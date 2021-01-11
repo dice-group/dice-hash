@@ -1,7 +1,9 @@
 #ifndef HYPERTRIE_DICEHASHDEFINITIONS_HPP
 #define HYPERTRIE_DICEHASHDEFINITIONS_HPP
 
-/** @file Home of the declarations of the dice_hash functions.
+/** @file
+ * @brief Home of the declarations of the dice_hash functions.
+ *
  * This is needed because the hash functions need to be able to call each other.
  * Because of that the declarations and definitions need to be separated.
  */
@@ -157,7 +159,7 @@ template<typename T>
 requires is_unordered_container_v<T>
 std::size_t dice_hash(T const &container) noexcept;
 
-/** Wrapper class for the dice_hash function.
+/** Wrapper class for the Dice::hash::dice_hash function.
  * It is a typical hash interface.
  * @tparam T The type to define the hash for.
  */

@@ -157,3 +157,6 @@ modules.xml
 .idea/sonarlint
 
 # End of https://www.toptal.com/developers/gitignore/api/c++,conan,jetbrains+all,cmake
+
+# docu folder
+/docu/

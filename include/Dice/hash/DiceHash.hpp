@@ -1,7 +1,9 @@
 #ifndef HYPERTRIE_DICEHASH_HPP
 #define HYPERTRIE_DICEHASH_HPP
 
-/** @file Home of the DiceHash implementation.
+/** @file
+ * @brief Home of the DiceHash implementation.
+ *
  * To speed up tests of the Hypertrie and Tentris we needed to be able to serialize a Hypertrie and save it.
  * However the last hash function was not "stable", i.e. it chose two different random seeds, so the results differed.
  * Because of that (and to not worry about versioning problems) this hash function was created.

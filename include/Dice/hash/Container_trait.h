@@ -1,7 +1,9 @@
 #ifndef CONTAINER_TRAIT_H_
 #define CONTAINER_TRAIT_H_
 
-/** @file Home of custom type traits for the diceHash.
+/** @file
+ * @brief Home of custom type traits for the diceHash.
+ *
  * If you want to add another class to the trait, the safest place to do so is in this file.
  * Why is there no namespace?
  */
