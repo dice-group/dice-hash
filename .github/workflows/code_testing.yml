@@ -5,7 +5,7 @@ on: [push, workflow_dispatch]
 
 jobs:
   clang10_build:
-    runs-on: ubuntu:focal
+    runs-on: ubuntu-20.04
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
