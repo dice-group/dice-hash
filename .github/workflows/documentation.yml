@@ -15,14 +15,7 @@ jobs:
           working-directory: '.'
           doxyfile-path: 'Doxyfile'
 
-      - name: Upload docu
-        uses: actions/upload-artifact@v1
-        with:
-          name: docu
-          path: docu
-          retention-days: 7
-
-      - name: Upload to wiki
+      - name: upload to github page branch
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
