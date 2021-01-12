@@ -1,8 +1,7 @@
 name: code_testing
 
-# Controls when the action will run.
-#on: [push, workflow_dispatch]
-on: [workflow_dispatch]
+# needs to change!
+on: [push, workflow_dispatch]
 
 jobs:
   build_test:
