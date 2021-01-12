@@ -4,20 +4,27 @@ name: code_testing
 on: [push, workflow_dispatch]
 
 jobs:
-  clang10_build:
+  build_test:
     runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        include:
+          - CC: "clang-10"
+            CXX: "clang++-10"
+          - CC: "gcc-10"
+            CXX: "gcc++-10"
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
       # setup
       - name: install needed packages
-        run: sudo apt-get -qq update && sudo apt-get -qq install -y git make cmake clang-10 libstdc++-10-dev
+        run: sudo apt-get -qq update && sudo apt-get -qq install -y git make cmake gcc-10 clang-10 libstdc++-10-dev
       # build
       - name: build tests
-        run: mkdir build_clang && cd build_clang && cmake -Ddice_hash_BUILD_TESTS=ON .. && make -j
+        run: mkdir build && cd build && cmake -Ddice_hash_BUILD_TESTS=ON .. && make -j
         env:
-          CC: "clang-10"
-          CXX: "clang++-10"
+          CC: ${{ matrix.CC }}
+          CXX: ${{ matrix.CXX }}
       # execute
       - name: run tests
-        run: build_clang/tests/tests_dice_hash
+        run: build/tests/tests_dice_hash
