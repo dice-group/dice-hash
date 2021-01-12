@@ -14,7 +14,7 @@ jobs:
         run: sudo apt-get -qq update && sudo apt-get -qq install -y git make cmake clang-10 libstdc++-10-dev
       # build
       - name: build tests
-        run: cd "$GITHUB_WORKSPACE" && mkdir build_clang && cd build_clang && cmake -Ddice_hash_BUILD_TESTS=ON .. && make -j
+        run: mkdir build_clang && cd build_clang && cmake -Ddice_hash_BUILD_TESTS=ON .. && make -j
         env:
           CC: "clang-10"
           CXX: "clang++-10"
