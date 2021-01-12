@@ -1,0 +1,20 @@
+name: code_testing
+
+# Controls when the action will run.
+on: [push, workflow_dispatch]
+
+jobs:
+  clang10_build:
+    runs-on: ubuntu:focal
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      # setup
+      - name: install needed packages
+        run: apt-get -qq update && apt-get -qq install -y git make cmake clang-10 libstdc++-10-dev
+      # build
+      - name: build tests
+        run: cd "$GITHUB_WORKSPACE" && mkdir build_clang && cd build_clang && cmake -Ddice_hash_BUILD_TESTS=ON .. && make -j
+      # execute
+      - name: run tests
+        run: build_clang/tests/tests_dice_hash
