@@ -1,5 +1,6 @@
 name: documentation
 
+#needs to be changed!
 on: [push, workflow_dispatch]
 
 jobs:
@@ -19,4 +20,11 @@ jobs:
         with:
           name: docu
           path: docu
+          retention-days: 7
+
+      - name: Upload to wiki
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docu
 
