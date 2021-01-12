@@ -30,13 +30,15 @@ jobs:
       - name: run tests
         run: build/tests/tests_dice_hash
 
+  #simply build the dockerfile and execute the produced image.
+  #If you want to upload a docker image, you probably should have a look at https://github.com/docker/build-push-action
   build_docker:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
+      # build
       - name: build image
         run: docker build -t dockerimage .
-
+      # run
       - name: run image
         run: docker run dockerimage

@@ -1,0 +1,22 @@
+name: documentation
+
+on: [push, workflow_dispatch]
+
+jobs:
+  generate_doxygen_docu:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      # https://github.com/marketplace/actions/doxygen-action
+      - name: generate docu
+        uses: mattnotmitt/doxygen-action@v1
+        with:
+          working-directory: '.'
+          doxyfile-path: 'Doxyfile'
+
+      - name: Upload docu
+        uses: actions/upload-artifact@v1
+        with:
+          name: docu
+          path: docu
+
