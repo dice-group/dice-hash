@@ -137,8 +137,7 @@ namespace Dice::hash {
     }
 
     template<typename T>
-    requires std::is_pointer_v<std::decay_t<T>>
-    std::size_t dice_hash(T const ptr) noexcept {
+    std::size_t dice_hash(T *ptr) noexcept {
         return detail::hash_primitive(ptr);
     }
 
