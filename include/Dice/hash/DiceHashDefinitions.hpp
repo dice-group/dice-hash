@@ -44,6 +44,7 @@ template<typename T>
 std::size_t dice_hash(T const &) noexcept {
     static_assert(AlwaysFalse<T>::value,
             "The hash function is not defined for this type. You need to add an implementation yourself");
+    return 0;
 }
 
 /** Implementation for fundamentals.
@@ -78,8 +79,7 @@ std::size_t dice_hash(std::basic_string_view<CharT> const &sv) noexcept;
  * @return Hash value.
  */
 template<typename T>
-requires std::is_pointer_v<std::decay_t<T>>
-std::size_t dice_hash(T const ptr) noexcept;
+std::size_t dice_hash(T *ptr) noexcept;
 
 /** Implementation for unique pointers.
  * CAUTION: hashes the POINTER, not the OBJECT POINTED TO!
