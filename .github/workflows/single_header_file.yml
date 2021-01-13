@@ -1,0 +1,23 @@
+name: single_header_file
+
+on: push
+
+jobs:
+  create_and_upload_file:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      # get needed packages
+      - name: install needed packages
+        run: |
+          sudo apt-get -qq update && sudo apt-get -qq install -y python3 python3-pip
+          sudo pip3 install quom
+      # create the file
+      - name: create the header file
+        run: quom include/Dice/hash/DiceHash.hpp DiceHashSingleHeader.hpp -I include/
+      #upload as artifact for testing purposes
+      - name: upload as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: DiceHashSingleHeader.hpp
+          path: DiceHashSingleHeader.hpp
