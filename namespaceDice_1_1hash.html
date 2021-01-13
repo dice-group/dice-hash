@@ -69,7 +69,8 @@ $(function() {
   <div class="summary">
 <a href="#namespaces">Namespaces</a> &#124;
 <a href="#nested-classes">Classes</a> &#124;
-<a href="#func-members">Functions</a>  </div>
+<a href="#func-members">Functions</a> &#124;
+<a href="#var-members">Variables</a>  </div>
   <div class="headertitle">
 <div class="title">Dice::hash Namespace Reference</div>  </div>
 </div><!--header-->
@@ -86,6 +87,24 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structDice_1_1hash_1_1is__unordered__container.html">is_unordered_container</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Typetrait for checking if a type T is an unordered container.  <a href="structDice_1_1hash_1_1is__unordered__container.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structDice_1_1hash_1_1is__unordered__container_3_01std_1_1unordered__map_3_01Key_00_01T_00_01Has5e7947411899036e45b171fdfd76bf75.html">is_unordered_container&lt; std::unordered_map&lt; Key, T, Hash, KeyEqual, Allocator &gt; &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Specialization for std::unordered_map.  <a href="structDice_1_1hash_1_1is__unordered__container_3_01std_1_1unordered__map_3_01Key_00_01T_00_01Has5e7947411899036e45b171fdfd76bf75.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structDice_1_1hash_1_1is__unordered__container_3_01std_1_1unordered__set_3_01Key_00_01Hash_00_011f4d7f8a223955449b962cc51658d1f5.html">is_unordered_container&lt; std::unordered_set&lt; Key, Hash, KeyEqual, Allocator &gt; &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Specialization for std::unordered_set.  <a href="structDice_1_1hash_1_1is__unordered__container_3_01std_1_1unordered__set_3_01Key_00_01Hash_00_011f4d7f8a223955449b962cc51658d1f5.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structDice_1_1hash_1_1is__ordered__container.html">is_ordered_container</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Typetrait for checking if a type T is an ordered container.  <a href="structDice_1_1hash_1_1is__ordered__container.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structDice_1_1hash_1_1is__ordered__container_3_01std_1_1map_3_01Key_00_01T_00_01Compare_00_01Allocator_01_4_01_4.html">is_ordered_container&lt; std::map&lt; Key, T, Compare, Allocator &gt; &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Specialization for std::map.  <a href="structDice_1_1hash_1_1is__ordered__container_3_01std_1_1map_3_01Key_00_01T_00_01Compare_00_01Allocator_01_4_01_4.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structDice_1_1hash_1_1is__ordered__container_3_01std_1_1set_3_01Key_00_01Compare_00_01Allocator_01_4_01_4.html">is_ordered_container&lt; std::set&lt; Key, Compare, Allocator &gt; &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Specialization for std::set.  <a href="structDice_1_1hash_1_1is__ordered__container_3_01std_1_1set_3_01Key_00_01Compare_00_01Allocator_01_4_01_4.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structDice_1_1hash_1_1AlwaysFalse.html">AlwaysFalse</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper type.  <a href="structDice_1_1hash_1_1AlwaysFalse.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -107,10 +126,10 @@ Functions</h2></td></tr>
 <tr class="memitem:ae79898d5881dbfb9cf7f34a739de0d9c"><td class="memTemplItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash.html#ae79898d5881dbfb9cf7f34a739de0d9c">dice_hash</a> (std::basic_string_view&lt; CharT &gt; const &amp;sv) noexcept</td></tr>
 <tr class="memdesc:ae79898d5881dbfb9cf7f34a739de0d9c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implementation for string view.  <a href="namespaceDice_1_1hash.html#ae79898d5881dbfb9cf7f34a739de0d9c">More...</a><br /></td></tr>
 <tr class="separator:ae79898d5881dbfb9cf7f34a739de0d9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a162031555adf4fcd9f71c260bafad205"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
-<tr class="memitem:a162031555adf4fcd9f71c260bafad205"><td class="memTemplItemLeft" align="right" valign="top">requires std::is_pointer_v&lt; std::decay_t&lt; T &gt; &gt; std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash.html#a162031555adf4fcd9f71c260bafad205">dice_hash</a> (T const ptr) noexcept</td></tr>
-<tr class="memdesc:a162031555adf4fcd9f71c260bafad205"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implementation for raw pointers.  <a href="namespaceDice_1_1hash.html#a162031555adf4fcd9f71c260bafad205">More...</a><br /></td></tr>
-<tr class="separator:a162031555adf4fcd9f71c260bafad205"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa45cbe3f308d9b4151dde59460ed4c1c"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
+<tr class="memitem:aa45cbe3f308d9b4151dde59460ed4c1c"><td class="memTemplItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash.html#aa45cbe3f308d9b4151dde59460ed4c1c">dice_hash</a> (T *ptr) noexcept</td></tr>
+<tr class="memdesc:aa45cbe3f308d9b4151dde59460ed4c1c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implementation for raw pointers.  <a href="namespaceDice_1_1hash.html#aa45cbe3f308d9b4151dde59460ed4c1c">More...</a><br /></td></tr>
+<tr class="separator:aa45cbe3f308d9b4151dde59460ed4c1c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa06abccf052eda05361dbb9e95ddbb32"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:aa06abccf052eda05361dbb9e95ddbb32"><td class="memTemplItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash.html#aa06abccf052eda05361dbb9e95ddbb32">dice_hash</a> (std::unique_ptr&lt; T &gt; const &amp;ptr) noexcept</td></tr>
 <tr class="memdesc:aa06abccf052eda05361dbb9e95ddbb32"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implementation for unique pointers.  <a href="namespaceDice_1_1hash.html#aa06abccf052eda05361dbb9e95ddbb32">More...</a><br /></td></tr>
@@ -136,17 +155,28 @@ Functions</h2></td></tr>
 <tr class="memdesc:a915cac2bc81d1dd162a09922d14fae00"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implementation for pairs.  <a href="namespaceDice_1_1hash.html#a915cac2bc81d1dd162a09922d14fae00">More...</a><br /></td></tr>
 <tr class="separator:a915cac2bc81d1dd162a09922d14fae00"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a780d9fc5d7503edb8d010dafa0a9f4f5"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
-<tr class="memitem:a780d9fc5d7503edb8d010dafa0a9f4f5"><td class="memTemplItemLeft" align="right" valign="top">requires <a class="el" href="Container__trait_8h.html#a6e5128db3851e61791f339ed2edd54e2">is_ordered_container_v</a>&lt; T &gt; std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash.html#a780d9fc5d7503edb8d010dafa0a9f4f5">dice_hash</a> (T const &amp;container) noexcept</td></tr>
+<tr class="memitem:a780d9fc5d7503edb8d010dafa0a9f4f5"><td class="memTemplItemLeft" align="right" valign="top">requires <a class="el" href="namespaceDice_1_1hash.html#ab147e9d5f309bd006996450618c3e58d">is_ordered_container_v</a>&lt; T &gt; std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash.html#a780d9fc5d7503edb8d010dafa0a9f4f5">dice_hash</a> (T const &amp;container) noexcept</td></tr>
 <tr class="memdesc:a780d9fc5d7503edb8d010dafa0a9f4f5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implementation for ordered container.  <a href="namespaceDice_1_1hash.html#a780d9fc5d7503edb8d010dafa0a9f4f5">More...</a><br /></td></tr>
 <tr class="separator:a780d9fc5d7503edb8d010dafa0a9f4f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9adb4d20d697e9526a009b900c5afaa3"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
-<tr class="memitem:a9adb4d20d697e9526a009b900c5afaa3"><td class="memTemplItemLeft" align="right" valign="top">requires <a class="el" href="Container__trait_8h.html#ab8a249fc230b19d695e5ed3edc5f7ea0">is_unordered_container_v</a>&lt; T &gt; std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash.html#a9adb4d20d697e9526a009b900c5afaa3">dice_hash</a> (T const &amp;container) noexcept</td></tr>
+<tr class="memitem:a9adb4d20d697e9526a009b900c5afaa3"><td class="memTemplItemLeft" align="right" valign="top">requires <a class="el" href="namespaceDice_1_1hash.html#ad1d03a80520c2512367fdae95ebe6a28">is_unordered_container_v</a>&lt; T &gt; std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash.html#a9adb4d20d697e9526a009b900c5afaa3">dice_hash</a> (T const &amp;container) noexcept</td></tr>
 <tr class="memdesc:a9adb4d20d697e9526a009b900c5afaa3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implementation for unordered container.  <a href="namespaceDice_1_1hash.html#a9adb4d20d697e9526a009b900c5afaa3">More...</a><br /></td></tr>
 <tr class="separator:a9adb4d20d697e9526a009b900c5afaa3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7f2dd7578117edde1f56d59c4129f5d2"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:a7f2dd7578117edde1f56d59c4129f5d2"><td class="memTemplItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash.html#a7f2dd7578117edde1f56d59c4129f5d2">dice_hash</a> (T const &amp;) noexcept</td></tr>
 <tr class="memdesc:a7f2dd7578117edde1f56d59c4129f5d2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default implementation of the dice_hash function.  <a href="namespaceDice_1_1hash.html#a7f2dd7578117edde1f56d59c4129f5d2">More...</a><br /></td></tr>
 <tr class="separator:a7f2dd7578117edde1f56d59c4129f5d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
+Variables</h2></td></tr>
+<tr class="memitem:ad1d03a80520c2512367fdae95ebe6a28"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
+<tr class="memitem:ad1d03a80520c2512367fdae95ebe6a28"><td class="memTemplItemLeft" align="right" valign="top">constexpr bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash.html#ad1d03a80520c2512367fdae95ebe6a28">is_unordered_container_v</a> = <a class="el" href="structDice_1_1hash_1_1is__unordered__container.html">is_unordered_container</a>&lt;T&gt;::value</td></tr>
+<tr class="memdesc:ad1d03a80520c2512367fdae95ebe6a28"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper definition.  <a href="namespaceDice_1_1hash.html#ad1d03a80520c2512367fdae95ebe6a28">More...</a><br /></td></tr>
+<tr class="separator:ad1d03a80520c2512367fdae95ebe6a28"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab147e9d5f309bd006996450618c3e58d"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
+<tr class="memitem:ab147e9d5f309bd006996450618c3e58d"><td class="memTemplItemLeft" align="right" valign="top">constexpr bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash.html#ab147e9d5f309bd006996450618c3e58d">is_ordered_container_v</a> = <a class="el" href="structDice_1_1hash_1_1is__ordered__container.html">is_ordered_container</a>&lt;T&gt;::value</td></tr>
+<tr class="memdesc:ab147e9d5f309bd006996450618c3e58d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper definition.  <a href="namespaceDice_1_1hash.html#ab147e9d5f309bd006996450618c3e58d">More...</a><br /></td></tr>
+<tr class="separator:ab147e9d5f309bd006996450618c3e58d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Home of the <a class="el" href="structDice_1_1hash_1_1DiceHash.html" title="Wrapper class for the Dice::hash::dice_hash function.">DiceHash</a> and its helper functions. </p>
@@ -172,7 +202,7 @@ template&lt;typename T , std::size_t N&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -216,7 +246,7 @@ template&lt;typename CharT &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -259,7 +289,7 @@ template&lt;typename CharT &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -302,7 +332,7 @@ template&lt;typename T , typename V &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -346,7 +376,7 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -389,7 +419,7 @@ template&lt;typename... TupleArgs&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -432,7 +462,7 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -475,7 +505,7 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -497,8 +527,51 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
+<a id="aa45cbe3f308d9b4151dde59460ed4c1c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa45cbe3f308d9b4151dde59460ed4c1c">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[9/13]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::size_t Dice::hash::dice_hash </td>
+          <td>(</td>
+          <td class="paramtype">T *&#160;</td>
+          <td class="paramname"><em>ptr</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Implementation for raw pointers. </p>
+<p>CAUTION: hashes the POINTER, not the OBJECT POINTED TO! </p><dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">T</td><td>A pointer type. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ptr</td><td>The pointer to hash. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Hash value. </dd></dl>
+
+</div>
+</div>
 <a id="a7f2dd7578117edde1f56d59c4129f5d2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7f2dd7578117edde1f56d59c4129f5d2">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[9/13]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a7f2dd7578117edde1f56d59c4129f5d2">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[10/13]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -518,7 +591,7 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -535,7 +608,7 @@ template&lt;typename T &gt; </div>
 </div>
 </div>
 <a id="a780d9fc5d7503edb8d010dafa0a9f4f5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a780d9fc5d7503edb8d010dafa0a9f4f5">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[10/13]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a780d9fc5d7503edb8d010dafa0a9f4f5">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[11/13]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -546,7 +619,7 @@ template&lt;typename T &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">requires <a class="el" href="Container__trait_8h.html#a6e5128db3851e61791f339ed2edd54e2">is_ordered_container_v</a>&lt; T &gt; std::size_t Dice::hash::dice_hash </td>
+          <td class="memname">requires <a class="el" href="namespaceDice_1_1hash.html#ab147e9d5f309bd006996450618c3e58d">is_ordered_container_v</a>&lt; T &gt; std::size_t Dice::hash::dice_hash </td>
           <td>(</td>
           <td class="paramtype">T const &amp;&#160;</td>
           <td class="paramname"><em>container</em></td><td>)</td>
@@ -555,7 +628,7 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -578,7 +651,7 @@ template&lt;typename T &gt; </div>
 </div>
 </div>
 <a id="a9adb4d20d697e9526a009b900c5afaa3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9adb4d20d697e9526a009b900c5afaa3">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[11/13]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a9adb4d20d697e9526a009b900c5afaa3">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[12/13]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -589,7 +662,7 @@ template&lt;typename T &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">requires <a class="el" href="Container__trait_8h.html#ab8a249fc230b19d695e5ed3edc5f7ea0">is_unordered_container_v</a>&lt; T &gt; std::size_t Dice::hash::dice_hash </td>
+          <td class="memname">requires <a class="el" href="namespaceDice_1_1hash.html#ad1d03a80520c2512367fdae95ebe6a28">is_unordered_container_v</a>&lt; T &gt; std::size_t Dice::hash::dice_hash </td>
           <td>(</td>
           <td class="paramtype">T const &amp;&#160;</td>
           <td class="paramname"><em>container</em></td><td>)</td>
@@ -598,7 +671,7 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -621,7 +694,7 @@ template&lt;typename T &gt; </div>
 </div>
 </div>
 <a id="a3a3f9b5830c08fdaa79e1711d40e53a1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3a3f9b5830c08fdaa79e1711d40e53a1">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[12/13]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a3a3f9b5830c08fdaa79e1711d40e53a1">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[13/13]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -641,7 +714,7 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -663,8 +736,9 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="a162031555adf4fcd9f71c260bafad205"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a162031555adf4fcd9f71c260bafad205">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[13/13]</span></h2>
+<h2 class="groupheader">Variable Documentation</h2>
+<a id="ab147e9d5f309bd006996450618c3e58d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab147e9d5f309bd006996450618c3e58d">&#9670;&nbsp;</a></span>is_ordered_container_v</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -675,34 +749,55 @@ template&lt;typename T &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">requires std::is_pointer_v&lt; std::decay_t&lt; T &gt; &gt; std::size_t Dice::hash::dice_hash </td>
-          <td>(</td>
-          <td class="paramtype">T const&#160;</td>
-          <td class="paramname"><em>ptr</em></td><td>)</td>
-          <td></td>
+          <td class="memname">constexpr bool Dice::hash::is_ordered_container_v = <a class="el" href="structDice_1_1hash_1_1is__ordered__container.html">is_ordered_container</a>&lt;T&gt;::value</td>
         </tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">constexpr</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Implementation for raw pointers. </p>
-<p>CAUTION: hashes the POINTER, not the OBJECT POINTED TO! </p><dl class="tparams"><dt>Template Parameters</dt><dd>
+<p>Helper definition. </p>
+<p>Enables the *_v usage of <a class="el" href="structDice_1_1hash_1_1is__ordered__container.html" title="Typetrait for checking if a type T is an ordered container.">is_ordered_container</a>. </p><dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
-    <tr><td class="paramname">T</td><td>A pointer type. </td></tr>
+    <tr><td class="paramname">T</td><td>The type to check. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">ptr</td><td>The pointer to hash. </td></tr>
+
+</div>
+</div>
+<a id="ad1d03a80520c2512367fdae95ebe6a28"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad1d03a80520c2512367fdae95ebe6a28">&#9670;&nbsp;</a></span>is_unordered_container_v</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr bool Dice::hash::is_unordered_container_v = <a class="el" href="structDice_1_1hash_1_1is__unordered__container.html">is_unordered_container</a>&lt;T&gt;::value</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Helper definition. </p>
+<p>Enables the *_v usage of <a class="el" href="structDice_1_1hash_1_1is__unordered__container.html" title="Typetrait for checking if a type T is an unordered container.">is_unordered_container</a>. </p><dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">T</td><td>The type to check. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>Hash value. </dd></dl>
 
 </div>
 </div>

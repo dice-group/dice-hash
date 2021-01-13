@@ -69,8 +69,38 @@ $(function() {
 <div class="textblock"><p><a class="anchor" id="md_README"></a> dice-hash is based on the hash from <a href="https://github.com/martinus/robin-hood-hashing">robin-hood-hashing hash map/set</a> by <a href="https://martin.ankerl.com/">Martin Ankerl</a>. It performs well as hash function for most hash-based containers like <code>std::unordered_map/set</code> or <a href="https://github.com/Tessil/sparse-map"><code>tsl::sparse_map/set</code></a>. dice-hash is an extended version with support for all kinds of fixed, ordered and unordered data structures from STL.</p>
 <h1><a class="anchor" id="autotoc_md1"></a>
 Requirements</h1>
-<p>A C++20 compatible compiler. Code was only tested on x86_64. </p>
-</div></div><!-- PageDoc -->
+<p>A C++20 compatible compiler. Code was only tested on x86_64.</p>
+<h1><a class="anchor" id="autotoc_md2"></a>
+Include it into your projects</h1>
+<h2><a class="anchor" id="autotoc_md3"></a>
+CMake</h2>
+<p>add </p><div class="fragment"><div class="line">FetchContent_Declare(</div>
+<div class="line">        dice-hash</div>
+<div class="line">        GIT_REPOSITORY https://github.com/dice-group/dice-hash.git</div>
+<div class="line">        GIT_TAG 0.1.0</div>
+<div class="line">        GIT_SHALLOW TRUE)</div>
+<div class="line"> </div>
+<div class="line">FetchContent_MakeAvailable(dice-hash)</div>
+</div><!-- fragment --><p>to your CMakeLists.txt</p>
+<p>You can now add it to your target with: </p><div class="fragment"><div class="line">target_link_libraries(your_target</div>
+<div class="line">        dice-hash::dice-hash</div>
+<div class="line">        )</div>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md4"></a>
+conan</h2>
+<p>To use it with <a href="https://conan.io/">conan</a> you need to add the repository: </p><div class="fragment"><div class="line">conan remote add dice-group https://api.bintray.com/conan/dice-group/tentris</div>
+</div><!-- fragment --><p>To use it add <code>dice-hash/0.1.0@dice-group/stable</code> to the <code>[requires]</code> section of your conan file.</p>
+<h1><a class="anchor" id="autotoc_md5"></a>
+build and run tests</h1>
+<div class="fragment"><div class="line">#get it </div>
+<div class="line">git clone https://github.com/dice-group/dice-hash.git</div>
+<div class="line">cd dice-hash</div>
+<div class="line">#build it</div>
+<div class="line">mkdir build</div>
+<div class="line">cd build</div>
+<div class="line">cmake -DDICE_HASH_BUILD_TESTS -DCMAKE_BUILD_TYPE=Release ..</div>
+<div class="line">make -j tests_dice_hash</div>
+<div class="line">./test/tests_dice_hash</div>
+</div><!-- fragment --> </div></div><!-- PageDoc -->
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
