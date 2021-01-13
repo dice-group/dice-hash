@@ -1,7 +1,9 @@
 name: code_testing
 
 # needs to change!
-on: [push]
+# disabled temporary
+#on: [push]
+on: []
 
 jobs:
   build_test:

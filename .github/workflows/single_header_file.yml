@@ -26,6 +26,11 @@ jobs:
           name: DiceHashSingleHeader.hpp
           path: DiceHashSingleHeader.hpp
 
+      - name: test different env variables
+        run: |
+          echo GITHUB_EVENT_NAME $GITHUB_EVENT_NAME
+          echo GITHUB_EVENT_PATH $GITHUB_EVENT_PATH
+          echo GITHUB_REF $GITHUB_REF
       # does not working at the moment
 #      - name: upload as asset
 #        uses: actions/upload_release-asset@v1

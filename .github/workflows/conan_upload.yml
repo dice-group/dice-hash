@@ -10,4 +10,4 @@ jobs:
   test_variables:
     steps:
       - name: print interesting variables
-        run: echo ${{ GITHUB_REF }}
+        run: echo $GITHUB_REF
