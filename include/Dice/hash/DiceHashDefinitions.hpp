@@ -20,7 +20,7 @@
 #include <unordered_set>
 #include <utility>
 
-#include "Dice/hash/Container_trait.h"
+#include "Dice/hash/Container_trait.hpp"
 
 /** Home of the DiceHash and its helper functions.
  */
