@@ -8,6 +8,7 @@ on:
 
 jobs:
   test_variables:
+    runs-on: ubuntu-20.04
     steps:
       - name: print interesting variables
         run: echo $GITHUB_REF

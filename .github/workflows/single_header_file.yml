@@ -3,8 +3,6 @@ name: single_header_file
 # only run for releases
 on:
   release:
-    types:
-      - created
 
 jobs:
   create_and_upload_file:
