@@ -184,6 +184,19 @@ namespace Dice::tests::hash {
         REQUIRE(getHash(i) == getHash(42));
     }
 
+    TEST_CASE("Variant objects can be hashed", "[DiceHash]") {
+        int first = 42;
+        char second = 'c';
+        std::string third = "42";
+        std::variant<int, char, std::string> test;
+        test = first;
+        REQUIRE(getHash(test) == getHash(first));
+        test = second;
+        REQUIRE(getHash(test) == getHash(second));
+        test = third;
+        REQUIRE(getHash(test) == getHash(third));
+    }
+
     /*
     TEST_CASE("If the hash is not defined for a specific type, it will not compile", "[DiceHash]") {
         struct NotImplementedHashType {};
@@ -205,7 +218,7 @@ namespace Dice::tests::hash {
         mySet.insert(UserDefinedStruct(3));
         mySet.insert(UserDefinedStruct(4));
         mySet.insert(UserDefinedStruct(7));
-        std::cout << Dice::hash::dice_hash(mySet);
+        Dice::hash::dice_hash(mySet);
 	}
 }// namespace Dice::tests::hash
 
