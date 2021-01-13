@@ -10,7 +10,7 @@ FetchContent_MakeAvailable(Catch2)
 add_executable(tests_dice_hash TestDiceHash.cpp)
 target_link_libraries(tests_dice_hash PRIVATE
         Catch2::Catch2
-        dice_hash::dice_hash
+        dice-hash::dice-hash
         )
 
 include(CTest)
