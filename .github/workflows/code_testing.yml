@@ -1,7 +1,7 @@
 name: code_testing
 
 # needs to change!
-on: [push, pull_request]
+on: [push]
 
 jobs:
   build_test:
