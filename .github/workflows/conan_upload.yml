@@ -1,0 +1,13 @@
+name: conan_upload
+
+# idea: run on every push connected to a tag
+on:
+  push:
+    tags:
+    - 'v*'
+
+jobs:
+  test_variables:
+    steps:
+      - name: print interesting variables
+        run: echo ${{ GITHUB_REF }}

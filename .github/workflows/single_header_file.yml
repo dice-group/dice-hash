@@ -1,6 +1,10 @@
 name: single_header_file
 
-on: push
+# only run for releases
+on:
+  release:
+    types:
+      - created
 
 jobs:
   create_and_upload_file:
@@ -21,3 +25,13 @@ jobs:
         with:
           name: DiceHashSingleHeader.hpp
           path: DiceHashSingleHeader.hpp
+
+      # does not working at the moment
+#      - name: upload as asset
+#        uses: actions/upload_release-asset@v1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          upload_url: ""
+#          asset_path: DiceHashSingleHeader.hpp
+#          asset_name: DiceHashSingleHeader.hpp
