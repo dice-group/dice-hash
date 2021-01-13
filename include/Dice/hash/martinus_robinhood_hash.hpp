@@ -136,7 +136,7 @@ namespace Dice::hash::martinus {
 		size_t h;
 
 	public:
-		HashState(uint64_t size) : h(seed ^ (size * m)) {}
+		explicit HashState(uint64_t size) : h(seed ^ (size * m)) {}
 
 		void add(size_t hash) noexcept {
 			hash *= m;
@@ -147,7 +147,7 @@ namespace Dice::hash::martinus {
 			h *= m;
 		}
 
-		size_t digest() noexcept {
+		[[nodiscard]] size_t digest() const noexcept {
 			size_t hash = h;
 			hash ^= hash >> r;
 			hash *= m;
