@@ -19,8 +19,9 @@ class DiceHashConan(ConanFile):
     # No settings/options are necessary, this is header only
 
     def set_version(self):
-        cmake_file = load(os.path.join(self.recipe_folder, "CMakeLists.txt"))
-        self.version = re.search("project\(dice_hash VERSION (.*)\)", cmake_file).group(1)
+        if not hasattr(self, 'version'):
+            cmake_file = load(os.path.join(self.recipe_folder, "CMakeLists.txt"))
+            self.version = re.search("project\(dice_hash VERSION (.*)\)", cmake_file).group(1)
 
     def package_id(self):
         self.info.header_only()
