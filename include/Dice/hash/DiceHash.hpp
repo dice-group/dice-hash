@@ -181,9 +181,8 @@ namespace Dice::hash {
         try {
             return std::visit([]<typename T>(T &&arg) { return dice_hash(std::forward<T>(arg)); }, var);
         }
-        catch (std::bad_variant_access const &ex) {
-            //what to do? dice_hash is not allowed to throw!
-            return -1;
+        catch (std::bad_variant_access const &) {
+            return Dice::hash::martinus::seed;
         }
     }
 

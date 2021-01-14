@@ -142,6 +142,7 @@ namespace Dice::hash {
 	 * Will hash the value which was set.
 	 * The hash of a variant of a type is equal to the hash of the type.
 	 * For example: a variant of int of 42 is equal to the hash of the int of 42.
+	 * If the variant is valueless_by_exception, the seed will be returned.
 	 * @tparam VariantArgs Types of the possible values.
 	 * @param var The variant itself.
 	 * @return Hash value.
