@@ -3,6 +3,7 @@ name: single_header_file
 # only run for releases
 on:
   release:
+    types: [created]
 
 jobs:
   create_and_upload_file:
@@ -17,24 +18,22 @@ jobs:
       # create the file
       - name: create the header file
         run: quom include/Dice/hash/DiceHash.hpp DiceHashSingleHeader.hpp -I include/
-      #upload as artifact for testing purposes
-      - name: upload as artifact
-        uses: actions/upload-artifact@v2
+      # this step uses the webhook request payload and GitHub script
+      # for documentation for the webhook payload see here: https://docs.github.com/en/free-pro-team@latest/developers/webhooks-and-events/webhook-events-and-payloads#release
+      # for documentation for GitHub script see here: https://github.com/actions/github-script#print-the-available-attributes-of-context
+      - name: Get the release upload url
+        id: get-upload-url
+        uses: actions/github-script@v3
         with:
-          name: DiceHashSingleHeader.hpp
-          path: DiceHashSingleHeader.hpp
-
-      - name: test different env variables
-        run: |
-          echo GITHUB_EVENT_NAME $GITHUB_EVENT_NAME
-          echo GITHUB_EVENT_PATH $GITHUB_EVENT_PATH
-          echo GITHUB_REF $GITHUB_REF
-      # does not working at the moment
-#      - name: upload as asset
-#        uses: actions/upload_release-asset@v1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        with:
-#          upload_url: ""
-#          asset_path: DiceHashSingleHeader.hpp
-#          asset_name: DiceHashSingleHeader.hpp
+          script: return context.payload.release.upload_url
+          result-encoding: string
+      # upload the header to the release
+      - name: upload as asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.get-upload-url.outputs.result }}
+          asset_path: DiceHashSingleHeader.hpp
+          asset_name: DiceHashSingleHeader.hpp
+          asset_content_type: application/octet-stream
