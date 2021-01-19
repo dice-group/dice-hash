@@ -150,6 +150,14 @@ namespace Dice::hash {
 	template <typename... VariantArgs>
 	inline std::size_t dice_hash(std::variant<VariantArgs...> const &var) noexcept;
 
+	/** Specialization for std::monostate.
+	 * It is needed so its usage in std::variant is possible.
+	 * Will simply return the seed.
+	 * @return The seed of the hash function.
+	 */
+	template <>
+	inline std::size_t dice_hash(std::monostate const&) noexcept;
+
 	/** Implementation for ordered container.
 	 * It uses a custom type trait to check if the type is in fact an ordered container.
 	 * CAUTION: If you want to add another type to the trait, you might need to do it before this is included!

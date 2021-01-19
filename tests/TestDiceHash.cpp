@@ -196,6 +196,10 @@ namespace Dice::tests::hash {
         test = third;
         REQUIRE(getHash(test) == getHash(third));
     }
+    TEST_CASE("Variant monostate returns seed", "[DiceHash]") {
+		std::variant<std::monostate, int, char> test;
+		REQUIRE(getHash(test) == Dice::hash::martinus::seed);
+	}
 
     /*
      * CAUTION: the hash is defined for ValuelessByException.
