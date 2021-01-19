@@ -15,6 +15,11 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -qq python3 python3-pip -y && sudo pip3 install conan
       - name: Checkout
         uses: actions/checkout@v1
+        # set the remote and login into the user
+      - name: setup conan
+        run: |
+          conan remote add dice-group https://api.bintray.com/conan/dice-group/tentris
+          conan user -p <conan_token> -r dice-group <username>
       - name: build the package
         run: conan create . "dice-group/stable" --build missing
         # will use `grep` and `sed` to extract the version number out of the cmake file
