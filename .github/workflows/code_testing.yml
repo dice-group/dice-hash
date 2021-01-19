@@ -2,8 +2,7 @@ name: code_testing
 
 # needs to change!
 # disabled temporary
-#on: [push]
-on: [workflow_dispatch]
+on: [push]
 
 jobs:
   build_test:

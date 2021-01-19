@@ -1,8 +1,5 @@
 name: documentation
 
-#needs to be changed!
-#disabled for the moment
-#on: [push, workflow_dispatch]
 on:
   push:
     branches:
