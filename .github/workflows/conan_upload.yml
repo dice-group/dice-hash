@@ -24,7 +24,7 @@ jobs:
         # will use `grep` and `sed` to extract the version number out of the cmake file
       - name: upload the package
         run: |
-          VERSION=$(conan info . --only None | sed 's#^.*(.*/##g;s#)##g')
+          VERSION=$(conan inspect . --raw version)
           echo "$VERSION"
           conan remove "dice-hash/${VERSION}@dice-group/stable" -r dice-group -f
           conan upload "dice-hash/${VERSION}@dice-group/stable" --force --all -r dice-group
