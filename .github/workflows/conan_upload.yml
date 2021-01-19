@@ -19,6 +19,7 @@ jobs:
       - name: setup conan
         run: |
           conan remote add dice-group https://api.bintray.com/conan/dice-group/tentris
+          echo "test"
           conan user -p <conan_token> -r dice-group <username>
       - name: build the package
         run: conan create . "dice-group/stable" --build missing
@@ -27,4 +28,5 @@ jobs:
         run: |
           VERSION=$(grep '^project(.*)$' CMakeLists.txt | sed 's/.*VERSION[[:blank:]]*//g;s/[[:blank:]]*).*//g')
           echo "$VERSION"
+          conan remove "dice-hash/${VERSION}@dice-group/stable" -r dice-group -f
           conan upload "dice-hash/${VERSION}@dice-group/stable" --force --all -r dice-group
