@@ -3,7 +3,11 @@ name: documentation
 #needs to be changed!
 #disabled for the moment
 #on: [push, workflow_dispatch]
-on: [workflow_dispatch]
+on:
+  push:
+    branches:
+      - master
+
 jobs:
   generate_doxygen_docu:
     runs-on: ubuntu-20.04
