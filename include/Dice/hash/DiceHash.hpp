@@ -176,6 +176,21 @@ namespace Dice::hash {
 		return detail::hash_and_combine(p.first, p.second);
 	}
 
+    template <>
+    inline std::size_t dice_hash(std::monostate const&) noexcept {
+		return Dice::hash::martinus::seed;
+	}
+
+    template<typename ...VariantArgs>
+    inline std::size_t dice_hash(std::variant<VariantArgs...> const &var) noexcept {
+        try {
+            return std::visit([]<typename T>(T &&arg) { return dice_hash(std::forward<T>(arg)); }, var);
+        }
+        catch (std::bad_variant_access const &) {
+            return Dice::hash::martinus::seed;
+        }
+    }
+
 	template<typename T>
 	requires is_ordered_container_v<T>
 	inline std::size_t dice_hash(T const &container) noexcept {

@@ -184,6 +184,39 @@ namespace Dice::tests::hash {
         REQUIRE(getHash(i) == getHash(42));
     }
 
+    TEST_CASE("Variant objects can be hashed", "[DiceHash]") {
+        int first = 42;
+        char second = 'c';
+        std::string third = "42";
+        std::variant<int, char, std::string> test;
+        test = first;
+        REQUIRE(getHash(test) == getHash(first));
+        test = second;
+        REQUIRE(getHash(test) == getHash(second));
+        test = third;
+        REQUIRE(getHash(test) == getHash(third));
+    }
+    TEST_CASE("Variant monostate returns seed", "[DiceHash]") {
+		std::variant<std::monostate, int, char> test;
+		REQUIRE(getHash(test) == Dice::hash::martinus::seed);
+	}
+
+    /*
+     * CAUTION: the hash is defined for ValuelessByException.
+     * Otherwise the code will not compile!
+     */
+    struct ValuelessByException {
+        ValuelessByException() = default;
+        ValuelessByException(const ValuelessByException &) { throw std::domain_error("copy ctor"); }
+    };
+    TEST_CASE("Hash of ill-formed variant is the seed", "[DiceHash]") {
+        std::variant<int, ValuelessByException> test;
+        try {test = ValuelessByException();}
+        catch (std::domain_error const&) {}
+        // now test is valueless_by_exception
+        REQUIRE(getHash(test) == Dice::hash::martinus::seed);
+    }
+
     /*
     TEST_CASE("If the hash is not defined for a specific type, it will not compile", "[DiceHash]") {
         struct NotImplementedHashType {};
@@ -205,13 +238,20 @@ namespace Dice::tests::hash {
         mySet.insert(UserDefinedStruct(3));
         mySet.insert(UserDefinedStruct(4));
         mySet.insert(UserDefinedStruct(7));
-        std::cout << Dice::hash::dice_hash(mySet);
+        Dice::hash::dice_hash(mySet);
 	}
 }// namespace Dice::tests::hash
 
+/*
+ * Define hash for test structures.
+ */
 namespace Dice::hash {
     template<>
     inline std::size_t dice_hash(Dice::tests::hash::UserDefinedStruct const &t) noexcept {
         return dice_hash(t.a);
+    }
+    template <>
+    inline std::size_t dice_hash(Dice::tests::hash::ValuelessByException const &t) noexcept {
+        return 0;
     }
 }

@@ -19,6 +19,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <variant>
 
 #include "Dice/hash/Container_trait.hpp"
 
@@ -136,6 +137,26 @@ namespace Dice::hash {
 	 */
 	template<typename T, typename V>
 	inline std::size_t dice_hash(std::pair<T, V> const &p) noexcept;
+
+	/** Implementation for variant.
+	 * Will hash the value which was set.
+	 * The hash of a variant of a type is equal to the hash of the type.
+	 * For example: a variant of int of 42 is equal to the hash of the int of 42.
+	 * If the variant is valueless_by_exception, the seed will be returned.
+	 * @tparam VariantArgs Types of the possible values.
+	 * @param var The variant itself.
+	 * @return Hash value.
+	 */
+	template <typename... VariantArgs>
+	inline std::size_t dice_hash(std::variant<VariantArgs...> const &var) noexcept;
+
+	/** Specialization for std::monostate.
+	 * It is needed so its usage in std::variant is possible.
+	 * Will simply return the seed.
+	 * @return The seed of the hash function.
+	 */
+	template <>
+	inline std::size_t dice_hash(std::monostate const&) noexcept;
 
 	/** Implementation for ordered container.
 	 * It uses a custom type trait to check if the type is in fact an ordered container.
