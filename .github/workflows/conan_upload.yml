@@ -19,8 +19,7 @@ jobs:
       - name: setup conan
         run: |
           conan remote add dice-group https://api.bintray.com/conan/dice-group/tentris
-          echo "test"
-          conan user -p <conan_token> -r dice-group <username>
+          conan user -p ${{ secrets.BINTRAY_API_KEY }} -r dice-group ${{ secrets.BINTRAY_USER }}
       - name: build the package
         run: conan create . "dice-group/stable" --build missing
         # will use `grep` and `sed` to extract the version number out of the cmake file
@@ -29,4 +28,4 @@ jobs:
           VERSION=$(grep '^project(.*)$' CMakeLists.txt | sed 's/.*VERSION[[:blank:]]*//g;s/[[:blank:]]*).*//g')
           echo "$VERSION"
           conan remove "dice-hash/${VERSION}@dice-group/stable" -r dice-group -f
-          conan upload "dice-hash/${VERSION}@dice-group/stable" --force --all -r dice-group
+          conan upload "dice-hash/${VERSION}@dice-group/stable" --force --all -r dice-group --skip-upload
