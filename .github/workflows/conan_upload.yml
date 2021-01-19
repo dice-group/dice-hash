@@ -1,10 +1,10 @@
 name: conan_upload
 
 # idea: run on every push connected to a tag
-on:
-  push:
-    tags:
-      - '*'
+on: push
+  #push:
+    #tags:
+      #- '*'
 
 jobs:
   build_and_upload:
@@ -24,7 +24,8 @@ jobs:
         # will use `grep` and `sed` to extract the version number out of the cmake file
       - name: upload the package
         run: |
-          VERSION=$(grep '^project(.*)$' CMakeLists.txt | sed 's/.*VERSION[[:blank:]]*//g;s/[[:blank:]]*).*//g')
+          VERSION=$(conan info . --only None | sed 's#^.*(.*/##g;s#)##g')
           echo "$VERSION"
           conan remove "dice-hash/${VERSION}@dice-group/stable" -r dice-group -f
-          conan upload "dice-hash/${VERSION}@dice-group/stable" --force --all -r dice-group
+          conan upload "dice-hash/${VERSION}@dice-group/stable" --skip-upload --all -r dice-group
+        # conan upload "dice-hash/${VERSION}@dice-group/stable" --force --all -r dice-group
