@@ -9,7 +9,6 @@
  */
 
 #include <cstring>
-#include <functional>
 #include <map>
 #include <memory>
 #include <set>
@@ -54,8 +53,7 @@ namespace Dice::hash {
  * @return Hash value.
  */
 	template<typename T>
-	requires std::is_fundamental_v<std::decay_t<T>>
-	inline std::size_t dice_hash(T const &fundamental) noexcept;
+	requires std::is_fundamental_v<std::decay_t<T>> inline std::size_t dice_hash(T const &fundamental) noexcept;
 
 	/** Implementation for string types.
 	 * @tparam CharT A char type. See the definition of std::string for more information.
@@ -147,7 +145,7 @@ namespace Dice::hash {
 	 * @param var The variant itself.
 	 * @return Hash value.
 	 */
-	template <typename... VariantArgs>
+	template<typename... VariantArgs>
 	inline std::size_t dice_hash(std::variant<VariantArgs...> const &var) noexcept;
 
 	/** Specialization for std::monostate.
@@ -155,8 +153,8 @@ namespace Dice::hash {
 	 * Will simply return the seed.
 	 * @return The seed of the hash function.
 	 */
-	template <>
-	inline std::size_t dice_hash(std::monostate const&) noexcept;
+	template<>
+	inline std::size_t dice_hash(std::monostate const &) noexcept;
 
 	/** Implementation for ordered container.
 	 * It uses a custom type trait to check if the type is in fact an ordered container.
@@ -166,8 +164,7 @@ namespace Dice::hash {
 	 * @return Hash value.
 	 */
 	template<typename T>
-	requires is_ordered_container_v<T>
-	inline std::size_t dice_hash(T const &container) noexcept;
+	requires is_ordered_container_v<T> inline std::size_t dice_hash(T const &container) noexcept;
 
 	/** Implementation for unordered container.
 	 * It uses a custom type trait to check if the type is in fact an unordered container.
@@ -177,8 +174,37 @@ namespace Dice::hash {
 	 * @return Hash value.
 	 */
 	template<typename T>
-	requires is_unordered_container_v<T>
-	inline std::size_t dice_hash(T const &container) noexcept;
+	requires is_unordered_container_v<T> inline std::size_t dice_hash(T const &container) noexcept;
+
+	/** Combines two hashes to a new hash.
+     * This function is commutative and invertible.
+     * It is used in the unordered container functions. However this __will__ be replaced in the future.
+     * @param a First hash.
+     * @param b Second hash.
+     * @return Combination of a and b.
+     */
+	inline std::size_t dice_hash_invertible_combine(std::size_t a, std::size_t b);
+
+	/** Combine n hashes to a new hash.
+     * Uses the base definition of Dice::hash::detail::dice_hash_invertible_combine for two elements.
+     * So all properties are from that definition.
+     * @tparam Args Needed so any number of arguments can be used.
+     * @param a First hash.
+     * @param args All other hashes.
+     * @return Combination of all hashes.
+     */
+	template<typename... Args>
+	inline std::size_t dice_hash_invertible_combine(std::size_t a, Args... args);
+
+	/** Combine n hashes to a new hash.
+     * Uses the Dice::hash::martinus::hash_combine for all elements at once.
+     * So this is simply a wrapper for it.
+     * @tparam Args std::size_t.
+     * @param args Hashes. All std::size_t from type.
+     * @return Combination of all hashes.
+     */
+	template<typename... Args>
+	inline std::size_t dice_hash_combine(Args... args);
 
 	/** Wrapper class for the Dice::hash::dice_hash function.
 	 * It is a typical hash interface.

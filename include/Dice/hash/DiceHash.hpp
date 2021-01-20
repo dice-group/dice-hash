@@ -28,8 +28,7 @@ namespace Dice::hash {
 		 * @return Hash value.
 		 */
 		template<typename T>
-		requires std::is_fundamental_v<std::decay_t<T>> or std::is_pointer_v<std::decay_t<T>>
-		inline std::size_t hash_primitive(T x) noexcept {
+				requires std::is_fundamental_v<std::decay_t<T>> or std::is_pointer_v<std::decay_t<T>> inline std::size_t hash_primitive(T x) noexcept {
 			if constexpr (sizeof(std::decay_t<T>) == sizeof(size_t)) {
 				return Dice::hash::martinus::hash_int(*reinterpret_cast<size_t const *>(&x));
 			} else if constexpr (sizeof(std::decay_t<T>) > sizeof(size_t) or std::is_floating_point_v<std::decay_t<T>>) {
@@ -38,43 +37,6 @@ namespace Dice::hash {
 				return Dice::hash::martinus::hash_int(static_cast<size_t>(x));
 			}
 		}
-
-		/** Combines two hashes to a new hash.
-         * This function is commutative and invertible.
-         * It is used in the unordered container functions. However this __will__ be replaced in the future.
-         * @param a First hash.
-         * @param b Second hash.
-         * @return Combination of a and b.
-         */
-		inline std::size_t dice_hash_invertible_combine(std::size_t a, std::size_t b) {
-			return a xor b;
-		}
-
-		/** Combine n hashes to a new hash.
-		 * Uses the base definition of Dice::hash::detail::dice_hash_invertible_combine for two elements.
-		 * So all properties are from that definition.
-		 * @tparam Args Needed so any number of arguments can be used.
-		 * @param a First hash.
-		 * @param args All other hashes.
-		 * @return Combination of all hashes.
-		 */
-		template <typename ...Args>
-		inline std::size_t dice_hash_invertible_combine(std::size_t a, Args ...args) {
-			return dice_hash_invertible_combine(a, dice_hash_invertible_combine(args...));
-		}
-
-		/** Combine n hashes to a new hash.
-		 * Uses the Dice::hash::martinus::hash_combine for all elements at once.
-		 * So this is simply a wrapper for it.
-		 * @tparam Args std::size_t.
-		 * @param args Hashes. All std::size_t from type.
-		 * @return Combination of all hashes.
-		 */
-		template <typename ...Args>
-		inline std::size_t dice_hash_combine(Args ...args) {
-			return hash_combine({args...});
-		}
-
 
 		/** Calculates the hash over an ordered container.
          * An example would be a vector, a map, an array or a list.
@@ -140,9 +102,22 @@ namespace Dice::hash {
 
 	}// namespace detail
 
+	inline std::size_t dice_hash_invertible_combine(std::size_t a, std::size_t b) {
+		return a xor b;
+	}
+
+	template<typename... Args>
+	inline std::size_t dice_hash_invertible_combine(std::size_t a, Args... args) {
+		return dice_hash_invertible_combine(a, dice_hash_invertible_combine(args...));
+	}
+
+	template<typename... Args>
+	inline std::size_t dice_hash_combine(Args... args) {
+		return detail::hash_combine({args...});
+	}
+
 	template<typename T>
-	requires std::is_fundamental_v<std::decay_t<T>>
-	inline std::size_t dice_hash(T const &fundamental) noexcept {
+	requires std::is_fundamental_v<std::decay_t<T>> inline std::size_t dice_hash(T const &fundamental) noexcept {
 		return detail::hash_primitive(fundamental);
 	}
 
@@ -202,30 +177,27 @@ namespace Dice::hash {
 		return detail::hash_and_combine(p.first, p.second);
 	}
 
-    template <>
-    inline std::size_t dice_hash(std::monostate const&) noexcept {
+	template<>
+	inline std::size_t dice_hash(std::monostate const &) noexcept {
 		return Dice::hash::martinus::seed;
 	}
 
-    template<typename ...VariantArgs>
-    inline std::size_t dice_hash(std::variant<VariantArgs...> const &var) noexcept {
-        try {
-            return std::visit([]<typename T>(T &&arg) { return dice_hash(std::forward<T>(arg)); }, var);
-        }
-        catch (std::bad_variant_access const &) {
-            return Dice::hash::martinus::seed;
-        }
-    }
+	template<typename... VariantArgs>
+	inline std::size_t dice_hash(std::variant<VariantArgs...> const &var) noexcept {
+		try {
+			return std::visit([]<typename T>(T &&arg) { return dice_hash(std::forward<T>(arg)); }, var);
+		} catch (std::bad_variant_access const &) {
+			return Dice::hash::martinus::seed;
+		}
+	}
 
 	template<typename T>
-	requires is_ordered_container_v<T>
-	inline std::size_t dice_hash(T const &container) noexcept {
+	requires is_ordered_container_v<T> inline std::size_t dice_hash(T const &container) noexcept {
 		return detail::dice_hash_ordered_container(container);
 	}
 
 	template<typename T>
-	requires is_unordered_container_v<T>
-	inline std::size_t dice_hash(T const &container) noexcept {
+	requires is_unordered_container_v<T> inline std::size_t dice_hash(T const &container) noexcept {
 		return detail::dice_hash_unordered_container(container);
 	}
 
