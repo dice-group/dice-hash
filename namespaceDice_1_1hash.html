@@ -154,6 +154,14 @@ Functions</h2></td></tr>
 <tr class="memitem:a915cac2bc81d1dd162a09922d14fae00"><td class="memTemplItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash.html#a915cac2bc81d1dd162a09922d14fae00">dice_hash</a> (std::pair&lt; T, V &gt; const &amp;p) noexcept</td></tr>
 <tr class="memdesc:a915cac2bc81d1dd162a09922d14fae00"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implementation for pairs.  <a href="namespaceDice_1_1hash.html#a915cac2bc81d1dd162a09922d14fae00">More...</a><br /></td></tr>
 <tr class="separator:a915cac2bc81d1dd162a09922d14fae00"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab25dfe8936f0d06e165ea463f0df49f2"><td class="memItemLeft" align="right" valign="top">template&lt;&gt; </td></tr>
+<tr class="memitem:ab25dfe8936f0d06e165ea463f0df49f2"><td class="memTemplItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash.html#ab25dfe8936f0d06e165ea463f0df49f2">dice_hash</a> (std::monostate const  &amp;) noexcept</td></tr>
+<tr class="memdesc:ab25dfe8936f0d06e165ea463f0df49f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Specialization for std::monostate.  <a href="namespaceDice_1_1hash.html#ab25dfe8936f0d06e165ea463f0df49f2">More...</a><br /></td></tr>
+<tr class="separator:ab25dfe8936f0d06e165ea463f0df49f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a62d0ef43327ec6c113ae91d3874f082c"><td class="memTemplParams" colspan="2">template&lt;typename ... VariantArgs&gt; </td></tr>
+<tr class="memitem:a62d0ef43327ec6c113ae91d3874f082c"><td class="memTemplItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash.html#a62d0ef43327ec6c113ae91d3874f082c">dice_hash</a> (std::variant&lt; VariantArgs... &gt; const &amp;var) noexcept</td></tr>
+<tr class="memdesc:a62d0ef43327ec6c113ae91d3874f082c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implementation for variant.  <a href="namespaceDice_1_1hash.html#a62d0ef43327ec6c113ae91d3874f082c">More...</a><br /></td></tr>
+<tr class="separator:a62d0ef43327ec6c113ae91d3874f082c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a780d9fc5d7503edb8d010dafa0a9f4f5"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:a780d9fc5d7503edb8d010dafa0a9f4f5"><td class="memTemplItemLeft" align="right" valign="top">requires <a class="el" href="namespaceDice_1_1hash.html#ab147e9d5f309bd006996450618c3e58d">is_ordered_container_v</a>&lt; T &gt; std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash.html#a780d9fc5d7503edb8d010dafa0a9f4f5">dice_hash</a> (T const &amp;container) noexcept</td></tr>
 <tr class="memdesc:a780d9fc5d7503edb8d010dafa0a9f4f5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implementation for ordered container.  <a href="namespaceDice_1_1hash.html#a780d9fc5d7503edb8d010dafa0a9f4f5">More...</a><br /></td></tr>
@@ -182,7 +190,7 @@ Variables</h2></td></tr>
 <div class="textblock"><p>Home of the <a class="el" href="structDice_1_1hash_1_1DiceHash.html" title="Wrapper class for the Dice::hash::dice_hash function.">DiceHash</a> and its helper functions. </p>
 </div><h2 class="groupheader">Function Documentation</h2>
 <a id="a7f30439f12a4d38e43af1a48749d6573"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7f30439f12a4d38e43af1a48749d6573">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[1/13]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a7f30439f12a4d38e43af1a48749d6573">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[1/15]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -226,7 +234,7 @@ template&lt;typename T , std::size_t N&gt; </div>
 </div>
 </div>
 <a id="a3d80f074068ec5fe1c19eb071ed10ac0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3d80f074068ec5fe1c19eb071ed10ac0">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[2/13]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a3d80f074068ec5fe1c19eb071ed10ac0">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[2/15]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -269,7 +277,7 @@ template&lt;typename CharT &gt; </div>
 </div>
 </div>
 <a id="ae79898d5881dbfb9cf7f34a739de0d9c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae79898d5881dbfb9cf7f34a739de0d9c">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[3/13]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ae79898d5881dbfb9cf7f34a739de0d9c">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[3/15]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -311,8 +319,39 @@ template&lt;typename CharT &gt; </div>
 
 </div>
 </div>
+<a id="ab25dfe8936f0d06e165ea463f0df49f2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab25dfe8936f0d06e165ea463f0df49f2">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[4/15]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::size_t Dice::hash::dice_hash </td>
+          <td>(</td>
+          <td class="paramtype">std::monostate const &amp;&#160;</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Specialization for std::monostate. </p>
+<p>It is needed so its usage in std::variant is possible. Will simply return the seed. </p><dl class="section return"><dt>Returns</dt><dd>The seed of the hash function. </dd></dl>
+
+</div>
+</div>
 <a id="a915cac2bc81d1dd162a09922d14fae00"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a915cac2bc81d1dd162a09922d14fae00">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[4/13]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a915cac2bc81d1dd162a09922d14fae00">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[5/15]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -356,7 +395,7 @@ template&lt;typename T , typename V &gt; </div>
 </div>
 </div>
 <a id="a8ded3bd127d6d0c024c1121028c066a8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8ded3bd127d6d0c024c1121028c066a8">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[5/13]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a8ded3bd127d6d0c024c1121028c066a8">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[6/15]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -399,7 +438,7 @@ template&lt;typename T &gt; </div>
 </div>
 </div>
 <a id="a34548e4c5deff80743b3bb84bade0907"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a34548e4c5deff80743b3bb84bade0907">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[6/13]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a34548e4c5deff80743b3bb84bade0907">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[7/15]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -442,7 +481,7 @@ template&lt;typename... TupleArgs&gt; </div>
 </div>
 </div>
 <a id="aa06abccf052eda05361dbb9e95ddbb32"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa06abccf052eda05361dbb9e95ddbb32">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[7/13]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#aa06abccf052eda05361dbb9e95ddbb32">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[8/15]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -484,8 +523,51 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
+<a id="a62d0ef43327ec6c113ae91d3874f082c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a62d0ef43327ec6c113ae91d3874f082c">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[9/15]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename ... VariantArgs&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::size_t Dice::hash::dice_hash </td>
+          <td>(</td>
+          <td class="paramtype">std::variant&lt; VariantArgs... &gt; const &amp;&#160;</td>
+          <td class="paramname"><em>var</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Implementation for variant. </p>
+<p>Will hash the value which was set. The hash of a variant of a type is equal to the hash of the type. For example: a variant of int of 42 is equal to the hash of the int of 42. If the variant is valueless_by_exception, the seed will be returned. </p><dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">VariantArgs</td><td>Types of the possible values. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">var</td><td>The variant itself. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Hash value. </dd></dl>
+
+</div>
+</div>
 <a id="ac50e2e202969651bf345c9f5bae95616"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac50e2e202969651bf345c9f5bae95616">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[8/13]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ac50e2e202969651bf345c9f5bae95616">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[10/15]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -528,7 +610,7 @@ template&lt;typename T &gt; </div>
 </div>
 </div>
 <a id="aa45cbe3f308d9b4151dde59460ed4c1c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa45cbe3f308d9b4151dde59460ed4c1c">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[9/13]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#aa45cbe3f308d9b4151dde59460ed4c1c">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[11/15]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -571,7 +653,7 @@ template&lt;typename T &gt; </div>
 </div>
 </div>
 <a id="a7f2dd7578117edde1f56d59c4129f5d2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7f2dd7578117edde1f56d59c4129f5d2">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[10/13]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a7f2dd7578117edde1f56d59c4129f5d2">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[12/15]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -608,7 +690,7 @@ template&lt;typename T &gt; </div>
 </div>
 </div>
 <a id="a780d9fc5d7503edb8d010dafa0a9f4f5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a780d9fc5d7503edb8d010dafa0a9f4f5">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[11/13]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a780d9fc5d7503edb8d010dafa0a9f4f5">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[13/15]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -651,7 +733,7 @@ template&lt;typename T &gt; </div>
 </div>
 </div>
 <a id="a9adb4d20d697e9526a009b900c5afaa3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9adb4d20d697e9526a009b900c5afaa3">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[12/13]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a9adb4d20d697e9526a009b900c5afaa3">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[14/15]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -694,7 +776,7 @@ template&lt;typename T &gt; </div>
 </div>
 </div>
 <a id="a3a3f9b5830c08fdaa79e1711d40e53a1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3a3f9b5830c08fdaa79e1711d40e53a1">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[13/13]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a3a3f9b5830c08fdaa79e1711d40e53a1">&#9670;&nbsp;</a></span>dice_hash() <span class="overload">[15/15]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
