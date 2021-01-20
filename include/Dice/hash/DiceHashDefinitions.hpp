@@ -19,6 +19,7 @@
 #include <unordered_set>
 #include <utility>
 #include <variant>
+#include <vector>
 
 #include "Dice/hash/Container_trait.hpp"
 
