@@ -50,6 +50,32 @@ namespace Dice::hash {
 			return a xor b;
 		}
 
+		/** Combine n hashes to a new hash.
+		 * Uses the base definition of Dice::hash::detail::dice_hash_invertible_combine for two elements.
+		 * So all properties are from that definition.
+		 * @tparam Args Needed so any number of arguments can be used.
+		 * @param a First hash.
+		 * @param args All other hashes.
+		 * @return Combination of all hashes.
+		 */
+		template <typename ...Args>
+		inline std::size_t dice_hash_invertible_combine(std::size_t a, Args ...args) {
+			return dice_hash_invertible_combine(a, dice_hash_invertible_combine(args...));
+		}
+
+		/** Combine n hashes to a new hash.
+		 * Uses the Dice::hash::martinus::hash_combine for all elements at once.
+		 * So this is simply a wrapper for it.
+		 * @tparam Args std::size_t.
+		 * @param args Hashes. All std::size_t from type.
+		 * @return Combination of all hashes.
+		 */
+		template <typename ...Args>
+		inline std::size_t dice_hash_combine(Args ...args) {
+			return hash_combine({args...});
+		}
+
+
 		/** Calculates the hash over an ordered container.
          * An example would be a vector, a map, an array or a list.
          * Needs a ForwardIterator in the Container-type, and an member type "value_type".

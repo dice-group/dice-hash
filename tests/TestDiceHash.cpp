@@ -240,6 +240,23 @@ namespace Dice::tests::hash {
         mySet.insert(UserDefinedStruct(7));
         Dice::hash::dice_hash(mySet);
 	}
+
+
+	TEST_CASE("dice_hash_invertible_combine can be called with any number of size_t", "[DiceHash]") {
+		std::size_t a = 3;
+        std::size_t b = 4;
+        std::size_t c = 7;
+        std::size_t d = 42;
+		Dice::hash::detail::dice_hash_invertible_combine(a,b,c,d);
+	}
+
+    TEST_CASE("dice_hash_combine can be called with any number of size_t", "[DiceHash]") {
+        std::size_t a = 3;
+        std::size_t b = 4;
+        std::size_t c = 7;
+        std::size_t d = 42;
+        Dice::hash::detail::dice_hash_combine(a,b,c,d);
+    }
 }// namespace Dice::tests::hash
 
 /*
