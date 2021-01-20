@@ -1,0 +1,25 @@
+name: documentation
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  generate_doxygen_docu:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      # https://github.com/marketplace/actions/doxygen-action
+      - name: generate docu
+        uses: mattnotmitt/doxygen-action@v1
+        with:
+          working-directory: '.'
+          doxyfile-path: 'Doxyfile'
+
+      - name: upload to github page branch
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docu
+
