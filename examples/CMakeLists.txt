@@ -22,3 +22,4 @@ add_executable(combineHashes combineHashes.cpp)
 target_link_libraries(combineHashes PRIVATE
         dice-hash::dice-hash
         )
+

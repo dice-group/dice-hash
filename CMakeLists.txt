@@ -3,6 +3,25 @@ project(dice-hash VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 20)
 
+# set gcc-10 and clang-10 as minimum versions see
+# https://stackoverflow.com/questions/14933172/how-can-i-add-a-minimum-compiler-version-requisite#14934542
+set(MIN_COMPILER_VERSION_GCC "10.0.0")
+set(MIN_COMPILER_VERSION_CLANG "10.0.0")
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS MIN_COMPILER_VERSION_GCC)
+        MESSAGE(FATAL_ERROR "Insufficient gcc version. \
+        Your version is ${CMAKE_CXX_COMPILER_VERSION} and ${MIN_COMPILER_VERSION_GCC} is needed.")
+    endif()
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "10.0.0")
+        MESSAGE(FATAL_ERROR "Insufficient clang version. \
+        Your version is ${CMAKE_CXX_COMPILER_VERSION} and ${MIN_COMPILER_VERSION_CLANG} is needed.")
+    endif()
+else()
+    MESSAGE(WARNING "Could not verify that your compiler (${CMAKE_CXX_COMPILER}) supports all needed features.")
+endif()
+
+
 # installation directories
 set(dice-hash_INSTALL_INCLUDE_DIR "include" CACHE STRING "The installation include directory")
 set(dice-hash_INSTALL_CMAKE_DIR "share/dice-hash/cmake" CACHE STRING "The installation cmake directory")
