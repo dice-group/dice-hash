@@ -9,7 +9,6 @@ class DiceHashConan(ConanFile):
     author = "DICE Group <info@dice-research.org>"
     homepage = "https://github.com/dice-group/dice-hash"
     url = homepage
-    description = "<Description of DiceHash here>"
     topics = ("hash", "C++", "C++20")
     settings = "build_type", "compiler", "os", "arch"
     generators = "cmake", "cmake_find_package", "cmake_paths"
@@ -30,3 +29,11 @@ class DiceHashConan(ConanFile):
         cmake = CMake(self)
         cmake.configure()
         cmake.install()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        try:
+            with open("README.md") as file:
+                self.description = file.read()
+        except Exception as err:
+            self.description = str(err)
