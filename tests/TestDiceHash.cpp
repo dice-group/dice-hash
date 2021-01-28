@@ -10,8 +10,15 @@
 
 #include "Dice/hash/DiceHash.hpp"
 
+#define AllTypesToTestForDiceHash int, long, std::size_t, std::string, std::string_view, int *, long *, \
+				 std::string *, std::unique_ptr<int>, std::shared_ptr<int>, std::vector<int>,      \
+                 std::set<int>, std::unordered_set<int>, (std::array<int, 10>), (std::tuple<int, int, long>) \
+                 (std::pair<int,int>), (std::variant<std::monostate>), (std::variant<int, float, std::string>)
 
 namespace Dice::tests::hash {
+    TEMPLATE_PRODUCT_TEST_CASE("DiceHash compiles for every type", "[DiceHashPolicy]", Dice::hash::DiceHash, (AllTypesToTestForDiceHash)) {
+        TestType hasher;
+    }
 
 	template<typename T>
 	size_t getHash(T const &parameter) {
@@ -224,7 +231,7 @@ namespace Dice::tests::hash {
         NotImplementedHashType test;
         getHash(test);
     }
-     */
+    */
 
 	struct UserDefinedStruct {
 		int a;
@@ -239,10 +246,9 @@ namespace Dice::tests::hash {
 		mySet.insert(UserDefinedStruct(3));
 		mySet.insert(UserDefinedStruct(4));
 		mySet.insert(UserDefinedStruct(7));
-		Dice::hash::dice_hash(mySet);
+		getHash(mySet);
 	}
-
-
+    /*
 	TEST_CASE("dice_hash_invertible_combine can be called with any number of size_t", "[DiceHash]") {
 		std::size_t a = 3;
 		std::size_t b = 4;
@@ -264,6 +270,7 @@ namespace Dice::tests::hash {
 		std::size_t d = 42;
 		Dice::hash::dice_hash_combine(a, b, c, d);
 	}
+     */
 }// namespace Dice::tests::hash
 
 /*
@@ -271,11 +278,11 @@ namespace Dice::tests::hash {
  */
 namespace Dice::hash {
 	template<>
-	inline std::size_t dice_hash(Dice::tests::hash::UserDefinedStruct const &t) noexcept {
-		return dice_hash(t.a);
+	inline std::size_t dice_hash_base::dice_hash(Dice::tests::hash::UserDefinedStruct const &t) noexcept {
+		return t.a;
 	}
 	template<>
-	inline std::size_t dice_hash(Dice::tests::hash::ValuelessByException const &t) noexcept {
+	inline std::size_t dice_hash_base::dice_hash(Dice::tests::hash::ValuelessByException const &t) noexcept {
 		return 0;
 	}
 }// namespace Dice::hash
