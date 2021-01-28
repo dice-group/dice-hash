@@ -198,7 +198,7 @@ namespace Dice::tests::hash {
 	}
 	TEST_CASE("Variant monostate returns seed", "[DiceHash]") {
 		std::variant<std::monostate, int, char> test;
-		REQUIRE(getHash(test) == Dice::hash::martinus::seed);
+		REQUIRE(getHash(test) == Dice::hash::detail::seed);
 	}
 
 	/*
@@ -215,7 +215,7 @@ namespace Dice::tests::hash {
 			test = ValuelessByException();
 		} catch (std::domain_error const &) {}
 		// now test is valueless_by_exception
-		REQUIRE(getHash(test) == Dice::hash::martinus::seed);
+		REQUIRE(getHash(test) == Dice::hash::detail::seed);
 	}
 
 	/*

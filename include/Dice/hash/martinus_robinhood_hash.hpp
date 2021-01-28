@@ -111,7 +111,7 @@ namespace Dice::hash::martinus {
 		return static_cast<size_t>(h);
 	}
 
-	inline size_t hash_combine(std::initializer_list<size_t> hashes) {
+	inline size_t hash_combine(std::initializer_list<size_t> hashes) noexcept {
 
 
 		uint64_t h = seed ^ (hashes.size() * m);

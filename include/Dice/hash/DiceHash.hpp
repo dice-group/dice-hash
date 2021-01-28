@@ -10,16 +10,28 @@
  */
 
 #include "Dice/hash/DiceHashDefinitions.hpp"
-#include "Dice/hash/martinus_robinhood_hash.hpp"
+//#include "Dice/hash/martinus_robinhood_hash.hpp"
+#include "Dice/hash/xxhash.hpp"
 
 namespace Dice::hash {
 
 	/** Home of the implementation specific things.
 	 */
 	namespace detail {
-		using Dice::hash::martinus::hash_bytes;
-		using Dice::hash::martinus::hash_combine;
-		using Dice::hash::martinus::HashState;
+		//using Dice::hash::martinus::hash_bytes;
+		//using Dice::hash::martinus::hash_combine;
+		//using Dice::hash::martinus::HashState;
+		inline static constexpr std::size_t size_t_bits = 8 * sizeof(std::size_t);
+		inline static constexpr std::size_t seed = std::size_t(0xA24BAED4963EE407UL);
+
+		inline std::size_t hash_bytes(void const *ptr, std::size_t len) noexcept {
+			return xxh::xxhash3<size_t_bits>(ptr, len, seed);
+		}
+
+		inline size_t hash_combine(std::initializer_list<size_t> hashes) noexcept {
+			return xxh::xxhash3<detail::size_t_bits>(hashes, seed);
+		}
+
 
 		/** Wrapper for fundamental types.
 		 * Chooses the correct basic hash function for a given type.
@@ -30,13 +42,7 @@ namespace Dice::hash {
 		template<typename T>
 		requires std::is_fundamental_v<std::decay_t<T>> or std::is_pointer_v<std::decay_t<T>>
 		inline std::size_t hash_primitive(T x) noexcept {
-			if constexpr (sizeof(std::decay_t<T>) == sizeof(size_t)) {
-				return Dice::hash::martinus::hash_int(*reinterpret_cast<size_t const *>(&x));
-			} else if constexpr (sizeof(std::decay_t<T>) > sizeof(size_t) or std::is_floating_point_v<std::decay_t<T>>) {
-				return hash_bytes(&x, sizeof(x));
-			} else {
-				return Dice::hash::martinus::hash_int(static_cast<size_t>(x));
-			}
+			return hash_bytes(&x, sizeof(x));
 		}
 
 		/** Calculates the hash over an ordered container.
@@ -49,11 +55,11 @@ namespace Dice::hash {
          */
 		template<typename Container>
 		inline std::size_t dice_hash_ordered_container(Container const &container) noexcept {
-			detail::HashState hash_state(container.size());
+			xxh::hash3_state64_t hash_state{seed};
 			std::size_t item_hash;
 			for (const auto &item : container) {
 				item_hash = dice_hash(item);
-				hash_state.add(item_hash);
+				hash_state.update(&item_hash, sizeof(std::size_t));
 			}
 			return hash_state.digest();
 		}
@@ -181,7 +187,7 @@ namespace Dice::hash {
 
 	template<>
 	inline std::size_t dice_hash(std::monostate const &) noexcept {
-		return Dice::hash::martinus::seed;
+		return detail::seed;
 	}
 
 	template<typename... VariantArgs>
@@ -189,7 +195,7 @@ namespace Dice::hash {
 		try {
 			return std::visit([]<typename T>(T &&arg) { return dice_hash(std::forward<T>(arg)); }, var);
 		} catch (std::bad_variant_access const &) {
-			return Dice::hash::martinus::seed;
+			return detail::seed;
 		}
 	}
 
