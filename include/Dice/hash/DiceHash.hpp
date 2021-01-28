@@ -1,5 +1,5 @@
-#ifndef DICE_HASH_DICEHASHPOLICY_HPP
-#define DICE_HASH_DICEHASHPOLICY_HPP
+#ifndef DICE_HASH_DICEHASH_HPP
+#define DICE_HASH_DICEHASH_HPP
 
 #include <cstring>
 #include <map>
@@ -165,4 +165,4 @@ namespace Dice::hash{
 
 
 }// namespace Dice::hash::Policy
-#endif//DICE_HASH_DICEHASHPOLICY_HPP
+#endif//DICE_HASH_DICEHASH_HPP
