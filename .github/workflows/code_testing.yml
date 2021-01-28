@@ -72,3 +72,4 @@ jobs:
           build/examples/customContainer
           build/examples/customType
           build/examples/usageForUnorderedSet
+          build/examples/combineHashes

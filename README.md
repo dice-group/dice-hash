@@ -80,6 +80,10 @@ template <> Dice::hash::std::size_t dice_hash(YourType const&) noexcept {
 After that, you can use `DiceHash` like in the example above.
 [Here](examples/customType.cpp) is an compilable example. 
 
+If you want to combine the hash of two or more objects you can use the
+`dice_hash_combine` or `dice_hash_invertible_combine` function.
+An example can be seen [here](examples/combineHashes.cpp).
+
 If your own type is a container type, there is an easier and faster way to define the hash for you.
 There are the two typetraits `is_ordered_container` and `is_unordered_container`.
 You just need to set these typetraits for your own type, and the hash will automatically loop over the entries and hash them.
