@@ -32,7 +32,7 @@ jobs:
   #simply build the dockerfile and execute the produced image.
   #If you want to upload a docker image, you probably should have a look at https://github.com/docker/build-push-action
   build_docker:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       # build
@@ -41,3 +41,34 @@ jobs:
       # run
       - name: run image
         run: docker run dockerimage
+
+  # simply build the examples and execute them.
+  build_examples:
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - CC: "clang-10"
+            CXX: "clang++-10"
+          - CC: "gcc-10"
+            CXX: "g++-10"
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      # setup
+      - name: install needed packages
+        run: sudo apt-get -qq update && sudo apt-get -qq install -y git make cmake gcc-10 g++-10 clang-10 libstdc++-10-dev
+      # build
+      - name: build examples
+        run: mkdir build && cd build && cmake -DDICE_HASH_BUILD_EXAMPLES=ON .. && make -j
+        env:
+          CC: ${{ matrix.CC }}
+          CXX: ${{ matrix.CXX }}
+      # execute
+      - name: run examples
+        run: |
+          build/examples/basicUsage
+          build/examples/customContainer
+          build/examples/customType
+          build/examples/usageForUnorderedSet

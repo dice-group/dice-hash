@@ -41,6 +41,11 @@ if (DICE_HASH_BUILD_TESTS)
     add_subdirectory(tests)
 endif ()
 
+option(DICE_HASH_BUILD_EXAMPLES "Build test programs" OFF)
+if (DICE_HASH_BUILD_EXAMPLES)
+    add_subdirectory(examples)
+endif ()
+
 # Make package findable
 configure_file(cmake/dummy-config.cmake.in dice-hash-config.cmake @ONLY)
 
