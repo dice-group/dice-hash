@@ -54,7 +54,8 @@ namespace Dice::hash {
  * @return Hash value.
  */
 	template<typename T>
-	requires std::is_fundamental_v<std::decay_t<T>> inline std::size_t dice_hash(T const &fundamental) noexcept;
+	requires std::is_fundamental_v<std::decay_t<T>>
+	inline std::size_t dice_hash(T const &fundamental) noexcept;
 
 	/** Implementation for string types.
 	 * @tparam CharT A char type. See the definition of std::string for more information.
@@ -165,7 +166,8 @@ namespace Dice::hash {
 	 * @return Hash value.
 	 */
 	template<typename T>
-	requires is_ordered_container_v<T> inline std::size_t dice_hash(T const &container) noexcept;
+	requires is_ordered_container_v<T>
+	inline std::size_t dice_hash(T const &container) noexcept;
 
 	/** Implementation for unordered container.
 	 * It uses a custom type trait to check if the type is in fact an unordered container.
@@ -175,7 +177,8 @@ namespace Dice::hash {
 	 * @return Hash value.
 	 */
 	template<typename T>
-	requires is_unordered_container_v<T> inline std::size_t dice_hash(T const &container) noexcept;
+	requires is_unordered_container_v<T>
+	inline std::size_t dice_hash(T const &container) noexcept;
 
 	/** Combines two hashes to a new hash.
      * This function is commutative and invertible.

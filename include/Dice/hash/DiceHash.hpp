@@ -28,7 +28,8 @@ namespace Dice::hash {
 		 * @return Hash value.
 		 */
 		template<typename T>
-				requires std::is_fundamental_v<std::decay_t<T>> or std::is_pointer_v<std::decay_t<T>> inline std::size_t hash_primitive(T x) noexcept {
+		requires std::is_fundamental_v<std::decay_t<T>> or std::is_pointer_v<std::decay_t<T>>
+		inline std::size_t hash_primitive(T x) noexcept {
 			if constexpr (sizeof(std::decay_t<T>) == sizeof(size_t)) {
 				return Dice::hash::martinus::hash_int(*reinterpret_cast<size_t const *>(&x));
 			} else if constexpr (sizeof(std::decay_t<T>) > sizeof(size_t) or std::is_floating_point_v<std::decay_t<T>>) {
@@ -117,7 +118,8 @@ namespace Dice::hash {
 	}
 
 	template<typename T>
-	requires std::is_fundamental_v<std::decay_t<T>> inline std::size_t dice_hash(T const &fundamental) noexcept {
+	requires std::is_fundamental_v<std::decay_t<T>>
+	inline std::size_t dice_hash(T const &fundamental) noexcept {
 		return detail::hash_primitive(fundamental);
 	}
 
@@ -192,12 +194,14 @@ namespace Dice::hash {
 	}
 
 	template<typename T>
-	requires is_ordered_container_v<T> inline std::size_t dice_hash(T const &container) noexcept {
+	requires is_ordered_container_v<T>
+	inline std::size_t dice_hash(T const &container) noexcept {
 		return detail::dice_hash_ordered_container(container);
 	}
 
 	template<typename T>
-	requires is_unordered_container_v<T> inline std::size_t dice_hash(T const &container) noexcept {
+	requires is_unordered_container_v<T>
+	inline std::size_t dice_hash(T const &container) noexcept {
 		return detail::dice_hash_unordered_container(container);
 	}
 
