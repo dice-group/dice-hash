@@ -252,12 +252,11 @@ namespace Dice::hash {
 			return hash_combine({dice_hash(p.first), dice_hash(p.second)});
 		}
 
-		/** Specialization for std::monostate.
+		/** Overload for std::monostate.
          * It is needed so its usage in std::variant is possible.
          * Will simply return the seed.
          * @return The seed of the hash function.
          */
-		template<>
 		static std::size_t dice_hash(std::monostate const &) noexcept {
 			return ErrorValue;
 		}
