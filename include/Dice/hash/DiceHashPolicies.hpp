@@ -1,7 +1,48 @@
 #ifndef DICE_HASH_DICEHASHPOLICIES_HPP
 #define DICE_HASH_DICEHASHPOLICIES_HPP
 
+#include "Dice/hash/martinus_robinhood_hash.hpp"
+#include "Dice/hash/xxhash.hpp"
+
 namespace Dice::hash::Policies {
+
+	struct xxhash {
+        inline static constexpr std::size_t size_t_bits = 8 * sizeof(std::size_t);
+        inline static constexpr std::size_t seed = std::size_t(0xA24BAED4963EE407UL);
+		static constexpr std::size_t ErrorValue = seed;
+
+		template <typename T>
+		static std::size_t hash_fundamental(T x) noexcept {
+            return hash_bytes(&x, sizeof(x));
+		}
+		static std::size_t hash_bytes(void const *ptr, size_t len) noexcept {
+            return xxh::xxhash3<size_t_bits>(ptr, len, seed);
+		}
+		static std::size_t hash_combine(std::initializer_list<std::size_t> hashes) noexcept {
+            return xxh::xxhash3<size_t_bits>(hashes, seed);
+		}
+        static std::size_t hash_invertible_combine(std::initializer_list<size_t> hashes) noexcept {
+            std::size_t result = 0;
+            for (auto hash : hashes) {
+                result = result xor hash;
+            }
+            return result;
+        }
+		class HashState {
+		private:
+			xxh::hash3_state64_t hash_state{seed};
+
+		public:
+			HashState(std::size_t) {}
+
+		    void add(std::size_t hash)	noexcept {
+				hash_state.update(&hash, sizeof(std::size_t));
+			}
+			std::size_t digest() noexcept {
+				return hash_state.digest();
+			}
+		};
+	};
 
 	struct Martinus {
 		static constexpr size_t ErrorValue = Dice::hash::martinus::seed;

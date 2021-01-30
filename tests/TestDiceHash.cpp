@@ -1,16 +1,9 @@
 #define CATCH_CONFIG_MAIN// This tells Catch to provide a main() - only do this in one cpp file
 
 #include <catch2/catch.hpp>
-
-#include <array>
-#include <string>
-#include <tuple>
-#include <utility>
-#include <vector>
-
 #include "Dice/hash/DiceHash.hpp"
 
-#define AllPoliciesToTestForDiceHash Dice::hash::Policies::Martinus
+#define AllPoliciesToTestForDiceHash Dice::hash::Policies::Martinus, Dice::hash::Policies::xxhash
 #define AllTypesToTestForDiceHash int, long, std::size_t, std::string, std::string_view, int *, long *,                        \
 								  std::string *, std::unique_ptr<int>, std::shared_ptr<int>, std::vector<int>,                 \
 								  std::set<int>, std::unordered_set<int>, (std::array<int, 10>), (std::tuple<int, int, long>), \
