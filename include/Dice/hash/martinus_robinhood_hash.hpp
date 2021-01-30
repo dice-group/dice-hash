@@ -33,6 +33,8 @@
 // SOFTWARE.
 
 #include <cstddef>
+#include <cstdint>
+#include <cstring>
 #include <initializer_list>
 
 
