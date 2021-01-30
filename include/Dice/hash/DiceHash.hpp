@@ -1,6 +1,14 @@
 #ifndef DICE_HASH_DICEHASH_HPP
 #define DICE_HASH_DICEHASH_HPP
 
+/** @file
+ * @brief Home of the DiceHash implementation.
+ *
+ * To speed up tests of the Hypertrie and Tentris we needed to be able to serialize a Hypertrie and save it.
+ * However the last hash function was not "stable", i.e. it chose two different random seeds, so the results differed.
+ * Because of that (and to not worry about versioning problems) this hash function was created.
+ */
+
 #include <cstring>
 #include <map>
 #include <memory>
@@ -17,19 +25,28 @@
 #include "Dice/hash/Container_trait.hpp"
 #include "Dice/hash/DiceHashPolicies.hpp"
 
+/** Home of the DiceHash.
+ *
+ */
 namespace Dice::hash{
-	struct dice_hash_base {
+
+	template <typename Policy, typename T>
+	struct dice_hash_overload{
         template<typename>
         struct AlwaysFalse : std::false_type {};
-        template<typename T>
-        static std::size_t dice_hash(T const &) noexcept {
-            static_assert(AlwaysFalse<T>::value,
-                          "The hash function is not defined for this type. You need to add an implementation yourself");
-            return 0;
-        }
+
+		static std::size_t dice_hash(T const&) noexcept {
+			static_assert(AlwaysFalse<T>::value,
+						  "The hash function is not defined for this type. You need to add an implementation yourself");
+			return 0;
+		}
 	};
+
+	/** Class which contains all dice_hash functions.
+	 * @tparam Policy The Policy the hash is based on.
+	 */
 	template <typename Policy>
-	class dice_hash_templates : public Policy, public dice_hash_base{
+	class dice_hash_templates : public Policy{
 	private:
         using Policy::hash_fundamental;
 		using Policy::hash_bytes;
@@ -64,10 +81,16 @@ namespace Dice::hash{
         }
 
 	public:
-		template <typename T>
-		static std::size_t dice_hash(T const& t) noexcept {
-			return dice_hash_base::dice_hash(t);
-		}
+        /** Base case for dice_hash.
+         * Will never compile, will always static assert to false.
+         * @tparam T
+         * @return Nothing.
+         */
+        template<typename T>
+        static std::size_t dice_hash(T const &t) noexcept {
+			return dice_hash_overload<Policy, T>::dice_hash(t);
+        }
+
 
         template <typename T>
         requires std::is_fundamental_v<std::decay_t<T>>

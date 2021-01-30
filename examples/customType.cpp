@@ -12,41 +12,39 @@ class MyCustomClass {
 	int a;
 	char b;
 	std::string c;
-
-	template <typename Policy>
-	friend std::size_t Dice::hash::dice_hash_templates<Policy>::dice_hash(MyCustomClass const& t) noexcept;
 public:
 	MyCustomClass(int a, char b, std::string c)
 	: a(a), b(b), c(std::move(c)) {}
+
+	template <typename Policy, typename T>
+	friend std::size_t Dice::hash::dice_hash_overload<Policy, T>::dice_hash(T const&) noexcept;
 };
 
 namespace Dice::hash {
-	/** Policy agnostic.
-	 *
-	 * @param t
-	 * @return
-	 */
-	template <>
-	std::size_t dice_hash_base::dice_hash(MyCustomStruct const& t) noexcept {
-		return (t.a + t.b) * t.c.length();
-	}
+	template <typename Policy>
+	struct dice_hash_overload<Policy, MyCustomStruct> {
+		static std::size_t dice_hash(MyCustomStruct const& s) noexcept {
+			return dice_hash_templates<Policy>::dice_hash(std::make_tuple(s.a, s.b, s.c));
+		}
+	};
 
-	/** For a specific Policy.
-	 *
-	 */
-	 template <>
-	 template <>
-	 std::size_t dice_hash_templates<Dice::hash::Policies::Martinus>::dice_hash(MyCustomClass const& t) noexcept {
-		 return dice_hash(std::make_tuple(t.a, t.b, t.c));
-	 }
+	template <typename Policy>
+	struct dice_hash_overload<Policy, MyCustomClass> {
+		static std::size_t dice_hash(MyCustomClass const& s) noexcept{
+            return dice_hash_templates<Policy>::dice_hash(std::make_tuple(s.a, s.b, s.c));
+		}
+	};
 }// namespace Dice::hash
 
+template <typename T>
+std::size_t getHash(T const& t) {
+	Dice::hash::DiceHash<T> hasher;
+	return hasher(t);
+}
 
 int main() {
-	Dice::hash::DiceHash<MyCustomStruct> hashForMyCustomStruct;
-    Dice::hash::DiceHash<MyCustomClass> hashForMyCustomClass;
 	MyCustomStruct objS{42, 'c', "hello World!"};
     MyCustomClass  objC{42, 'c', "hello World!"};
-	std::cout << "hashForMyCustomStruct(obj): " << hashForMyCustomStruct(objS) << '\n';
-    std::cout << "hashForMyCustomStruct(obj): " << hashForMyCustomClass(objC) << '\n';
+	std::cout << "getHash(objS): " << getHash(objS) << '\n';
+    std::cout << "getHash(objC): " << getHash(objC) << '\n';
 }

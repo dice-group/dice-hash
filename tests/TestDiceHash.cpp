@@ -216,6 +216,7 @@ namespace Dice::tests::hash {
 		ValuelessByException() = default;
 		ValuelessByException(const ValuelessByException &) { throw std::domain_error("copy ctor"); }
 	};
+
 	TEST_CASE("Hash of ill-formed variant is the seed", "[DiceHash]") {
 		std::variant<int, ValuelessByException> test;
 		try {
@@ -240,7 +241,6 @@ namespace Dice::tests::hash {
 			return l.a < r.a;
 		}
 	};
-
 	TEST_CASE("user-defined types can be used in collections", "[DiceHash]") {
 		std::set<UserDefinedStruct> mySet;
 		mySet.insert(UserDefinedStruct(3));
@@ -277,12 +277,16 @@ namespace Dice::tests::hash {
  * Define hash for test structures.
  */
 namespace Dice::hash {
-	template<>
-	inline std::size_t dice_hash_base::dice_hash(Dice::tests::hash::UserDefinedStruct const &t) noexcept {
-		return t.a;
-	}
-	template<>
-	inline std::size_t dice_hash_base::dice_hash(Dice::tests::hash::ValuelessByException const &t) noexcept {
-		return 0;
-	}
+	template<typename Policy>
+	struct dice_hash_overload<Policy, Dice::tests::hash::UserDefinedStruct> {
+        static std::size_t dice_hash(Dice::tests::hash::UserDefinedStruct const& s) noexcept {
+			return dice_hash_templates<Policy>::dice_hash(s.a);
+		}
+	};
+    template<typename Policy>
+    struct dice_hash_overload<Policy, Dice::tests::hash::ValuelessByException> {
+		static std::size_t dice_hash(Dice::tests::hash::ValuelessByException const&) noexcept {
+			return 0;
+		}
+	};
 }// namespace Dice::hash
