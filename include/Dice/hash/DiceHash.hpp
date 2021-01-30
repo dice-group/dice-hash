@@ -180,7 +180,10 @@ namespace Dice::hash{
 	};
 
     template<typename T, typename Policy=::Dice::hash::Policies::Martinus>
-	struct DiceHash {
+	struct DiceHash : Policy{
+        using Policy::hash_combine;
+        using Policy::hash_invertible_combine;
+        using Policy::ErrorValue;
 		std::size_t operator()(T const &t) const noexcept {
 			return dice_hash_templates<Policy>::dice_hash(t);
 		}
