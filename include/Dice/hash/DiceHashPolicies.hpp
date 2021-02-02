@@ -3,10 +3,23 @@
 
 #include "Dice/hash/martinus_robinhood_hash.hpp"
 #include "Dice/hash/xxhash.hpp"
+#include <type_traits>
 
 namespace Dice::hash::Policies {
+	template <typename T>
+	concept HashPolicy =
+			std::is_convertible_v<decltype(T::ErrorValue), std::size_t>
+			&& std::is_nothrow_invocable_r_v<std::size_t, decltype(T::template hash_fundamental<int>), int>
+            && std::is_nothrow_invocable_r_v<std::size_t, decltype(T::template hash_fundamental<long>), long>
+	        && std::is_nothrow_invocable_r_v<std::size_t, decltype(T::template hash_fundamental<std::size_t>), std::size_t>
+            && std::is_nothrow_invocable_r_v<std::size_t, decltype(T::hash_bytes), void const *, std::size_t>
+            && std::is_nothrow_invocable_r_v<std::size_t, decltype(T::hash_combine), std::initializer_list<std::size_t>>
+            && std::is_nothrow_invocable_r_v<std::size_t, decltype(T::hash_invertible_combine), std::initializer_list<std::size_t>>
+            && std::is_nothrow_constructible_v<typename T::HashState, std::size_t>
+            && std::is_nothrow_invocable_r_v<void, decltype(&T::HashState::add), typename T::HashState&, std::size_t>
+            && std::is_nothrow_invocable_r_v<std::size_t, decltype(&T::HashState::digest), typename T::HashState&>;
 
-	struct xxhash {
+    struct xxhash {
         inline static constexpr std::size_t size_t_bits = 8 * sizeof(std::size_t);
         inline static constexpr std::size_t seed = std::size_t(0xA24BAED4963EE407UL);
 		static constexpr std::size_t ErrorValue = seed;
@@ -33,7 +46,7 @@ namespace Dice::hash::Policies {
 			xxh::hash3_state64_t hash_state{seed};
 
 		public:
-			HashState(std::size_t) {}
+			HashState(std::size_t) noexcept {}
 
 		    void add(std::size_t hash)	noexcept {
 				hash_state.update(&hash, sizeof(std::size_t));
@@ -74,7 +87,7 @@ namespace Dice::hash::Policies {
 			Dice::hash::martinus::HashState state;
 
 		public:
-			HashState(std::size_t size) : state(size) {}
+			HashState(std::size_t size) noexcept : state(size) {}
 			void add(std::size_t hash) noexcept {
 				state.add(hash);
 			}

@@ -34,7 +34,7 @@ namespace Dice::hash {
 	 * @tparam Policy The policy to use.
 	 * @tparam T The custom type.
 	 */
-	template<typename Policy, typename T>
+	template<Policies::HashPolicy Policy, typename T>
 	struct dice_hash_overload {
 		/** Helper type.
          * It is used for a static_assert.
@@ -60,16 +60,9 @@ namespace Dice::hash {
 	/** Class which contains all dice_hash functions.
 	 * @tparam Policy The Policy the hash is based on.
 	 */
-	template<typename Policy>
-	class dice_hash_templates : public Policy {
+	template<Policies::HashPolicy Policy>
+	class dice_hash_templates {
 	private:
-		using Policy::ErrorValue;
-		using Policy::hash_bytes;
-		using Policy::hash_combine;
-		using Policy::hash_fundamental;
-		using Policy::hash_invertible_combine;
-		using typename Policy::HashState;
-
 		/** Calculates the hash over an ordered container.
          * An example would be a vector, a map, an array or a list.
          * Needs a ForwardIterator in the Container-type, and an member type "value_type".
@@ -80,7 +73,7 @@ namespace Dice::hash {
          */
 		template<typename Container>
 		static std::size_t dice_hash_ordered_container(Container const &container) noexcept {
-			HashState hash_state(container.size());
+			typename Policy::HashState hash_state(container.size());
 			std::size_t item_hash;
 			for (const auto &item : container) {
 				item_hash = dice_hash(item);
@@ -102,7 +95,7 @@ namespace Dice::hash {
 		static std::size_t dice_hash_unordered_container(Container const &container) noexcept {
 			std::size_t h{};
 			for (auto const &it : container) {
-				h = hash_invertible_combine({h, dice_hash(it)});
+				h = Policy::hash_invertible_combine({h, dice_hash(it)});
 			}
 			return h;
 		}
@@ -117,7 +110,7 @@ namespace Dice::hash {
          */
 		template<typename... TupleArgs, std::size_t... ids>
 		static std::size_t dice_hash_tuple(std::tuple<TupleArgs...> const &tuple, std::index_sequence<ids...> const &) {
-			return hash_combine({dice_hash(std::get<ids>(tuple))...});
+			return Policy::hash_combine({dice_hash(std::get<ids>(tuple))...});
 		}
 
 	public:
@@ -140,7 +133,7 @@ namespace Dice::hash {
          */
 		template<typename T>
 		requires std::is_fundamental_v<std::decay_t<T>> static std::size_t dice_hash(T const &fundamental) noexcept {
-			return hash_fundamental(fundamental);
+			return Policy::hash_fundamental(fundamental);
 		}
 
 		/** Implementation for string types.
@@ -150,7 +143,7 @@ namespace Dice::hash {
          */
 		template<typename CharT>
 		static std::size_t dice_hash(std::basic_string<CharT> const &str) noexcept {
-			return hash_bytes(str.data(), sizeof(CharT) * str.size());
+			return Policy::hash_bytes(str.data(), sizeof(CharT) * str.size());
 		}
 
 		/** Implementation for string view.
@@ -160,7 +153,7 @@ namespace Dice::hash {
          */
 		template<typename CharT>
 		static std::size_t dice_hash(std::basic_string_view<CharT> const &sv) noexcept {
-			return hash_bytes(sv.data(), sizeof(CharT) * sv.size());
+			return Policy::hash_bytes(sv.data(), sizeof(CharT) * sv.size());
 		}
 
 		/** Implementation for raw pointers.
@@ -171,7 +164,7 @@ namespace Dice::hash {
          */
 		template<typename T>
 		static std::size_t dice_hash(T *ptr) noexcept {
-			return hash_fundamental(ptr);
+			return Policy::hash_fundamental(ptr);
 		}
 
 		/** Implementation for unique pointers.
@@ -206,7 +199,7 @@ namespace Dice::hash {
 		template<typename T, std::size_t N>
 		static std::size_t dice_hash(std::array<T, N> const &arr) noexcept {
 			if constexpr (std::is_fundamental_v<T>) {
-				return hash_bytes(arr.data(), sizeof(T) * N);
+				return Policy::hash_bytes(arr.data(), sizeof(T) * N);
 			} else {
 				return dice_hash_ordered_container(arr);
 			}
@@ -223,7 +216,7 @@ namespace Dice::hash {
 			if constexpr (std::is_fundamental_v<T>) {
 				static_assert(!std::is_same_v<std::decay_t<T>, bool>,
 							  "vector of booleans has a special implementation which results into errors!");
-				return hash_bytes(vec.data(), sizeof(T) * vec.size());
+				return Policy::hash_bytes(vec.data(), sizeof(T) * vec.size());
 			} else {
 				return dice_hash_ordered_container(vec);
 			}
@@ -249,7 +242,7 @@ namespace Dice::hash {
          */
 		template<typename T, typename V>
 		static std::size_t dice_hash(std::pair<T, V> const &p) noexcept {
-			return hash_combine({dice_hash(p.first), dice_hash(p.second)});
+			return Policy::hash_combine({dice_hash(p.first), dice_hash(p.second)});
 		}
 
 		/** Overload for std::monostate.
@@ -258,7 +251,7 @@ namespace Dice::hash {
          * @return The seed of the hash function.
          */
 		static std::size_t dice_hash(std::monostate const &) noexcept {
-			return ErrorValue;
+			return Policy::ErrorValue;
 		}
 
 		/** Implementation for variant.
@@ -275,7 +268,7 @@ namespace Dice::hash {
 			try {
 				return std::visit([]<typename T>(T &&arg) { return dice_hash(std::forward<T>(arg)); }, var);
 			} catch (std::bad_variant_access const &) {
-				return ErrorValue;
+				return Policy::ErrorValue;
 			}
 		}
 
@@ -309,12 +302,8 @@ namespace Dice::hash {
      * @tparam T The type to define the hash for.
      * @tparam Policy The Policy defines how the hash works on a basic level.
      */
-	template<typename T, typename Policy = ::Dice::hash::Policies::Martinus>
+	template<typename T, Policies::HashPolicy Policy = Policies::Martinus>
 	struct DiceHash : Policy {
-		using Policy::ErrorValue;
-		using Policy::hash_combine;
-		using Policy::hash_invertible_combine;
-
 		/** Overloaded operator to calculate a hash.
          * Simply calls the dice_hash function for the specified type.
          * @param t The value to calculate the hash of.
