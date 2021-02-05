@@ -257,6 +257,13 @@ namespace Dice::tests::hash {
 			Dice::hash::DiceHash<TestType>::hash_combine({a, b, c, d});
 		}
 	}
+
+
+	TEST_CASE("Just for me", "[DiceHash]") {
+		std::vector<int> test {0,1,2,3,4,5};
+        std::cout << Dice::hash::Policies::wyhash::hash_fundamental(42) << '\n';
+		std::cout << Dice::hash::Policies::wyhash::hash_bytes(test.data(), test.size()) << '\n';
+	}
 }// namespace Dice::tests::hash
 
 /*

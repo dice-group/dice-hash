@@ -26,8 +26,12 @@ endif()
 set(dice-hash_INSTALL_INCLUDE_DIR "include" CACHE STRING "The installation include directory")
 set(dice-hash_INSTALL_CMAKE_DIR "share/dice-hash/cmake" CACHE STRING "The installation cmake directory")
 
+add_subdirectory(src)
+
 add_library(dice-hash INTERFACE)
 add_library(dice-hash::dice-hash ALIAS dice-hash)
+
+target_link_libraries(dice-hash INTERFACE wy-hash)
 
 
 target_include_directories(dice-hash INTERFACE
@@ -54,15 +58,16 @@ include(CMakePackageConfigHelpers)
 write_basic_package_version_file(dice-hash-config-version.cmake COMPATIBILITY SameMajorVersion)
 
 # install and export target
-install(TARGETS dice-hash EXPORT dice-hash-targets)
+#install(TARGETS dice-hash EXPORT dice-hash-targets)
 
-install(EXPORT dice-hash-targets
-        FILE dice-hash-config.cmake
-        NAMESPACE Dice::
-        DESTINATION ${dice-hash_INSTALL_CMAKE_DIR}
-        )
-
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/dice-hash-config-version.cmake DESTINATION ${dice-hash_INSTALL_CMAKE_DIR})
-install(DIRECTORY include/ DESTINATION ${dice-hash_INSTALL_INCLUDE_DIR})
-
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/dice-hash-config-version.cmake DESTINATION ${dice-hash_INSTALL_CMAKE_DIR})
+#install(EXPORT dice-hash-targets
+#        FILE dice-hash-config.cmake
+#        NAMESPACE Dice::
+#        DESTINATION ${dice-hash_INSTALL_CMAKE_DIR}
+#        )
+#
+#install(FILES ${CMAKE_CURRENT_BINARY_DIR}/dice-hash-config-version.cmake DESTINATION ${dice-hash_INSTALL_CMAKE_DIR})
+#install(DIRECTORY include/ DESTINATION ${dice-hash_INSTALL_INCLUDE_DIR})
+#
+#install(FILES ${CMAKE_CURRENT_BINARY_DIR}/dice-hash-config-version.cmake DESTINATION ${dice-hash_INSTALL_CMAKE_DIR})
+#
