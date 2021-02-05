@@ -1,9 +1,10 @@
 #define CATCH_CONFIG_MAIN// This tells Catch to provide a main() - only do this in one cpp file
 
-#include <catch2/catch.hpp>
 #include "Dice/hash/DiceHash.hpp"
+#include <catch2/catch.hpp>
 
-#define AllPoliciesToTestForDiceHash Dice::hash::Policies::Martinus, Dice::hash::Policies::xxhash
+#define AllPoliciesToTestForDiceHash Dice::hash::Policies::Martinus, Dice::hash::Policies::xxhash, \
+									 Dice::hash::Policies::wyhash
 #define AllTypesToTestForDiceHash int, long, std::size_t, std::string, std::string_view, int *, long *,                        \
 								  std::string *, std::unique_ptr<int>, std::shared_ptr<int>, std::vector<int>,                 \
 								  std::set<int>, std::unordered_set<int>, (std::array<int, 10>), (std::tuple<int, int, long>), \
@@ -256,13 +257,6 @@ namespace Dice::tests::hash {
 			std::size_t d = 42;
 			Dice::hash::DiceHash<TestType>::hash_combine({a, b, c, d});
 		}
-	}
-
-
-	TEST_CASE("Just for me", "[DiceHash]") {
-		std::vector<int> test {0,1,2,3,4,5};
-        std::cout << Dice::hash::Policies::wyhash::hash_fundamental(42) << '\n';
-		std::cout << Dice::hash::Policies::wyhash::hash_bytes(test.data(), test.size()) << '\n';
 	}
 }// namespace Dice::tests::hash
 

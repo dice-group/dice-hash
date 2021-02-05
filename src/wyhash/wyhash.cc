@@ -14,13 +14,11 @@
 
 #include "wyhash.h"
 
-#include "internal/endian.h"
 #include "internal/int128.h"
 #include "internal/unaligned_access.h"
 
 namespace Dice::hash::wyhash {
 
-	static inline constexpr size_t PiecewiseChunkSize() { return 1024; }
 
 	static uint64_t WyhashMix(uint64_t v0, uint64_t v1) {
 		Dice::hash::wyhash::uint128 p = v0;
@@ -120,68 +118,4 @@ namespace Dice::hash::wyhash {
 		m *= kMul;
 		return static_cast<uint64_t>(m ^ (m >> (sizeof(m) * 8 / 2)));
 	}
-
-	static uint64_t CombineLargeContiguousImpl64(uint64_t state,
-												 const unsigned char *first,
-												 size_t len) {
-		while (len >= PiecewiseChunkSize()) {
-			state = Mix(state, Hash64(first, PiecewiseChunkSize()));
-			len -= PiecewiseChunkSize();
-			first += PiecewiseChunkSize();
-		}
-		// Handle the remainder.
-		return CombineContiguousImpl(state, first, len);
-	}
-
-	// Reads 9 to 16 bytes from p.
-	// The first 8 bytes are in .first, the rest (zero padded) bytes are in
-	// .second.
-	static std::pair<uint64_t, uint64_t> Read9To16(const unsigned char *p,
-												   size_t len) {
-		uint64_t high = little_endian::Load64(p + len - 8);
-		return {little_endian::Load64(p), high >> (128 - len * 8)};
-	}
-
-	// Reads 4 to 8 bytes from p. Zero pads to fill uint64_t.
-	static uint64_t Read4To8(const unsigned char *p, size_t len) {
-		return (static_cast<uint64_t>(little_endian::Load32(p + len - 4))
-				<< (len - 4) * 8) |
-			   little_endian::Load32(p);
-	}
-
-	// Reads 1 to 3 bytes from p. Zero pads to fill uint32_t.
-	static uint32_t Read1To3(const unsigned char *p, size_t len) {
-		return static_cast<uint32_t>((p[0]) |                       //
-									 (p[len / 2] << (len / 2 * 8)) |//
-									 (p[len - 1] << ((len - 1) * 8)));
-	}
-
-	uint64_t CombineContiguousImpl(
-			uint64_t state, const unsigned char *first, size_t len) {
-		// For large values we use Wyhash or CityHash depending on the platform, for
-		// small ones we just use a multiplicative hash.
-		uint64_t v;
-		if (len > 16) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunknown-attributes"
-			if (len > PiecewiseChunkSize()) [[unlikely]] {
-#pragma clang diagnostic pop
-				return CombineLargeContiguousImpl64(state, first, len);
-			}
-			v = Hash64(first, len);
-		} else if (len > 8) {
-			auto p = Read9To16(first, len);
-			state = Mix(state, p.first);
-			v = p.second;
-		} else if (len >= 4) {
-			v = Read4To8(first, len);
-		} else if (len > 0) {
-			v = Read1To3(first, len);
-		} else {
-			// Empty ranges have no effect.
-			return state;
-		}
-		return Mix(state, v);
-	}
-
 }// namespace Dice::hash::wyhash

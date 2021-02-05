@@ -21,25 +21,32 @@ namespace Dice::hash::Policies {
     &&std::is_nothrow_invocable_r_v<std::size_t, decltype(&T::HashState::digest), typename T::HashState &>;
 
 	struct wyhash {
-		inline static constexpr std::size_t kSeed = Dice::hash::wyhash::kSeed;
-		inline static constexpr std::size_t ErrorValue = Dice::hash::wyhash::kSeed;
+        inline static constexpr uint64_t kSeed = 0xe17a1465UL;
+        inline static constexpr uint64_t kWyhashSalt[5] = {
+                uint64_t{0x243F6A8885A308D3},
+                uint64_t{0x13198A2E03707344},
+                uint64_t{0xA4093822299F31D0},
+                uint64_t{0x082EFA98EC4E6C89},
+                uint64_t{0x452821E638D01377},
+        };
+		inline static constexpr std::size_t ErrorValue = kSeed;
 
 		template<typename T>
 		static std::size_t hash_fundamental(T x) noexcept {
 			if constexpr (std::is_integral_v<T>) {
 				return static_cast<std::size_t>(Dice::hash::wyhash::Mix(kSeed, x));
 			}
-			return static_cast<std::size_t>(Dice::hash::wyhash::Hash64(&x, sizeof(T)));
+			return static_cast<std::size_t>(Dice::hash::wyhash::Wyhash(&x, sizeof(T), kSeed, kWyhashSalt));
 		}
 
 		static std::size_t hash_bytes(void const *ptr, size_t len) noexcept {
-			return static_cast<std::size_t>(Dice::hash::wyhash::Hash64(ptr, len));
+			return static_cast<std::size_t>(Dice::hash::wyhash::Wyhash(ptr, len, kSeed, kWyhashSalt));
 		}
 
 		static std::size_t hash_combine(std::initializer_list<size_t> hashes) noexcept {
 			uint64_t state = kSeed;
 			for (auto hash : hashes) {
-				state = Dice::hash::wyhash::combine(state, hash);
+				state = Dice::hash::wyhash::Mix(state, hash);
 			}
 			return static_cast<std::size_t>(state);
 		}
@@ -51,6 +58,19 @@ namespace Dice::hash::Policies {
 			}
 			return result;
 		}
+
+		class HashState {
+		private:
+			uint64_t state = kSeed;
+		public:
+			explicit HashState(std::size_t) noexcept {}
+			void add (std::size_t hash) noexcept {
+				state = Dice::hash::wyhash::Mix(state, static_cast<uint64_t>(hash));
+			}
+			std::size_t digest() noexcept {
+				return static_cast<std::size_t>(state);
+			}
+		};
 	};
 
 	struct xxhash {
