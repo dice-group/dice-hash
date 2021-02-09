@@ -1,9 +1,9 @@
 #ifndef DICE_HASH_DICEHASHPOLICIES_HPP
 #define DICE_HASH_DICEHASHPOLICIES_HPP
 
-#include "Dice/hash/martinus_robinhood_hash.hpp"
-#include "Dice/hash/xxhash.hpp"
 #include <type_traits>
+#include <martinus_robinhood_hash.hpp>
+#include <xxhash.hpp>
 #include <wyhash.h>
 
 namespace Dice::hash::Policies {
