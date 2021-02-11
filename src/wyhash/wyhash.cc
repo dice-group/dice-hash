@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "wyhash.h"
+#include "Dice/hash/wyhash.h"
 
 #include "internal/int128.h"
 #include "internal/unaligned_access.h"

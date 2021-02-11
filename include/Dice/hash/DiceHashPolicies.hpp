@@ -2,9 +2,9 @@
 #define DICE_HASH_DICEHASHPOLICIES_HPP
 
 #include <type_traits>
-#include <martinus_robinhood_hash.hpp>
-#include <xxhash.hpp>
-#include <wyhash.h>
+#include "Dice/hash/martinus_robinhood_hash.hpp"
+#include "Dice/hash/xxhash.hpp"
+#include "Dice/hash/wyhash.h"
 
 namespace Dice::hash::Policies {
     template<typename T>
