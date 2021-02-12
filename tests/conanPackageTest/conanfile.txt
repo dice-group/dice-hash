@@ -1,5 +1,5 @@
 [requires]
-dice-hash/0.1.0
+dice-hash/100@dice-group/stable
 
 [generators]
 cmake_paths
