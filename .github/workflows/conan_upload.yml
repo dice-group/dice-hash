@@ -22,9 +22,8 @@ jobs:
           conan profile new gcc10 --detect
           conan profile update settings.compiler=gcc gcc10
           conan profile update settings.compiler.version=10 gcc10
-          conan profile show gcc10
       - name: build the package
-        run: conan create . "dice-group/stable" --build missing -pr gcc10
+        run: conan create . "dice-group/stable" --build missing -e CC=gcc-10 CXX=g++-10
         # will use `grep` and `sed` to extract the version number out of the cmake file
       - name: upload the package
         run: |
