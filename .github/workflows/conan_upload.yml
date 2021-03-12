@@ -1,6 +1,7 @@
 name: conan_upload
 
 # idea: run on every push connected to a tag
+# need another run for testing
 on: push #just for testing
   #push:
     #tags:
