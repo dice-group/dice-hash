@@ -20,7 +20,7 @@ jobs:
           conan remote add dice-group https://conan.dice-research.org/artifactory/api/conan/tentris
           conan user -p ${{ secrets.ARTIFACTORY_API_KEY }} -r dice-group ${{ secrets.ARTIFACTORY_USER }}
       - name: build the package
-        run: conan create . "dice-group/stable" --build missing
+        run: conan create . "dice-group/stable" --build missing -s compiler.version=10
         # will use `grep` and `sed` to extract the version number out of the cmake file
       - name: upload the package
         run: |
