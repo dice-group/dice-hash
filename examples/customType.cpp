@@ -9,15 +9,13 @@ struct MyCustomStruct {
 };
 
 class MyCustomClass {
+public:
 	int a;
 	char b;
 	std::string c;
 public:
 	MyCustomClass(int a, char b, std::string c)
 	: a(a), b(b), c(std::move(c)) {}
-
-	template <typename Policy, typename T>
-	friend std::size_t Dice::hash::dice_hash_overload<Policy, T>::dice_hash(T const&) noexcept;
 };
 
 namespace Dice::hash {

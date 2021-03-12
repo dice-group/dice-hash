@@ -13,7 +13,7 @@ class DiceHashConan(ConanFile):
     settings = "build_type", "compiler", "os", "arch"
     generators = "cmake", "cmake_find_package", "cmake_paths"
     exports = "LICENSE"
-    exports_sources = "include/*", "CMakeLists.txt", "cmake/*"
+    exports_sources = "src/*", "include/*", "CMakeLists.txt", "cmake/*"
     no_copy_source = True
     # No settings/options are necessary, this is header only
 
@@ -24,6 +24,11 @@ class DiceHashConan(ConanFile):
 
     def package_id(self):
         self.info.header_only()
+
+    def build(self):
+        cmake = CMake(self)
+        cmake.configure()
+        cmake.build()
 
     def package(self):
         cmake = CMake(self)

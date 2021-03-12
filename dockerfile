@@ -10,6 +10,7 @@ RUN mkdir dice-hash
 WORKDIR dice-hash
 COPY cmake cmake
 COPY include include
+COPY src src
 COPY tests tests
 COPY CMakeLists.txt CMakeLists.txt
 
