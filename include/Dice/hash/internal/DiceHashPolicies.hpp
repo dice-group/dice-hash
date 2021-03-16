@@ -1,10 +1,10 @@
 #ifndef DICE_HASH_DICEHASHPOLICIES_HPP
 #define DICE_HASH_DICEHASHPOLICIES_HPP
 
+#include "martinus_robinhood_hash.hpp"
+#include "wyhash.h"
+#include "xxhash.hpp"
 #include <type_traits>
-#include "Dice/hash/martinus_robinhood_hash.hpp"
-#include "Dice/hash/xxhash.hpp"
-#include "Dice/hash/wyhash.h"
 
 namespace Dice::hash::Policies {
     template<typename T>

@@ -9,8 +9,8 @@
  * Because of that (and to not worry about versioning problems) this hash function was created.
  */
 
-#include "Dice/hash/Container_trait.hpp"
-#include "Dice/hash/DiceHashPolicies.hpp"
+#include "Dice/hash/internal/Container_trait.hpp"
+#include "Dice/hash/internal/DiceHashPolicies.hpp"
 #include <cstring>
 #include <map>
 #include <memory>
