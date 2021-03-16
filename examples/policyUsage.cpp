@@ -6,7 +6,7 @@
 
 int main() {
 	std::cout << "DiceHash<int,...>()(42):\n"
-			  << "    xxhash policy: " << Dice::hash::DiceHash<int, Dice::hash::Policies::xxhash>()(42) << '\n'
+			  << "      xxh3 policy: " << Dice::hash::DiceHash<int, Dice::hash::Policies::xxh3>()(42) << '\n'
 			  << "  martinus policy: " << Dice::hash::DiceHash<int, Dice::hash::Policies::Martinus>()(42) << '\n'
 			  << "    wyhash policy: " << Dice::hash::DiceHash<int, Dice::hash::Policies::wyhash>()(42) << std::endl;
 }

@@ -30,16 +30,16 @@ struct MyCustomPolicy {
 		void add(std::size_t hash) noexcept {
 			result = result xor hash;
 		}
-		std::size_t digest() noexcept {
+		[[nodiscard]] constexpr std::size_t digest() const noexcept {
 			return result;
 		}
 	};
 };
 
-struct NotWorklingPolicy {};
+struct NotWorkingPolicy {};
 
 
 int main() {
 	std::cout << Dice::hash::DiceHash<int, MyCustomPolicy>()(42) << std::endl;
-    //std::cout << Dice::hash::DiceHash<int, NotWorklingPolicy>()(42) << std::endl;
+    //std::cout << Dice::hash::DiceHash<int, NotWorkingPolicy>()(42) << std::endl;
 }

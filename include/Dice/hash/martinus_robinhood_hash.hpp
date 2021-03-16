@@ -40,8 +40,8 @@
 
 namespace Dice::hash::martinus {
 
-	inline constexpr size_t m = 0xc6a4a7935bd1e995UL;
-	inline constexpr size_t seed = 0xe17a1465UL;
+	inline constexpr std::size_t m = 0xc6a4a7935bd1e995UL;
+	inline constexpr std::size_t seed = 0xe17a1465UL;
 	inline constexpr unsigned int r = 47;
 
 
@@ -59,7 +59,7 @@ namespace Dice::hash::martinus {
 		return (x >> k) | (x << (8U * sizeof(T) - k));
 	}
 
-	inline size_t hash_bytes(void const *ptr, size_t len) noexcept {
+	inline std::size_t hash_bytes(void const *ptr, std::size_t len) noexcept {
 
 
 		static constexpr unsigned int r = 47;
@@ -68,7 +68,7 @@ namespace Dice::hash::martinus {
 		uint64_t h = seed ^ (len * m);
 
 		size_t const n_blocks = len / 8;
-		for (size_t i = 0; i < n_blocks; ++i) {
+		for (std::size_t i = 0; i < n_blocks; ++i) {
 			auto k = unaligned_load<uint64_t>(data64 + i);
 
 			k *= m;
@@ -113,7 +113,7 @@ namespace Dice::hash::martinus {
 		return static_cast<size_t>(h);
 	}
 
-	inline size_t hash_combine(std::initializer_list<size_t> hashes) {
+	inline std::size_t hash_combine(std::initializer_list<size_t> hashes) {
 
 
 		uint64_t h = seed ^ (hashes.size() * m);
@@ -140,7 +140,7 @@ namespace Dice::hash::martinus {
 	public:
 		explicit HashState(uint64_t size) : h(seed ^ (size * m)) {}
 
-		void add(size_t hash) noexcept {
+		void add(std::size_t hash) noexcept {
 			hash *= m;
 			hash ^= hash >> r;
 			hash *= m;
@@ -149,7 +149,7 @@ namespace Dice::hash::martinus {
 			h *= m;
 		}
 
-		[[nodiscard]] size_t digest() const noexcept {
+		[[nodiscard]] std::size_t digest() const noexcept {
 			size_t hash = h;
 			hash ^= hash >> r;
 			hash *= m;
@@ -158,7 +158,7 @@ namespace Dice::hash::martinus {
 		}
 	};
 
-	inline size_t hash_int(uint64_t x) noexcept {
+	inline std::size_t hash_int(uint64_t x) noexcept {
 		// inspired by lemire's strongly universal hashing
 		// https://lemire.me/blog/2018/08/15/fast-strongly-universal-64-bit-hashing-everywhere/
 		//

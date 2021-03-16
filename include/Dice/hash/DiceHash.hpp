@@ -303,15 +303,35 @@ namespace Dice::hash {
      * @tparam Policy The Policy defines how the hash works on a basic level.
      */
 	template<typename T, Policies::HashPolicy Policy = Policies::Martinus>
-	struct DiceHash : Policy {
-		/** Overloaded operator to calculate a hash.
+	struct DiceHash : private Policy {
+		/**
+		 *
+		 */
+        using Policy::hash_combine;
+		/**
+		 *
+		 */
+        using Policy::hash_invertible_combine;
+
+        /** Overloaded operator to calculate a hash.
          * Simply calls the dice_hash function for the specified type.
          * @param t The value to calculate the hash of.
          * @return Hash value.
          */
-		std::size_t operator()(T const &t) const noexcept {
+        std::size_t operator()(T const &t) const noexcept {
 			return dice_hash_templates<Policy>::dice_hash(t);
 		}
+
+		[[nodiscard]] constexpr bool is_faulty(std::size_t to_check) const noexcept {
+			return to_check == Policy::ErrorValue;
+		}
 	};
+
+    template <typename T>
+    using DiceHashMartinus = DiceHash<T, Policies::Martinus>;
+    template <typename T>
+    using DiceHashxxh3 = DiceHash<T, Policies::xxh3>;
+    template <typename T>
+    using DiceHashwyhash = DiceHash<T, Policies::wyhash>;
 }// namespace Dice::hash
 #endif//DICE_HASH_DICEHASH_HPP

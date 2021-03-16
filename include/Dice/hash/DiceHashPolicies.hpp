@@ -39,7 +39,7 @@ namespace Dice::hash::Policies {
 			return static_cast<std::size_t>(Dice::hash::wyhash::Wyhash(&x, sizeof(T), kSeed, kWyhashSalt));
 		}
 
-		static std::size_t hash_bytes(void const *ptr, size_t len) noexcept {
+		static std::size_t hash_bytes(void const *ptr, std::size_t len) noexcept {
 			return static_cast<std::size_t>(Dice::hash::wyhash::Wyhash(ptr, len, kSeed, kWyhashSalt));
 		}
 
@@ -67,13 +67,13 @@ namespace Dice::hash::Policies {
 			void add (std::size_t hash) noexcept {
 				state = Dice::hash::wyhash::Mix(state, static_cast<uint64_t>(hash));
 			}
-			std::size_t digest() noexcept {
+            [[nodiscard]] std::size_t digest() noexcept {
 				return static_cast<std::size_t>(state);
 			}
 		};
 	};
 
-	struct xxhash {
+	struct xxh3 {
 		inline static constexpr std::size_t size_t_bits = 8 * sizeof(std::size_t);
 		inline static constexpr std::size_t seed = std::size_t(0xA24BAED4963EE407UL);
 		inline static constexpr std::size_t ErrorValue = seed;
@@ -82,7 +82,7 @@ namespace Dice::hash::Policies {
 		static std::size_t hash_fundamental(T x) noexcept {
 			return hash_bytes(&x, sizeof(x));
 		}
-		static std::size_t hash_bytes(void const *ptr, size_t len) noexcept {
+		static std::size_t hash_bytes(void const *ptr, std::size_t len) noexcept {
 			return xxh::xxhash3<size_t_bits>(ptr, len, seed);
 		}
 		static std::size_t hash_combine(std::initializer_list<std::size_t> hashes) noexcept {
@@ -100,19 +100,19 @@ namespace Dice::hash::Policies {
 			xxh::hash3_state64_t hash_state{seed};
 
 		public:
-			HashState(std::size_t) noexcept {}
+            explicit HashState(std::size_t) noexcept {}
 
 			void add(std::size_t hash) noexcept {
 				hash_state.update(&hash, sizeof(std::size_t));
 			}
-			std::size_t digest() noexcept {
+            [[nodiscard]] std::size_t digest() noexcept {
 				return hash_state.digest();
 			}
 		};
 	};
 
 	struct Martinus {
-		static constexpr size_t ErrorValue = Dice::hash::martinus::seed;
+		static constexpr std::size_t ErrorValue = Dice::hash::martinus::seed;
 		template<typename T>
 		static std::size_t hash_fundamental(T x) noexcept {
 			if constexpr (sizeof(std::decay_t<T>) == sizeof(size_t)) {
@@ -123,7 +123,7 @@ namespace Dice::hash::Policies {
 				return Dice::hash::martinus::hash_int(static_cast<size_t>(x));
 			}
 		}
-		static std::size_t hash_bytes(void const *ptr, size_t len) noexcept {
+		static std::size_t hash_bytes(void const *ptr, std::size_t len) noexcept {
 			return Dice::hash::martinus::hash_bytes(ptr, len);
 		}
 		static std::size_t hash_combine(std::initializer_list<size_t> hashes) noexcept {
@@ -141,7 +141,7 @@ namespace Dice::hash::Policies {
 			Dice::hash::martinus::HashState state;
 
 		public:
-			HashState(std::size_t size) noexcept : state(size) {}
+			explicit HashState(std::size_t size) noexcept : state(size) {}
 			void add(std::size_t hash) noexcept {
 				state.add(hash);
 			}

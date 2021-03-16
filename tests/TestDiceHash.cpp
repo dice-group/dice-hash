@@ -3,7 +3,7 @@
 #include "Dice/hash/DiceHash.hpp"
 #include <catch2/catch.hpp>
 
-#define AllPoliciesToTestForDiceHash Dice::hash::Policies::Martinus, Dice::hash::Policies::xxhash, \
+#define AllPoliciesToTestForDiceHash Dice::hash::Policies::Martinus, Dice::hash::Policies::xxh3, \
 									 Dice::hash::Policies::wyhash
 #define AllTypesToTestForDiceHash int, long, std::size_t, std::string, std::string_view, int *, long *,                        \
 								  std::string *, std::unique_ptr<int>, std::shared_ptr<int>, std::vector<int>,                 \
@@ -236,6 +236,7 @@ namespace Dice::tests::hash {
 			mySet.insert(UserDefinedStruct(7));
 			getHash<TestType>(mySet);
 		}
+
 		SECTION("dice_hash_invertible_combine can be called with any number of size_t") {
 			std::size_t a = 3;
 			std::size_t b = 4;
