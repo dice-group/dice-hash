@@ -304,12 +304,17 @@ namespace Dice::hash {
      */
 	template<typename T, Policies::HashPolicy Policy = Policies::Martinus>
 	struct DiceHash : private Policy {
-		/**
-		 *
+		/** Policy function for combining already hashed values.
+		 * This using declaration is equal to a handwritten wrapper function.
+		 *@param list Initializer list of std::size_t hashes.
+		 * @return Single hash value.
 		 */
         using Policy::hash_combine;
-		/**
-		 *
+
+		/** Policy function for combining already hashed values in a invertible fashion.
+		 * This using declaration is equal to a handwritten wrapper function.
+		 *@param list Initializer list of std::size_t hashes.
+		 * @return Single hash value.
 		 */
         using Policy::hash_invertible_combine;
 
@@ -322,7 +327,12 @@ namespace Dice::hash {
 			return dice_hash_templates<Policy>::dice_hash(t);
 		}
 
-		[[nodiscard]] constexpr bool is_faulty(std::size_t to_check) const noexcept {
+		/** Function to check if a hash is equal to an error value.
+		 * Simple wrapper for equality checking of the Policy error value.
+		 * @param to_check The hash value to check.
+		 * @return True if value is an error value, false otherwise.
+		 */
+		[[nodiscard]] static constexpr bool is_faulty(std::size_t to_check) noexcept {
 			return to_check == Policy::ErrorValue;
 		}
 	};

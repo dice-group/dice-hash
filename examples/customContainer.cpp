@@ -29,6 +29,11 @@ struct MyMap {
 	}
 };
 
+/* DiceHash is already defined for generic (homogeneous) ordered and unordered container.
+ * You simply need to tell it that your type is such a container.
+ * This happens via specializing the type trait as shown below.
+ * After that DiceHash can already be used on your type (as long as its content is hashable as well).
+ */
 namespace Dice::hash {
 	template<>
 	struct is_ordered_container<MyVector> : std::true_type {};

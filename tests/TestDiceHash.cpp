@@ -70,54 +70,55 @@ namespace Dice::tests::hash {
 	}
 
 	TEMPLATE_TEST_CASE("DiceHash works with different Policies", "[DiceHash]", AllPoliciesToTestForDiceHash) {
+		using CurrentPolicy = TestType;
 		/*
         SECTION("If the hash is not defined for a specific type, it will not compile") {
             struct NotImplementedHashType {};
             NotImplementedHashType test;
-            getHash<TestType>(test);
+            getHash<CurrentPolicy>(test);
         }//*/
 
 		SECTION("Vectors and arrays of char generate the same hash") {
-			REQUIRE(test_vec_arr<TestType>('0', '1', '2', '3', '4', '5', '6', '7', '8'));
+			REQUIRE(test_vec_arr<CurrentPolicy>('0', '1', '2', '3', '4', '5', '6', '7', '8'));
 		}
 
 		SECTION("Strings, vectors and arrays of char generate the same hash") {
-			REQUIRE(test_str_vec_arr<TestType>('0', '1', '2', '3', '4', '5', '6', '7', '8'));
+			REQUIRE(test_str_vec_arr<CurrentPolicy>('0', '1', '2', '3', '4', '5', '6', '7', '8'));
 		}
 
 		SECTION("Vectors and arrays of int generate the same hash (basic type)") {
-			REQUIRE(test_vec_arr<TestType>(1, 2, 3, 4, 5, 6, 7, 8));
+			REQUIRE(test_vec_arr<CurrentPolicy>(1, 2, 3, 4, 5, 6, 7, 8));
 		}
 
 		SECTION("Vectors and arrays of double generate the same hash (basic type)") {
-			REQUIRE(test_vec_arr<TestType>(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0));
+			REQUIRE(test_vec_arr<CurrentPolicy>(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0));
 		}
 
 		SECTION("Vectors and arrays of tuples generate the same hash (non-basic type)") {
-			REQUIRE(test_vec_arr<TestType>(std::make_tuple(1, 2), std::make_tuple(3, 4), std::make_tuple(5, 6)));
+			REQUIRE(test_vec_arr<CurrentPolicy>(std::make_tuple(1, 2), std::make_tuple(3, 4), std::make_tuple(5, 6)));
 		}
 
 		SECTION("Pairs and tuples of size_t generate the same hash (basic type)") {
 			size_t first = 12;
 			size_t second = 42;
-			REQUIRE(test_pair_tuple<TestType>(first, second));
+			REQUIRE(test_pair_tuple<CurrentPolicy>(first, second));
 		}
 
 		SECTION("Pairs and tuples of double generate the same hash (same types)") {
-			REQUIRE(test_pair_tuple<TestType>(3.14159, 4.2));
+			REQUIRE(test_pair_tuple<CurrentPolicy>(3.14159, 4.2));
 		}
 
 		SECTION("Pairs and tuples of booleans generate the same hash (same types)") {
-			REQUIRE(test_pair_tuple<TestType>(true, false));
+			REQUIRE(test_pair_tuple<CurrentPolicy>(true, false));
 		}
 
 		SECTION("Pairs and tuples of double and size_t generate the same hash (mixed types)") {
 			size_t second = 42;
-			REQUIRE(test_pair_tuple<TestType>(3.141, second));
+			REQUIRE(test_pair_tuple<CurrentPolicy>(3.141, second));
 		}
 
 		SECTION("Pairs and tuples of char and string generate the same hash (mixed types)") {
-			REQUIRE(test_pair_tuple<TestType>('a', std::string("abc")));
+			REQUIRE(test_pair_tuple<CurrentPolicy>('a', std::string("abc")));
 		}
 
 		SECTION("set of strings compiles") {
@@ -125,7 +126,7 @@ namespace Dice::tests::hash {
 			exampleSet.insert("cat");
 			exampleSet.insert("dog");
 			exampleSet.insert("horse");
-			getHash<TestType>(exampleSet);
+			getHash<CurrentPolicy>(exampleSet);
 		}
 
 		SECTION("map of string -> int compiles") {
@@ -133,7 +134,7 @@ namespace Dice::tests::hash {
 			exampleMap["cat"] = 1;
 			exampleMap["horse"] = 5;
 			exampleMap["dog"] = 100;
-			getHash<TestType>(exampleMap);
+			getHash<CurrentPolicy>(exampleMap);
 		}
 
 		SECTION("unordered map of string ->int compiles") {
@@ -141,7 +142,7 @@ namespace Dice::tests::hash {
 			exampleMap["cat"] = 1;
 			exampleMap["horse"] = 5;
 			exampleMap["dog"] = 100;
-			getHash<TestType>(exampleMap);
+			getHash<CurrentPolicy>(exampleMap);
 		}
 
 		SECTION("unordered maps of string ->int are equal, if the entries are equal") {
@@ -150,57 +151,57 @@ namespace Dice::tests::hash {
 															 {"dog", 100}};
 			std::unordered_map<std::string, int> exampleMap1(entries.begin(), entries.end());
 			std::unordered_map<std::string, int> exampleMap2(entries.rbegin(), entries.rend());
-			REQUIRE(getHash<TestType>(exampleMap1) == getHash<TestType>(exampleMap2));
+			REQUIRE(getHash<CurrentPolicy>(exampleMap1) == getHash<CurrentPolicy>(exampleMap2));
 		}
 
 		SECTION("unordered set of integers compiles") {
 			std::vector<int> entries{1, 2, 42, 512};
 			std::unordered_set<int> exampleSet(entries.begin(), entries.end());
-			getHash<TestType>(exampleSet);
+			getHash<CurrentPolicy>(exampleSet);
 		}
 
 		SECTION("unordered set of strings compiles") {
 			std::vector<std::string> entries{"cat", "dog", "horse"};
 			std::unordered_set<std::string> exampleSet(entries.begin(), entries.end());
-			getHash<TestType>(exampleSet);
+			getHash<CurrentPolicy>(exampleSet);
 		}
 
 		SECTION("unordered sets of strings are equal if entries are equal") {
 			std::vector<std::string> entries{"cat", "dog", "horse"};
 			std::unordered_set<std::string> exampleSet1(entries.begin(), entries.end());
 			std::unordered_set<std::string> exampleSet2(entries.rbegin(), entries.rend());
-			REQUIRE(getHash<TestType>(exampleSet1) == getHash<TestType>(exampleSet2));
+			REQUIRE(getHash<CurrentPolicy>(exampleSet1) == getHash<CurrentPolicy>(exampleSet2));
 		}
 
 		SECTION("Raw pointer hash themself, not the value pointed to") {
 			int i = 42;
 			auto raw = &i;
-			auto firstHash = getHash<TestType>(raw);
+			auto firstHash = getHash<CurrentPolicy>(raw);
 			i = 43;
-			auto secondHash = getHash<TestType>(raw);
+			auto secondHash = getHash<CurrentPolicy>(raw);
 			REQUIRE(firstHash == secondHash);
 		}
 
 		SECTION("Unique pointer hash the managed pointer, not the value pointed to") {
 			auto smartPtr = std::make_unique<int>(42);
-			REQUIRE(getHash<TestType>(smartPtr) == getHash<TestType>(smartPtr.get()));
+			REQUIRE(getHash<CurrentPolicy>(smartPtr) == getHash<CurrentPolicy>(smartPtr.get()));
 		}
 
 		SECTION("Shared pointer hash the managed pointer, not the value pointed to") {
 			auto smartPtr = std::make_shared<int>(42);
-			REQUIRE(getHash<TestType>(smartPtr) == getHash<TestType>(smartPtr.get()));
+			REQUIRE(getHash<CurrentPolicy>(smartPtr) == getHash<CurrentPolicy>(smartPtr.get()));
 		}
 
 		SECTION("Complicated types can be hashed (fix for the definition/declaration order bug)") {
 			int i = 42;
 			int *first = &i;
 			int *second = &i;
-			getHash<TestType>(std::make_tuple(first, second));
+			getHash<CurrentPolicy>(std::make_tuple(first, second));
 		}
 
 		SECTION("Fundamental types can be hashed") {
 			int i = 42;
-			REQUIRE(getHash<TestType>(i) == getHash<TestType>(42));
+			REQUIRE(getHash<CurrentPolicy>(i) == getHash<CurrentPolicy>(42));
 		}
 
 		SECTION("Variant objects can be hashed") {
@@ -209,15 +210,25 @@ namespace Dice::tests::hash {
 			std::string third = "42";
 			std::variant<int, char, std::string> test;
 			test = first;
-			REQUIRE(getHash<TestType>(test) == getHash<TestType>(first));
+			REQUIRE(getHash<CurrentPolicy>(test) == getHash<CurrentPolicy>(first));
 			test = second;
-			REQUIRE(getHash<TestType>(test) == getHash<TestType>(second));
+			REQUIRE(getHash<CurrentPolicy>(test) == getHash<CurrentPolicy>(second));
 			test = third;
-			REQUIRE(getHash<TestType>(test) == getHash<TestType>(third));
+			REQUIRE(getHash<CurrentPolicy>(test) == getHash<CurrentPolicy>(third));
 		}
+
+        SECTION("is_faulty returns true if ErrorValue is tested") {
+			REQUIRE(Dice::hash::DiceHash<int, CurrentPolicy>::is_faulty(CurrentPolicy::ErrorValue));
+		}
+
+        SECTION("is_faulty returns false if value tested isn't ErrorValue") {
+            REQUIRE(Dice::hash::DiceHash<int, CurrentPolicy>::is_faulty(CurrentPolicy::ErrorValue+1) == false);
+        }
+
 		SECTION("Variant monostate returns ErrorValue") {
 			std::variant<std::monostate, int, char> test;
-			REQUIRE(getHash<TestType>(test) == TestType::ErrorValue);
+			auto hashed = getHash<CurrentPolicy>(test);
+            REQUIRE(Dice::hash::DiceHash<decltype(test), CurrentPolicy>::is_faulty(hashed));
 		}
 
 		SECTION("Hash of ill-formed variant is the seed") {
@@ -226,7 +237,8 @@ namespace Dice::tests::hash {
 				test = ValuelessByException();
 			} catch (std::domain_error const &) {}
 			// now test is valueless_by_exception
-			REQUIRE(getHash<TestType>(test) == TestType::ErrorValue);
+            auto hashed = getHash<CurrentPolicy>(test);
+            REQUIRE(Dice::hash::DiceHash<decltype(test), CurrentPolicy>::is_faulty(hashed));
 		}
 
 		SECTION("user-defined types can be used in collections") {
@@ -234,7 +246,7 @@ namespace Dice::tests::hash {
 			mySet.insert(UserDefinedStruct(3));
 			mySet.insert(UserDefinedStruct(4));
 			mySet.insert(UserDefinedStruct(7));
-			getHash<TestType>(mySet);
+			getHash<CurrentPolicy>(mySet);
 		}
 
 		SECTION("dice_hash_invertible_combine can be called with any number of size_t") {
@@ -242,13 +254,13 @@ namespace Dice::tests::hash {
 			std::size_t b = 4;
 			std::size_t c = 7;
 			std::size_t d = 42;
-			Dice::hash::DiceHash<TestType>::hash_invertible_combine({a, b, c, d});
+			Dice::hash::DiceHash<CurrentPolicy>::hash_invertible_combine({a, b, c, d});
 		}
 
 		SECTION("dice_hash_invertible_combine is self inverse") {
 			std::size_t a = 3;
 			std::size_t b = 4;
-			REQUIRE(a == Dice::hash::DiceHash<TestType>::hash_invertible_combine({a, b, a, a, b}));
+			REQUIRE(a == Dice::hash::DiceHash<CurrentPolicy>::hash_invertible_combine({a, b, a, a, b}));
 		}
 
 		SECTION("dice_hash_combine can be called with any number of size_t") {
@@ -256,7 +268,7 @@ namespace Dice::tests::hash {
 			std::size_t b = 4;
 			std::size_t c = 7;
 			std::size_t d = 42;
-			Dice::hash::DiceHash<TestType>::hash_combine({a, b, c, d});
+			Dice::hash::DiceHash<CurrentPolicy>::hash_combine({a, b, c, d});
 		}
 	}
 }// namespace Dice::tests::hash

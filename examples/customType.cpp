@@ -11,6 +11,7 @@ public:
 	MyCustomClass(int a, char b, std::string c)
 		: a(a), b(b), c(std::move(c)) {}
 
+	// With this, the DiceHash can work on private data
 	template<Dice::hash::Policies::HashPolicy, typename>
 	friend class Dice::hash::dice_hash_overload;
 };
