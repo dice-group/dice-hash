@@ -2,22 +2,31 @@
 #include <iostream>
 #include <string>
 
-struct MyCustomStruct {
+class MyCustomClass {
 	int a;
 	char b;
 	std::string c;
+
+public:
+	MyCustomClass(int a, char b, std::string c)
+		: a(a), b(b), c(std::move(c)) {}
+
+	// With this, the DiceHash can work on private data
+	template<Dice::hash::Policies::HashPolicy, typename>
+	friend class Dice::hash::dice_hash_overload;
 };
 
 namespace Dice::hash {
-	template<>
-	std::size_t dice_hash(MyCustomStruct const &myCustomStruct) noexcept {
-		return (dice_hash(myCustomStruct.a) + dice_hash(myCustomStruct.b)) * dice_hash(myCustomStruct.c);
-	}
+	template<typename Policy>
+	struct dice_hash_overload<Policy, MyCustomClass> {
+		static std::size_t dice_hash(MyCustomClass const &s) noexcept {
+			return dice_hash_templates<Policy>::dice_hash(std::make_tuple(s.a, s.b, s.c));
+		}
+	};
 }// namespace Dice::hash
 
-
 int main() {
-	Dice::hash::DiceHash<MyCustomStruct> hashForMyCustomStruct;
-	MyCustomStruct obj{42, 'c', "hello World!"};
-	std::cout << "hashForMyCustomStruct(obj): " << hashForMyCustomStruct(obj) << '\n';
+	MyCustomClass objC{42, 'c', "hello World!"};
+	Dice::hash::DiceHash<MyCustomClass> hasher;
+	std::cout << "hasher(objC): " << hasher(objC) << '\n';
 }

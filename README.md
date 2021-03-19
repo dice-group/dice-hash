@@ -61,27 +61,23 @@ hash(42);
 ```
 [basicUsage](examples/basicUsage.cpp) is a run able example for this use-case.
 
-If you need `DiceHash` to be able to work on your own types, you can specialize the `Dice::hash::dice_hash` template:
+If you need `DiceHash` to be able to work on your own types, you can specialize the `Dice::hash::dice_hash_overload` template:
 ```c++
 struct YourType{};
 namespace Dice::hash {
-    template <> std::size_t dice_hash(YourType const&) noexcept {
-       return 42; 
-    }
+    template <typename Policy>
+    struct dice_hash_overload<Policy, YourType> {
+        static std::size_t dice_hash(YourType const& x) noexcept {
+            return 42;
+        }
+    };
 }
 ```
-If the usage of the namespace is too verbose for you, a different possibility would be
-```c++
-struct YourType{};
-template <> Dice::hash::std::size_t dice_hash(YourType const&) noexcept {
-   return 42; 
-}
-```
-After that, you can use `DiceHash` like in the example above.
 [Here](examples/customType.cpp) is an compilable example. 
 
 If you want to combine the hash of two or more objects you can use the
-`dice_hash_combine` or `dice_hash_invertible_combine` function.
+`hash_combine` or `hash_invertible_combine` function.
+These are part of the Policy, however they can be called via the DiceHash object.
 An example can be seen [here](examples/combineHashes.cpp).
 
 If your own type is a container type, there is an easier and faster way to define the hash for you.
