@@ -9,6 +9,8 @@ class DiceHashConan(ConanFile):
     author = "DICE Group <info@dice-research.org>"
     homepage = "https://github.com/dice-group/dice-hash"
     url = homepage
+    options = {'march': 'ANY'}
+    default_options = {'march': None}
     topics = ("hash", "C++", "C++20")
     settings = "build_type", "compiler", "os", "arch"
     generators = "cmake", "cmake_find_package", "cmake_paths"
@@ -32,6 +34,8 @@ class DiceHashConan(ConanFile):
 
     def package(self):
         cmake = CMake(self)
+        if self.options.march:
+            cmake.definitions['DICE_HASH_MARCH'] = self.options.march
         cmake.configure()
         cmake.install()
 
