@@ -77,7 +77,7 @@ CMake</h2>
 <p>add </p><div class="fragment"><div class="line">FetchContent_Declare(</div>
 <div class="line">        dice-hash</div>
 <div class="line">        GIT_REPOSITORY https://github.com/dice-group/dice-hash.git</div>
-<div class="line">        GIT_TAG 0.1.0</div>
+<div class="line">        GIT_TAG 0.2.0</div>
 <div class="line">        GIT_SHALLOW TRUE)</div>
 <div class="line"> </div>
 <div class="line">FetchContent_MakeAvailable(dice-hash)</div>
@@ -87,8 +87,9 @@ CMake</h2>
 <div class="line">        )</div>
 </div><!-- fragment --><h2><a class="anchor" id="autotoc_md4"></a>
 conan</h2>
-<p>To use it with <a href="https://conan.io/">conan</a> you need to add the repository: </p><div class="fragment"><div class="line">conan remote add dice-group https://api.bintray.com/conan/dice-group/tentris</div>
-</div><!-- fragment --><p>To use it add <code>dice-hash/0.1.0@dice-group/stable</code> to the <code>[requires]</code> section of your conan file.</p>
+<p>To use it with <a href="https://conan.io/">conan</a> you need to add the repository: </p><div class="fragment"><div class="line">conan remote add dice-group https://conan.dice-research.org/artifactory/api/conan/tentris</div>
+</div><!-- fragment --><p>To use it add <code>dice-hash/0.2.0@dice-group/stable</code> to the <code>[requires]</code> section of your conan file.</p>
+<p>To activate march=native, you can additionally add <code>dice-hash:march=native</code> to the <code>[options]</code> section.</p>
 <h1><a class="anchor" id="autotoc_md5"></a>
 build and run tests</h1>
 <div class="fragment"><div class="line">#get it </div>
@@ -100,7 +101,8 @@ build and run tests</h1>
 <div class="line">cmake -DDICE_HASH_BUILD_TESTS -DCMAKE_BUILD_TYPE=Release ..</div>
 <div class="line">make -j tests_dice_hash</div>
 <div class="line">./test/tests_dice_hash</div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md6"></a>
+</div><!-- fragment --><p><code>-march=native</code> is activated by the additional CMake option: <code>-DDICE_HASH_MARCH=native</code></p>
+<h1><a class="anchor" id="autotoc_md6"></a>
 usage</h1>
 <p>The hash is already defined for a lot of common types. In that case you can use the <code>DiceHash</code> just like <code>std::hash</code>. </p><div class="fragment"><div class="line"> {c++}</div>
 <div class="line">Dice::hash::DiceHash&lt;int&gt; hash;</div>
