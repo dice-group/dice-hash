@@ -1,5 +1,4 @@
-<map id="include/Dice/hash/Container_trait.hpp" name="include/Dice/hash/Container_trait.hpp">
-<area shape="rect" id="node1" title="Home of custom type traits for the diceHash." alt="" coords="19,5,203,47"/>
-<area shape="rect" id="node2" href="$DiceHashDefinitions_8hpp.html" title="Home of the declarations of the dice_hash functions." alt="" coords="17,95,204,136"/>
-<area shape="rect" id="node3" href="$DiceHash_8hpp.html" title="Home of the DiceHash implementation." alt="" coords="5,184,216,211"/>
+<map id="include/Dice/hash/internal/Container_trait.hpp" name="include/Dice/hash/internal/Container_trait.hpp">
+<area shape="rect" id="node1" title="Home of custom type traits for the diceHash." alt="" coords="25,5,196,47"/>
+<area shape="rect" id="node2" href="$DiceHash_8hpp.html" title="Home of the DiceHash implementation." alt="" coords="5,95,216,121"/>
 </map>

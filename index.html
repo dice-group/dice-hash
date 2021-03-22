@@ -100,7 +100,32 @@ build and run tests</h1>
 <div class="line">cmake -DDICE_HASH_BUILD_TESTS -DCMAKE_BUILD_TYPE=Release ..</div>
 <div class="line">make -j tests_dice_hash</div>
 <div class="line">./test/tests_dice_hash</div>
-</div><!-- fragment --> </div></div><!-- PageDoc -->
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md6"></a>
+usage</h1>
+<p>The hash is already defined for a lot of common types. In that case you can use the <code>DiceHash</code> just like <code>std::hash</code>. </p><div class="fragment"><div class="line"> {c++}</div>
+<div class="line">Dice::hash::DiceHash&lt;int&gt; hash;</div>
+<div class="line">hash(42);</div>
+</div><!-- fragment --><p> <a href="examples/basicUsage.cpp">basicUsage</a> is a run able example for this use-case.</p>
+<p>If you need <code>DiceHash</code> to be able to work on your own types, you can specialize the <code><a class="el" href="structDice_1_1hash_1_1dice__hash__overload.html" title="Helper struct for defining the hash for custom structs.">Dice::hash::dice_hash_overload</a></code> template: </p><div class="fragment"><div class="line"> {c++}</div>
+<div class="line">struct YourType{};</div>
+<div class="line">namespace Dice::hash {</div>
+<div class="line">    template &lt;typename Policy&gt;</div>
+<div class="line">    struct dice_hash_overload&lt;Policy, YourType&gt; {</div>
+<div class="line">        static std::size_t dice_hash(YourType const&amp; x) noexcept {</div>
+<div class="line">            return 42;</div>
+<div class="line">        }</div>
+<div class="line">    };</div>
+<div class="line">}</div>
+</div><!-- fragment --><p> <a href="examples/customType.cpp">Here</a> is an compilable example.</p>
+<p>If you want to combine the hash of two or more objects you can use the <code>hash_combine</code> or <code>hash_invertible_combine</code> function. These are part of the Policy, however they can be called via the DiceHash object. An example can be seen <a href="examples/combineHashes.cpp">here</a>.</p>
+<p>If your own type is a container type, there is an easier and faster way to define the hash for you. There are the two typetraits <code>is_ordered_container</code> and <code>is_unordered_container</code>. You just need to set these typetraits for your own type, and the hash will automatically loop over the entries and hash them. </p><div class="fragment"><div class="line"> {c++}</div>
+<div class="line">struct YourOwnOrderedContainer{...};</div>
+<div class="line">namespace Dice::hash {</div>
+<div class="line">    template&lt;&gt; struct is_ordered_container&lt;YourOwnOrderedContainer&gt; : std::true_type {};</div>
+<div class="line">}</div>
+</div><!-- fragment --><p> Now you can use <code>DiceHash</code> with your container. <b>However</b>: Your container <b>needs</b> to have <code>begin</code>, <code>end</code> and <code>size</code> functions. One simple example can be found <a href="examples/customContainer.cpp">here</a>.</p>
+<p>If you want to use <code>DiceHash</code> in a different structure (like <code>std::unordered_map</code>), you will need to set <code>DiceHash</code> as the correct template parameter. <a href="examples/usageForUnorderedSet.cpp">This</a> is one example. </p>
+</div></div><!-- PageDoc -->
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

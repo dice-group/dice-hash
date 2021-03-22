@@ -67,8 +67,9 @@ $(function() {
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
 <a href="#namespaces">Namespaces</a> &#124;
-<a href="#func-members">Functions</a>  </div>
+<a href="#typedef-members">Typedefs</a>  </div>
   <div class="headertitle">
 <div class="title">DiceHash.hpp File Reference</div>  </div>
 </div><!--header-->
@@ -76,127 +77,90 @@ $(function() {
 
 <p>Home of the DiceHash implementation.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &quot;<a class="el" href="DiceHashDefinitions_8hpp_source.html">Dice/hash/DiceHashDefinitions.hpp</a>&quot;</code><br />
-<code>#include &quot;Dice/hash/martinus_robinhood_hash.hpp&quot;</code><br />
+<div class="textblock"><code>#include &quot;<a class="el" href="Container__trait_8hpp_source.html">Dice/hash/internal/Container_trait.hpp</a>&quot;</code><br />
+<code>#include &quot;Dice/hash/internal/DiceHashPolicies.hpp&quot;</code><br />
+<code>#include &lt;cstring&gt;</code><br />
+<code>#include &lt;map&gt;</code><br />
+<code>#include &lt;memory&gt;</code><br />
+<code>#include &lt;set&gt;</code><br />
+<code>#include &lt;string&gt;</code><br />
+<code>#include &lt;string_view&gt;</code><br />
+<code>#include &lt;tuple&gt;</code><br />
+<code>#include &lt;unordered_map&gt;</code><br />
+<code>#include &lt;unordered_set&gt;</code><br />
+<code>#include &lt;utility&gt;</code><br />
+<code>#include &lt;variant&gt;</code><br />
+<code>#include &lt;vector&gt;</code><br />
 </div><div class="textblock"><div class="dynheader">
 Include dependency graph for DiceHash.hpp:</div>
 <div class="dyncontent">
 <div class="center"><img src="DiceHash_8hpp__incl.png" border="0" usemap="#ainclude_2Dice_2hash_2DiceHash_8hpp" alt=""/></div>
 <map name="ainclude_2Dice_2hash_2DiceHash_8hpp" id="ainclude_2Dice_2hash_2DiceHash_8hpp">
-<area shape="rect" title="Home of the DiceHash implementation." alt="" coords="697,5,907,32"/>
-<area shape="rect" href="DiceHashDefinitions_8hpp.html" title="Home of the declarations of the dice_hash functions." alt="" coords="429,87,655,114"/>
-<area shape="rect" href="martinus__robinhood__hash_8hpp_source.html" title=" " alt="" coords="1034,80,1178,121"/>
-<area shape="rect" title=" " alt="" coords="554,177,615,203"/>
-<area shape="rect" title=" " alt="" coords="640,177,719,203"/>
-<area shape="rect" title=" " alt="" coords="319,259,365,285"/>
-<area shape="rect" title=" " alt="" coords="33,177,101,203"/>
-<area shape="rect" title=" " alt="" coords="737,259,777,285"/>
-<area shape="rect" title=" " alt="" coords="125,177,180,203"/>
-<area shape="rect" title=" " alt="" coords="205,177,293,203"/>
-<area shape="rect" title=" " alt="" coords="317,177,367,203"/>
-<area shape="rect" title=" " alt="" coords="908,259,1019,285"/>
-<area shape="rect" title=" " alt="" coords="1043,259,1147,285"/>
-<area shape="rect" title=" " alt="" coords="392,177,444,203"/>
-<area shape="rect" title=" " alt="" coords="469,177,530,203"/>
-<area shape="rect" href="Container__trait_8hpp.html" title="Home of custom type traits for the diceHash." alt="" coords="794,169,933,211"/>
-<area shape="rect" title=" " alt="" coords="801,259,883,285"/>
-<area shape="rect" title=" " alt="" coords="1179,177,1244,203"/>
-<area shape="rect" title=" " alt="" coords="1058,177,1154,203"/>
+<area shape="rect" title="Home of the DiceHash implementation." alt="" coords="519,5,730,32"/>
+<area shape="rect" href="Container__trait_8hpp.html" title="Home of custom type traits for the diceHash." alt="" coords="165,80,300,121"/>
+<area shape="rect" title=" " alt="" coords="5,177,52,203"/>
+<area shape="rect" title=" " alt="" coords="77,177,117,203"/>
+<area shape="rect" title=" " alt="" coords="192,177,303,203"/>
+<area shape="rect" title=" " alt="" coords="327,177,431,203"/>
+<area shape="rect" href="DiceHashPolicies_8hpp_source.html" title=" " alt="" coords="491,80,644,121"/>
+<area shape="rect" title=" " alt="" coords="513,259,574,285"/>
+<area shape="rect" title=" " alt="" coords="1140,259,1192,285"/>
+<area shape="rect" title=" " alt="" coords="599,259,653,285"/>
+<area shape="rect" title=" " alt="" coords="678,259,737,285"/>
+<area shape="rect" title=" " alt="" coords="821,87,889,114"/>
+<area shape="rect" title=" " alt="" coords="914,87,1002,114"/>
+<area shape="rect" title=" " alt="" coords="1026,87,1077,114"/>
+<area shape="rect" title=" " alt="" coords="1101,87,1162,114"/>
+<area shape="rect" title=" " alt="" coords="222,259,305,285"/>
+<area shape="rect" href="martinus__robinhood__hash_8hpp_source.html" title=" " alt="" coords="771,169,905,211"/>
+<area shape="rect" href="wyhash_8h_source.html" title=" " alt="" coords="929,177,1005,203"/>
+<area shape="rect" href="xxhash_8hpp_source.html" title=" " alt="" coords="557,177,644,203"/>
+<area shape="rect" title=" " alt="" coords="967,259,1032,285"/>
+<area shape="rect" title=" " alt="" coords="881,259,942,285"/>
+<area shape="rect" title=" " alt="" coords="761,259,857,285"/>
+<area shape="rect" title=" " alt="" coords="1056,259,1116,285"/>
+<area shape="rect" title=" " alt="" coords="438,259,489,285"/>
+<area shape="rect" title=" " alt="" coords="329,259,414,285"/>
 </map>
 </div>
 </div>
 <p><a href="DiceHash_8hpp_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structDice_1_1hash_1_1dice__hash__overload.html">Dice::hash::dice_hash_overload&lt; Policy, T &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper struct for defining the hash for custom structs.  <a href="structDice_1_1hash_1_1dice__hash__overload.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structDice_1_1hash_1_1dice__hash__overload_1_1AlwaysFalse.html">Dice::hash::dice_hash_overload&lt; Policy, T &gt;::AlwaysFalse&lt; typename &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper type.  <a href="structDice_1_1hash_1_1dice__hash__overload_1_1AlwaysFalse.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classDice_1_1hash_1_1dice__hash__templates.html">Dice::hash::dice_hash_templates&lt; Policy &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Class which contains all dice_hash functions.  <a href="classDice_1_1hash_1_1dice__hash__templates.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structDice_1_1hash_1_1DiceHash.html">Dice::hash::DiceHash&lt; T, Policy &gt;</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wrapper class for the Dice::hash::dice_hash function.  <a href="structDice_1_1hash_1_1DiceHash.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
 Namespaces</h2></td></tr>
 <tr class="memitem:namespaceDice_1_1hash"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash.html">Dice::hash</a></td></tr>
-<tr class="memdesc:namespaceDice_1_1hash"><td class="mdescLeft">&#160;</td><td class="mdescRight">Home of the <a class="el" href="structDice_1_1hash_1_1DiceHash.html" title="Wrapper class for the Dice::hash::dice_hash function.">DiceHash</a> and its helper functions. <br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:namespaceDice_1_1hash_1_1detail"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash_1_1detail.html">Dice::hash::detail</a></td></tr>
-<tr class="memdesc:namespaceDice_1_1hash_1_1detail"><td class="mdescLeft">&#160;</td><td class="mdescRight">Home of the implementation specific things. <br /></td></tr>
+<tr class="memdesc:namespaceDice_1_1hash"><td class="mdescLeft">&#160;</td><td class="mdescRight">Home of the <a class="el" href="structDice_1_1hash_1_1DiceHash.html" title="Wrapper class for the Dice::hash::dice_hash function.">DiceHash</a>. <br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
-Functions</h2></td></tr>
-<tr class="memitem:a682bbe421209e86f7c32f8378ae1e479"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
-<tr class="memitem:a682bbe421209e86f7c32f8378ae1e479"><td class="memTemplItemLeft" align="right" valign="top">requires std::is_fundamental_v&lt; std::decay_t&lt; T &gt; &gt; or std::is_pointer_v&lt; std::decay_t&lt; T &gt; &gt; std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash_1_1detail.html#a682bbe421209e86f7c32f8378ae1e479">Dice::hash::detail::hash_primitive</a> (T x) noexcept</td></tr>
-<tr class="memdesc:a682bbe421209e86f7c32f8378ae1e479"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wrapper for fundamental types.  <a href="namespaceDice_1_1hash_1_1detail.html#a682bbe421209e86f7c32f8378ae1e479">More...</a><br /></td></tr>
-<tr class="separator:a682bbe421209e86f7c32f8378ae1e479"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4715cb483093f7f3c25430f4716554fa"><td class="memItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash_1_1detail.html#a4715cb483093f7f3c25430f4716554fa">Dice::hash::detail::dice_hash_invertible_combine</a> (std::size_t a, std::size_t b)</td></tr>
-<tr class="memdesc:a4715cb483093f7f3c25430f4716554fa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Combines two hashes to a new hash.  <a href="namespaceDice_1_1hash_1_1detail.html#a4715cb483093f7f3c25430f4716554fa">More...</a><br /></td></tr>
-<tr class="separator:a4715cb483093f7f3c25430f4716554fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3c6316453e2b236572e4446a6c0d0f72"><td class="memTemplParams" colspan="2">template&lt;typename Container &gt; </td></tr>
-<tr class="memitem:a3c6316453e2b236572e4446a6c0d0f72"><td class="memTemplItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash_1_1detail.html#a3c6316453e2b236572e4446a6c0d0f72">Dice::hash::detail::dice_hash_ordered_container</a> (Container const &amp;container) noexcept</td></tr>
-<tr class="memdesc:a3c6316453e2b236572e4446a6c0d0f72"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the hash over an ordered container.  <a href="namespaceDice_1_1hash_1_1detail.html#a3c6316453e2b236572e4446a6c0d0f72">More...</a><br /></td></tr>
-<tr class="separator:a3c6316453e2b236572e4446a6c0d0f72"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1ef57de050599a36210f03c7cb4241a8"><td class="memTemplParams" colspan="2">template&lt;typename Container &gt; </td></tr>
-<tr class="memitem:a1ef57de050599a36210f03c7cb4241a8"><td class="memTemplItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash_1_1detail.html#a1ef57de050599a36210f03c7cb4241a8">Dice::hash::detail::dice_hash_unordered_container</a> (Container const &amp;container) noexcept</td></tr>
-<tr class="memdesc:a1ef57de050599a36210f03c7cb4241a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the hash over an unordered container.  <a href="namespaceDice_1_1hash_1_1detail.html#a1ef57de050599a36210f03c7cb4241a8">More...</a><br /></td></tr>
-<tr class="separator:a1ef57de050599a36210f03c7cb4241a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab8bf91898374e8a13439f07c231b1bc8"><td class="memTemplParams" colspan="2">template&lt;typename... Ts&gt; </td></tr>
-<tr class="memitem:ab8bf91898374e8a13439f07c231b1bc8"><td class="memTemplItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash_1_1detail.html#ab8bf91898374e8a13439f07c231b1bc8">Dice::hash::detail::hash_and_combine</a> (Ts &amp;&amp;...values)</td></tr>
-<tr class="memdesc:ab8bf91898374e8a13439f07c231b1bc8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper function for tuple hashing.  <a href="namespaceDice_1_1hash_1_1detail.html#ab8bf91898374e8a13439f07c231b1bc8">More...</a><br /></td></tr>
-<tr class="separator:ab8bf91898374e8a13439f07c231b1bc8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae801f8a25b91109e6a82395995d56e0a"><td class="memTemplParams" colspan="2">template&lt;typename... TupleArgs, std::size_t... ids&gt; </td></tr>
-<tr class="memitem:ae801f8a25b91109e6a82395995d56e0a"><td class="memTemplItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash_1_1detail.html#ae801f8a25b91109e6a82395995d56e0a">Dice::hash::detail::hash_tuple</a> (std::tuple&lt; TupleArgs... &gt; const &amp;tuple, std::index_sequence&lt; ids... &gt; const &amp;)</td></tr>
-<tr class="memdesc:ae801f8a25b91109e6a82395995d56e0a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper function for hashing tuples.  <a href="namespaceDice_1_1hash_1_1detail.html#ae801f8a25b91109e6a82395995d56e0a">More...</a><br /></td></tr>
-<tr class="separator:ae801f8a25b91109e6a82395995d56e0a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3a3f9b5830c08fdaa79e1711d40e53a1"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
-<tr class="memitem:a3a3f9b5830c08fdaa79e1711d40e53a1"><td class="memTemplItemLeft" align="right" valign="top">requires std::is_fundamental_v&lt; std::decay_t&lt; T &gt; &gt; std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash.html#a3a3f9b5830c08fdaa79e1711d40e53a1">Dice::hash::dice_hash</a> (T const &amp;fundamental) noexcept</td></tr>
-<tr class="memdesc:a3a3f9b5830c08fdaa79e1711d40e53a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implementation for fundamentals.  <a href="namespaceDice_1_1hash.html#a3a3f9b5830c08fdaa79e1711d40e53a1">More...</a><br /></td></tr>
-<tr class="separator:a3a3f9b5830c08fdaa79e1711d40e53a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3d80f074068ec5fe1c19eb071ed10ac0"><td class="memTemplParams" colspan="2">template&lt;typename CharT &gt; </td></tr>
-<tr class="memitem:a3d80f074068ec5fe1c19eb071ed10ac0"><td class="memTemplItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash.html#a3d80f074068ec5fe1c19eb071ed10ac0">Dice::hash::dice_hash</a> (std::basic_string&lt; CharT &gt; const &amp;str) noexcept</td></tr>
-<tr class="memdesc:a3d80f074068ec5fe1c19eb071ed10ac0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implementation for string types.  <a href="namespaceDice_1_1hash.html#a3d80f074068ec5fe1c19eb071ed10ac0">More...</a><br /></td></tr>
-<tr class="separator:a3d80f074068ec5fe1c19eb071ed10ac0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae79898d5881dbfb9cf7f34a739de0d9c"><td class="memTemplParams" colspan="2">template&lt;typename CharT &gt; </td></tr>
-<tr class="memitem:ae79898d5881dbfb9cf7f34a739de0d9c"><td class="memTemplItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash.html#ae79898d5881dbfb9cf7f34a739de0d9c">Dice::hash::dice_hash</a> (std::basic_string_view&lt; CharT &gt; const &amp;sv) noexcept</td></tr>
-<tr class="memdesc:ae79898d5881dbfb9cf7f34a739de0d9c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implementation for string view.  <a href="namespaceDice_1_1hash.html#ae79898d5881dbfb9cf7f34a739de0d9c">More...</a><br /></td></tr>
-<tr class="separator:ae79898d5881dbfb9cf7f34a739de0d9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa45cbe3f308d9b4151dde59460ed4c1c"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
-<tr class="memitem:aa45cbe3f308d9b4151dde59460ed4c1c"><td class="memTemplItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash.html#aa45cbe3f308d9b4151dde59460ed4c1c">Dice::hash::dice_hash</a> (T *ptr) noexcept</td></tr>
-<tr class="memdesc:aa45cbe3f308d9b4151dde59460ed4c1c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implementation for raw pointers.  <a href="namespaceDice_1_1hash.html#aa45cbe3f308d9b4151dde59460ed4c1c">More...</a><br /></td></tr>
-<tr class="separator:aa45cbe3f308d9b4151dde59460ed4c1c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa06abccf052eda05361dbb9e95ddbb32"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
-<tr class="memitem:aa06abccf052eda05361dbb9e95ddbb32"><td class="memTemplItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash.html#aa06abccf052eda05361dbb9e95ddbb32">Dice::hash::dice_hash</a> (std::unique_ptr&lt; T &gt; const &amp;ptr) noexcept</td></tr>
-<tr class="memdesc:aa06abccf052eda05361dbb9e95ddbb32"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implementation for unique pointers.  <a href="namespaceDice_1_1hash.html#aa06abccf052eda05361dbb9e95ddbb32">More...</a><br /></td></tr>
-<tr class="separator:aa06abccf052eda05361dbb9e95ddbb32"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8ded3bd127d6d0c024c1121028c066a8"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
-<tr class="memitem:a8ded3bd127d6d0c024c1121028c066a8"><td class="memTemplItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash.html#a8ded3bd127d6d0c024c1121028c066a8">Dice::hash::dice_hash</a> (std::shared_ptr&lt; T &gt; const &amp;ptr) noexcept</td></tr>
-<tr class="memdesc:a8ded3bd127d6d0c024c1121028c066a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">implementation for shared pointers.  <a href="namespaceDice_1_1hash.html#a8ded3bd127d6d0c024c1121028c066a8">More...</a><br /></td></tr>
-<tr class="separator:a8ded3bd127d6d0c024c1121028c066a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7f30439f12a4d38e43af1a48749d6573"><td class="memTemplParams" colspan="2">template&lt;typename T , std::size_t N&gt; </td></tr>
-<tr class="memitem:a7f30439f12a4d38e43af1a48749d6573"><td class="memTemplItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash.html#a7f30439f12a4d38e43af1a48749d6573">Dice::hash::dice_hash</a> (std::array&lt; T, N &gt; const &amp;arr) noexcept</td></tr>
-<tr class="memdesc:a7f30439f12a4d38e43af1a48749d6573"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implementation for std arrays.  <a href="namespaceDice_1_1hash.html#a7f30439f12a4d38e43af1a48749d6573">More...</a><br /></td></tr>
-<tr class="separator:a7f30439f12a4d38e43af1a48749d6573"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac50e2e202969651bf345c9f5bae95616"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
-<tr class="memitem:ac50e2e202969651bf345c9f5bae95616"><td class="memTemplItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash.html#ac50e2e202969651bf345c9f5bae95616">Dice::hash::dice_hash</a> (std::vector&lt; T &gt; const &amp;vec) noexcept</td></tr>
-<tr class="memdesc:ac50e2e202969651bf345c9f5bae95616"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implementation for vectors.  <a href="namespaceDice_1_1hash.html#ac50e2e202969651bf345c9f5bae95616">More...</a><br /></td></tr>
-<tr class="separator:ac50e2e202969651bf345c9f5bae95616"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a34548e4c5deff80743b3bb84bade0907"><td class="memTemplParams" colspan="2">template&lt;typename... TupleArgs&gt; </td></tr>
-<tr class="memitem:a34548e4c5deff80743b3bb84bade0907"><td class="memTemplItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash.html#a34548e4c5deff80743b3bb84bade0907">Dice::hash::dice_hash</a> (std::tuple&lt; TupleArgs... &gt; const &amp;tpl) noexcept</td></tr>
-<tr class="memdesc:a34548e4c5deff80743b3bb84bade0907"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implementation for tuples.  <a href="namespaceDice_1_1hash.html#a34548e4c5deff80743b3bb84bade0907">More...</a><br /></td></tr>
-<tr class="separator:a34548e4c5deff80743b3bb84bade0907"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a915cac2bc81d1dd162a09922d14fae00"><td class="memTemplParams" colspan="2">template&lt;typename T , typename V &gt; </td></tr>
-<tr class="memitem:a915cac2bc81d1dd162a09922d14fae00"><td class="memTemplItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash.html#a915cac2bc81d1dd162a09922d14fae00">Dice::hash::dice_hash</a> (std::pair&lt; T, V &gt; const &amp;p) noexcept</td></tr>
-<tr class="memdesc:a915cac2bc81d1dd162a09922d14fae00"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implementation for pairs.  <a href="namespaceDice_1_1hash.html#a915cac2bc81d1dd162a09922d14fae00">More...</a><br /></td></tr>
-<tr class="separator:a915cac2bc81d1dd162a09922d14fae00"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab25dfe8936f0d06e165ea463f0df49f2"><td class="memItemLeft" align="right" valign="top">template&lt;&gt; </td></tr>
-<tr class="memitem:ab25dfe8936f0d06e165ea463f0df49f2"><td class="memTemplItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash.html#ab25dfe8936f0d06e165ea463f0df49f2">Dice::hash::dice_hash</a> (std::monostate const  &amp;) noexcept</td></tr>
-<tr class="memdesc:ab25dfe8936f0d06e165ea463f0df49f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Specialization for std::monostate.  <a href="namespaceDice_1_1hash.html#ab25dfe8936f0d06e165ea463f0df49f2">More...</a><br /></td></tr>
-<tr class="separator:ab25dfe8936f0d06e165ea463f0df49f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a62d0ef43327ec6c113ae91d3874f082c"><td class="memTemplParams" colspan="2">template&lt;typename ... VariantArgs&gt; </td></tr>
-<tr class="memitem:a62d0ef43327ec6c113ae91d3874f082c"><td class="memTemplItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash.html#a62d0ef43327ec6c113ae91d3874f082c">Dice::hash::dice_hash</a> (std::variant&lt; VariantArgs... &gt; const &amp;var) noexcept</td></tr>
-<tr class="memdesc:a62d0ef43327ec6c113ae91d3874f082c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implementation for variant.  <a href="namespaceDice_1_1hash.html#a62d0ef43327ec6c113ae91d3874f082c">More...</a><br /></td></tr>
-<tr class="separator:a62d0ef43327ec6c113ae91d3874f082c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a780d9fc5d7503edb8d010dafa0a9f4f5"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
-<tr class="memitem:a780d9fc5d7503edb8d010dafa0a9f4f5"><td class="memTemplItemLeft" align="right" valign="top">requires is_ordered_container_v&lt; T &gt; std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash.html#a780d9fc5d7503edb8d010dafa0a9f4f5">Dice::hash::dice_hash</a> (T const &amp;container) noexcept</td></tr>
-<tr class="memdesc:a780d9fc5d7503edb8d010dafa0a9f4f5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implementation for ordered container.  <a href="namespaceDice_1_1hash.html#a780d9fc5d7503edb8d010dafa0a9f4f5">More...</a><br /></td></tr>
-<tr class="separator:a780d9fc5d7503edb8d010dafa0a9f4f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9adb4d20d697e9526a009b900c5afaa3"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
-<tr class="memitem:a9adb4d20d697e9526a009b900c5afaa3"><td class="memTemplItemLeft" align="right" valign="top">requires is_unordered_container_v&lt; T &gt; std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceDice_1_1hash.html#a9adb4d20d697e9526a009b900c5afaa3">Dice::hash::dice_hash</a> (T const &amp;container) noexcept</td></tr>
-<tr class="memdesc:a9adb4d20d697e9526a009b900c5afaa3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Implementation for unordered container.  <a href="namespaceDice_1_1hash.html#a9adb4d20d697e9526a009b900c5afaa3">More...</a><br /></td></tr>
-<tr class="separator:a9adb4d20d697e9526a009b900c5afaa3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
+Typedefs</h2></td></tr>
+<tr class="memitem:aa62dc2e53794325da0274e00bf57d55c"><td class="memTemplParams" colspan="2"><a id="aa62dc2e53794325da0274e00bf57d55c"></a>
+template&lt;typename T &gt; </td></tr>
+<tr class="memitem:aa62dc2e53794325da0274e00bf57d55c"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><b>Dice::hash::DiceHashMartinus</b> = DiceHash&lt; T, Policies::Martinus &gt;</td></tr>
+<tr class="separator:aa62dc2e53794325da0274e00bf57d55c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a640acd457635cbb6eca13a7b6ea68ac8"><td class="memTemplParams" colspan="2"><a id="a640acd457635cbb6eca13a7b6ea68ac8"></a>
+template&lt;typename T &gt; </td></tr>
+<tr class="memitem:a640acd457635cbb6eca13a7b6ea68ac8"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><b>Dice::hash::DiceHashxxh3</b> = DiceHash&lt; T, Policies::xxh3 &gt;</td></tr>
+<tr class="separator:a640acd457635cbb6eca13a7b6ea68ac8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae1d46c90d3ae20c79a5e8474be3daa89"><td class="memTemplParams" colspan="2"><a id="ae1d46c90d3ae20c79a5e8474be3daa89"></a>
+template&lt;typename T &gt; </td></tr>
+<tr class="memitem:ae1d46c90d3ae20c79a5e8474be3daa89"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><b>Dice::hash::DiceHashwyhash</b> = DiceHash&lt; T, Policies::wyhash &gt;</td></tr>
+<tr class="separator:ae1d46c90d3ae20c79a5e8474be3daa89"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Home of the DiceHash implementation. </p>

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['dicehash_26',['DiceHash',['../structDice_1_1hash_1_1DiceHash.html',1,'Dice::hash']]]
+  ['canonical_5ft_40',['canonical_t',['../structxxh_1_1canonical__t.html',1,'xxh']]]
 ];

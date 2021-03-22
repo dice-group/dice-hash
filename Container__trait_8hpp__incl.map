@@ -1,5 +1,5 @@
-<map id="include/Dice/hash/Container_trait.hpp" name="include/Dice/hash/Container_trait.hpp">
-<area shape="rect" id="node1" title="Home of custom type traits for the diceHash." alt="" coords="90,5,274,47"/>
+<map id="include/Dice/hash/internal/Container_trait.hpp" name="include/Dice/hash/internal/Container_trait.hpp">
+<area shape="rect" id="node1" title="Home of custom type traits for the diceHash." alt="" coords="97,5,267,47"/>
 <area shape="rect" id="node2" title=" " alt="" coords="5,95,52,121"/>
 <area shape="rect" id="node3" title=" " alt="" coords="77,95,117,121"/>
 <area shape="rect" id="node4" title=" " alt="" coords="141,95,223,121"/>
