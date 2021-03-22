@@ -2,7 +2,7 @@
 
 dice-hash provides a framework to generate stable hashes. It provides state-of-the-art hash functions, supports STL containers out of the box and helps you to defines stable hashes for your own structs and classes. 
 
-**🔋 batteries included** dice-hash defines _policies_ to support different hash algorithms. It comes with predefined policies for three state-of-the-art hash functions:
+**🔋 batteries included:** dice-hash defines _policies_ to support different hash algorithms. It comes with predefined policies for three state-of-the-art hash functions:
 - [XXH3](https://github.com/Cyan4973/xxHash)
 - [wyhash](https://github.com/wangyi-fudan/wyhash)
 - "martinus", the internal hash function from [robin-hood-hashing](https://github.com/martinus/robin-hood-hashing)
