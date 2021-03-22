@@ -9,12 +9,13 @@ class DiceHashConan(ConanFile):
     author = "DICE Group <info@dice-research.org>"
     homepage = "https://github.com/dice-group/dice-hash"
     url = homepage
-    description = "<Description of DiceHash here>"
+    options = {'march': 'ANY'}
+    default_options = {'march': None}
     topics = ("hash", "C++", "C++20")
     settings = "build_type", "compiler", "os", "arch"
     generators = "cmake", "cmake_find_package", "cmake_paths"
     exports = "LICENSE"
-    exports_sources = "include/*", "CMakeLists.txt", "cmake/*"
+    exports_sources = "src/*", "include/*", "CMakeLists.txt", "cmake/*"
     no_copy_source = True
     # No settings/options are necessary, this is header only
 
@@ -26,7 +27,22 @@ class DiceHashConan(ConanFile):
     def package_id(self):
         self.info.header_only()
 
-    def package(self):
+    def build(self):
         cmake = CMake(self)
         cmake.configure()
+        cmake.build()
+
+    def package(self):
+        cmake = CMake(self)
+        if self.options.march:
+            cmake.definitions['DICE_HASH_MARCH'] = self.options.march
+        cmake.configure()
         cmake.install()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        try:
+            with open("README.md") as file:
+                self.description = file.read()
+        except Exception as err:
+            self.description = str(err)

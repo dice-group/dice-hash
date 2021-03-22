@@ -1,5 +1,5 @@
-#ifndef HYPERTRIE_DICEHASH_HPP
-#define HYPERTRIE_DICEHASH_HPP
+#ifndef DICE_HASH_DICEHASH_HPP
+#define DICE_HASH_DICEHASH_HPP
 
 /** @file
  * @brief Home of the DiceHash implementation.
@@ -9,47 +9,60 @@
  * Because of that (and to not worry about versioning problems) this hash function was created.
  */
 
-#include "Dice/hash/DiceHashDefinitions.hpp"
-#include "Dice/hash/martinus_robinhood_hash.hpp"
+#include "Dice/hash/internal/Container_trait.hpp"
+#include "Dice/hash/internal/DiceHashPolicies.hpp"
+#include <cstring>
+#include <map>
+#include <memory>
+#include <set>
+#include <string>
+#include <string_view>
+#include <tuple>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <variant>
+#include <vector>
 
+/** Home of the DiceHash.
+ *
+ */
 namespace Dice::hash {
 
-	/** Home of the implementation specific things.
+	/** Helper struct for defining the hash for custom structs.
+	 * Because of partial specialization problems with functions, this struct must be specialized to define the hash for a custom type.
+	 * @tparam Policy The policy to use.
+	 * @tparam T The custom type.
 	 */
-	namespace detail {
-		using Dice::hash::martinus::hash_bytes;
-		using Dice::hash::martinus::hash_combine;
-		using Dice::hash::martinus::HashState;
-
-		/** Wrapper for fundamental types.
-		 * Chooses the correct basic hash function for a given type.
-		 * @tparam T Fundamental type or pointer (using constrains).
-		 * @param x The value to hash.
-		 * @return Hash value.
-		 */
-		template<typename T>
-		requires std::is_fundamental_v<std::decay_t<T>> or std::is_pointer_v<std::decay_t<T>>
-		inline std::size_t hash_primitive(T x) noexcept {
-			if constexpr (sizeof(std::decay_t<T>) == sizeof(size_t)) {
-				return Dice::hash::martinus::hash_int(*reinterpret_cast<size_t const *>(&x));
-			} else if constexpr (sizeof(std::decay_t<T>) > sizeof(size_t) or std::is_floating_point_v<std::decay_t<T>>) {
-				return hash_bytes(&x, sizeof(x));
-			} else {
-				return Dice::hash::martinus::hash_int(static_cast<size_t>(x));
-			}
-		}
-
-		/** Combines two hashes to a new hash.
-         * This function is commutative and invertible.
-         * It is used in the unordered container functions. However this __will__ be replaced in the future.
-         * @param a First hash.
-         * @param b Second hash.
-         * @return Combination of a and b.
+	template<Policies::HashPolicy Policy, typename T>
+	struct dice_hash_overload {
+		/** Helper type.
+         * It is used for a static_assert.
+         * If a specific version of a template function needs to be disabled via static_assert, there can be a problem.
+         * If the evaluation does not need the type T of the template, it will always be evaluated, even if the specific function
+         * is not used/instantiated. This is a workaround. It will contain false for every type, however that is not directly knowable.
          */
-		inline std::size_t dice_hash_invertible_combine(std::size_t a, std::size_t b) {
-			return a xor b;
-		}
+		template<typename>
+		struct AlwaysFalse : std::false_type {};
 
+		/** Default implementation of the dice_hash function.
+         * It will simply not compile. For every type there should be an specific overload.
+         * @tparam T Type of the value to hash.
+         * @return Nothing. It WILL NOT compile.
+         */
+		static std::size_t dice_hash(T const &) noexcept {
+			static_assert(AlwaysFalse<T>::value,
+						  "The hash function is not defined for this type. You need to add an implementation yourself");
+			return 0;
+		}
+	};
+
+	/** Class which contains all dice_hash functions.
+	 * @tparam Policy The Policy the hash is based on.
+	 */
+	template<Policies::HashPolicy Policy>
+	class dice_hash_templates {
+	private:
 		/** Calculates the hash over an ordered container.
          * An example would be a vector, a map, an array or a list.
          * Needs a ForwardIterator in the Container-type, and an member type "value_type".
@@ -59,8 +72,8 @@ namespace Dice::hash {
          * @return The combined hash of all values inside of the container.
          */
 		template<typename Container>
-		inline std::size_t dice_hash_ordered_container(Container const &container) noexcept {
-			detail::HashState hash_state(container.size());
+		static std::size_t dice_hash_ordered_container(Container const &container) noexcept {
+			typename Policy::HashState hash_state(container.size());
 			std::size_t item_hash;
 			for (const auto &item : container) {
 				item_hash = dice_hash(item);
@@ -79,130 +92,256 @@ namespace Dice::hash {
          * @return The combined hash of all Values inside of the container.
          */
 		template<typename Container>
-		inline std::size_t dice_hash_unordered_container(Container const &container) noexcept {
+		static std::size_t dice_hash_unordered_container(Container const &container) noexcept {
 			std::size_t h{};
 			for (auto const &it : container) {
-				h = dice_hash_invertible_combine(h, dice_hash(it));
+				h = Policy::hash_invertible_combine({h, dice_hash(it)});
 			}
 			return h;
 		}
 
-		/** Helper function for tuple hashing.
-	     * It simply hashes every parameter and then combines them.
-	     * CAUTION: The order of the parameters CAN make a difference!
-	     * @tparam Ts Parameter pack. The hash function must be defined for every type used.
-	     * @param values The values to hash and combine.
-	     * @return Hash value.
-         */
-		template<typename... Ts>
-		inline std::size_t hash_and_combine(Ts &&...values) {
-			return detail::hash_combine(std::initializer_list<std::size_t>{dice_hash(std::forward<Ts>(values))...});
-		}
-
 		/** Helper function for hashing tuples.
-		 * It is a wrapper for hash_and_combine.
-		 * This function can be called with the help of std::make_index_sequence.
-		 * @tparam TupleArgs The types used in the tuple.
-		 * @tparam ids Generated by std::make_index_sequence. Needed for indexing the tuple values.
-		 * @param tuple The tuple to hash.
-		 * @return Hash value.
-		 */
+         * It is a wrapper for hash_and_combine.
+         * This function can be called with the help of std::make_index_sequence.
+         * @tparam TupleArgs The types used in the tuple.
+         * @tparam ids Generated by std::make_index_sequence. Needed for indexing the tuple values.
+         * @param tuple The tuple to hash.
+         * @return Hash value.
+         */
 		template<typename... TupleArgs, std::size_t... ids>
-		inline std::size_t hash_tuple(std::tuple<TupleArgs...> const &tuple, std::index_sequence<ids...> const &) {
-			return hash_and_combine(std::get<ids>(tuple)...);
+		static std::size_t dice_hash_tuple(std::tuple<TupleArgs...> const &tuple, std::index_sequence<ids...> const &) {
+			return Policy::hash_combine({dice_hash(std::get<ids>(tuple))...});
 		}
 
-	}// namespace detail
-
-	template<typename T>
-	requires std::is_fundamental_v<std::decay_t<T>>
-	inline std::size_t dice_hash(T const &fundamental) noexcept {
-		return detail::hash_primitive(fundamental);
-	}
-
-
-	template<typename CharT>
-	inline std::size_t dice_hash(std::basic_string<CharT> const &str) noexcept {
-		return detail::hash_bytes(str.data(), sizeof(CharT) * str.size());
-	}
-
-	template<typename CharT>
-	inline std::size_t dice_hash(std::basic_string_view<CharT> const &sv) noexcept {
-		return detail::hash_bytes(sv.data(), sizeof(CharT) * sv.size());
-	}
-
-	template<typename T>
-	inline std::size_t dice_hash(T *ptr) noexcept {
-		return detail::hash_primitive(ptr);
-	}
-
-	template<typename T>
-	inline std::size_t dice_hash(std::unique_ptr<T> const &ptr) noexcept {
-		return dice_hash(ptr.get());
-	}
-
-	template<typename T>
-	inline std::size_t dice_hash(std::shared_ptr<T> const &ptr) noexcept {
-		return dice_hash(ptr.get());
-	}
-
-	template<typename T, std::size_t N>
-	inline std::size_t dice_hash(std::array<T, N> const &arr) noexcept {
-		if constexpr (std::is_fundamental_v<T>) {
-			return detail::hash_bytes(arr.data(), sizeof(T) * N);
-		} else {
-			return detail::dice_hash_ordered_container(arr);
+	public:
+		/** Base case for dice_hash.
+         * This case is only chosen if no other match is found in this struct.
+         * Than it tries to find a specialization of Dice::hash::dice_hash_overload and
+         * if none is found, this function will not compile.
+         * @tparam T The type to hash.
+         * @return Hash value.
+         */
+		template<typename T>
+		static std::size_t dice_hash(T const &t) noexcept {
+			return dice_hash_overload<Policy, T>::dice_hash(t);
 		}
-	}
 
-	template<typename T>
-	inline std::size_t dice_hash(std::vector<T> const &vec) noexcept {
-		if constexpr (std::is_fundamental_v<T>) {
-			static_assert(!std::is_same_v<std::decay_t<T>, bool>,
-						  "vector of booleans has a special implementation which results into errors!");
-			return detail::hash_bytes(vec.data(), sizeof(T) * vec.size());
-		} else {
-			return detail::dice_hash_ordered_container(vec);
+		/** Implementation for fundamentals.
+         * @tparam T Fundamental type.
+         * @param fundamental Value to hash.
+         * @return Hash value.
+         */
+		template<typename T>
+		requires std::is_fundamental_v<std::decay_t<T>> static std::size_t dice_hash(T const &fundamental) noexcept {
+			return Policy::hash_fundamental(fundamental);
 		}
-	}
 
-	template<typename... TupleArgs>
-	inline std::size_t dice_hash(std::tuple<TupleArgs...> const &tpl) noexcept {
-		return detail::hash_tuple(tpl, std::make_index_sequence<sizeof...(TupleArgs)>());
-	}
+		/** Implementation for string types.
+         * @tparam CharT A char type. See the definition of std::string for more information.
+         * @param str The string to hash.
+         * @return Hash value.
+         */
+		template<typename CharT>
+		static std::size_t dice_hash(std::basic_string<CharT> const &str) noexcept {
+			return Policy::hash_bytes(str.data(), sizeof(CharT) * str.size());
+		}
 
-	template<typename T, typename V>
-	inline std::size_t dice_hash(std::pair<T, V> const &p) noexcept {
-		return detail::hash_and_combine(p.first, p.second);
-	}
+		/** Implementation for string view.
+         * @tparam CharT A char type. See the definition of std::string for more information.
+         * @param sv The string view to hash.
+         * @return Hash value.
+         */
+		template<typename CharT>
+		static std::size_t dice_hash(std::basic_string_view<CharT> const &sv) noexcept {
+			return Policy::hash_bytes(sv.data(), sizeof(CharT) * sv.size());
+		}
 
-    template <>
-    inline std::size_t dice_hash(std::monostate const&) noexcept {
-		return Dice::hash::martinus::seed;
-	}
+		/** Implementation for raw pointers.
+         * CAUTION: hashes the POINTER, not the OBJECT POINTED TO!
+         * @tparam T A pointer type.
+         * @param ptr The pointer to hash.
+         * @return Hash value.
+         */
+		template<typename T>
+		static std::size_t dice_hash(T *ptr) noexcept {
+			return Policy::hash_fundamental(ptr);
+		}
 
-    template<typename ...VariantArgs>
-    inline std::size_t dice_hash(std::variant<VariantArgs...> const &var) noexcept {
-        try {
-            return std::visit([]<typename T>(T &&arg) { return dice_hash(std::forward<T>(arg)); }, var);
-        }
-        catch (std::bad_variant_access const &) {
-            return Dice::hash::martinus::seed;
-        }
-    }
+		/** Implementation for unique pointers.
+         * CAUTION: hashes the POINTER, not the OBJECT POINTED TO!
+         * @tparam T A unique pointer type.
+         * @param ptr The pointer to hash.
+         * @return Hash value.
+         */
+		template<typename T>
+		static std::size_t dice_hash(std::unique_ptr<T> const &ptr) noexcept {
+			return dice_hash(ptr.get());
+		}
 
-	template<typename T>
-	requires is_ordered_container_v<T>
-	inline std::size_t dice_hash(T const &container) noexcept {
-		return detail::dice_hash_ordered_container(container);
-	}
+		/** implementation for shared pointers.
+         * CAUTION: hashes the POINTER, not the OBJECT POINTED TO!
+         * @tparam T A shared pointer type.
+         * @param ptr The pointer to hash.
+         * @return Hash value.
+         */
+		template<typename T>
+		static std::size_t dice_hash(std::shared_ptr<T> const &ptr) noexcept {
+			return dice_hash(ptr.get());
+		}
 
-	template<typename T>
-	requires is_unordered_container_v<T>
-	inline std::size_t dice_hash(T const &container) noexcept {
-		return detail::dice_hash_unordered_container(container);
-	}
+		/** Implementation for std arrays.
+        * It will use different implementations if the type is fundamental or not.
+        * @tparam T The type of the values.
+        * @tparam N The number of values.
+        * @param arr The array itself.
+        * @return Hash value.
+        */
+		template<typename T, std::size_t N>
+		static std::size_t dice_hash(std::array<T, N> const &arr) noexcept {
+			if constexpr (std::is_fundamental_v<T>) {
+				return Policy::hash_bytes(arr.data(), sizeof(T) * N);
+			} else {
+				return dice_hash_ordered_container(arr);
+			}
+		}
 
+		/** Implementation for vectors.
+         * It will use different implementations for fundamental and non-fundamental types.
+         * @tparam T The type of the values.
+         * @param vec The vector itself.
+         * @return Hash value.
+         */
+		template<typename T>
+		static std::size_t dice_hash(std::vector<T> const &vec) noexcept {
+			if constexpr (std::is_fundamental_v<T>) {
+				static_assert(!std::is_same_v<std::decay_t<T>, bool>,
+							  "vector of booleans has a special implementation which results into errors!");
+				return Policy::hash_bytes(vec.data(), sizeof(T) * vec.size());
+			} else {
+				return dice_hash_ordered_container(vec);
+			}
+		}
+
+		/** Implementation for tuples.
+         * Will hash every entry and then combine the hashes.
+         * @tparam TupleArgs The types of the tuple values.
+         * @param tpl The tuple itself.
+         * @return Hash value.
+         */
+		template<typename... TupleArgs>
+		static std::size_t dice_hash(std::tuple<TupleArgs...> const &tpl) noexcept {
+			return dice_hash_tuple(tpl, std::make_index_sequence<sizeof...(TupleArgs)>());
+		}
+
+		/** Implementation for pairs.
+         * Will hash the entries and then combine them.
+         * @tparam T Type of the first value.
+         * @tparam V Type of the second value.
+         * @param p The pair itself.
+         * @return Hash value.
+         */
+		template<typename T, typename V>
+		static std::size_t dice_hash(std::pair<T, V> const &p) noexcept {
+			return Policy::hash_combine({dice_hash(p.first), dice_hash(p.second)});
+		}
+
+		/** Overload for std::monostate.
+         * It is needed so its usage in std::variant is possible.
+         * Will simply return the seed.
+         * @return The seed of the hash function.
+         */
+		static std::size_t dice_hash(std::monostate const &) noexcept {
+			return Policy::ErrorValue;
+		}
+
+		/** Implementation for variant.
+         * Will hash the value which was set.
+         * The hash of a variant of a type is equal to the hash of the type.
+         * For example: a variant of int of 42 is equal to the hash of the int of 42.
+         * If the variant is valueless_by_exception, the seed will be returned.
+         * @tparam VariantArgs Types of the possible values.
+         * @param var The variant itself.
+         * @return Hash value.
+         */
+		template<typename... VariantArgs>
+		static std::size_t dice_hash(std::variant<VariantArgs...> const &var) noexcept {
+			try {
+				return std::visit([]<typename T>(T &&arg) { return dice_hash(std::forward<T>(arg)); }, var);
+			} catch (std::bad_variant_access const &) {
+				return Policy::ErrorValue;
+			}
+		}
+
+		/** Implementation for ordered container.
+         * It uses a custom type trait to check if the type is in fact an ordered container.
+         * CAUTION: If you want to add another type to the trait, you might need to do it before this is included!
+         * @tparam T The container type.
+         * @param container The container itself.
+         * @return Hash value.
+         */
+		template<typename T>
+		requires is_ordered_container_v<T> static std::size_t dice_hash(T const &container) noexcept {
+			return dice_hash_ordered_container(container);
+		}
+
+		/** Implementation for unordered container.
+         * It uses a custom type trait to check if the type is in fact an unordered container.
+         * CAUTION: If you want to add another type to the trait, you might need to do it before this is included!
+         * @tparam T The container type.
+         * @param container The container itself.
+         * @return Hash value.
+         */
+		template<typename T>
+		requires is_unordered_container_v<T> static std::size_t dice_hash(T const &container) noexcept {
+			return dice_hash_unordered_container(container);
+		}
+	};
+
+	/** Wrapper class for the Dice::hash::dice_hash function.
+     * It is a typical hash interface.
+     * @tparam T The type to define the hash for.
+     * @tparam Policy The Policy defines how the hash works on a basic level.
+     */
+	template<typename T, Policies::HashPolicy Policy = Policies::Martinus>
+	struct DiceHash : private Policy {
+		/** Policy function for combining already hashed values.
+		 * This using declaration is equal to a handwritten wrapper function.
+		 *@param list Initializer list of std::size_t hashes.
+		 * @return Single hash value.
+		 */
+        using Policy::hash_combine;
+
+		/** Policy function for combining already hashed values in a invertible fashion.
+		 * This using declaration is equal to a handwritten wrapper function.
+		 *@param list Initializer list of std::size_t hashes.
+		 * @return Single hash value.
+		 */
+        using Policy::hash_invertible_combine;
+
+        /** Overloaded operator to calculate a hash.
+         * Simply calls the dice_hash function for the specified type.
+         * @param t The value to calculate the hash of.
+         * @return Hash value.
+         */
+        std::size_t operator()(T const &t) const noexcept {
+			return dice_hash_templates<Policy>::dice_hash(t);
+		}
+
+		/** Function to check if a hash is equal to an error value.
+		 * Simple wrapper for equality checking of the Policy error value.
+		 * @param to_check The hash value to check.
+		 * @return True if value is an error value, false otherwise.
+		 */
+		[[nodiscard]] static constexpr bool is_faulty(std::size_t to_check) noexcept {
+			return to_check == Policy::ErrorValue;
+		}
+	};
+
+    template <typename T>
+    using DiceHashMartinus = DiceHash<T, Policies::Martinus>;
+    template <typename T>
+    using DiceHashxxh3 = DiceHash<T, Policies::xxh3>;
+    template <typename T>
+    using DiceHashwyhash = DiceHash<T, Policies::wyhash>;
 }// namespace Dice::hash
-
-#endif//HYPERTRIE_DICEHASH_HPP
+#endif//DICE_HASH_DICEHASH_HPP
