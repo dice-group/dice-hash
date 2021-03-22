@@ -1,7 +1,19 @@
-# dice-hash: High-Performance Hash for Hash-Based Container
+# dice-hash: A Hashing framework
 
-dice-hash is based on the hash from [robin-hood-hashing hash map/set](https://github.com/martinus/robin-hood-hashing) by [Martin Ankerl](https://martin.ankerl.com/). It performs well as hash function for most hash-based containers like `std::unordered_map/set` or [`tsl::sparse_map/set`](https://github.com/Tessil/sparse-map). 
-dice-hash is an extended version with support for all kinds of fixed, ordered and unordered data structures from STL. 
+dice-hash provides a framework to generate stable hashes. It provides state-of-the-art hash functions, supports STL containers out of the box and helps you to defines stable hashes for your own structs and classes. 
+
+**🔋 batteries included** dice-hash defines _policies_ to support different hash algorithms. It comes with predefined policies for three state-of-the-art hash functions:
+- [XXH3](https://github.com/Cyan4973/xxHash)
+- [wyhash](https://github.com/wangyi-fudan/wyhash)
+- "martinus", the internal hash function from [robin-hood-hashing](https://github.com/martinus/robin-hood-hashing)
+
+**📦 STL out of the box:** dice-hash supports many common STL types already: 
+arithmetic types like `bool`, `int`, `double`, ... etc.; collections like `std::unordered_map/set`, `std::map/set`, `std::vector`, `std::tuple`, `std::pair`, `std::optional`, `std::variant`, `std::array` and; all combinations of them. 
+
+**🔩 extensible:** dice-hash supports you with helper functions to define hashes for your own classes. Checkout [usage](#usage). 
+
+
+
 
 ## Requirements
 
