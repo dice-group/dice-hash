@@ -16,7 +16,7 @@ add
 FetchContent_Declare(
         dice-hash
         GIT_REPOSITORY https://github.com/dice-group/dice-hash.git
-        GIT_TAG 0.1.0
+        GIT_TAG 0.2.0
         GIT_SHALLOW TRUE)
 
 FetchContent_MakeAvailable(dice-hash)
@@ -34,10 +34,12 @@ target_link_libraries(your_target
 ### conan
 To use it with [conan](https://conan.io/) you need to add the repository:
 ```shell
-conan remote add dice-group https://api.bintray.com/conan/dice-group/tentris
+conan remote add dice-group https://conan.dice-research.org/artifactory/api/conan/tentris
 ```
 
-To use it add `dice-hash/0.1.0@dice-group/stable` to the `[requires]` section of your conan file.
+To use it add `dice-hash/0.2.0@dice-group/stable` to the `[requires]` section of your conan file.
+
+To activate march=native, you can additionally add `dice-hash:march=native` to the `[options]` section. 
 
 ## build and run tests
 
@@ -52,6 +54,8 @@ cmake -DDICE_HASH_BUILD_TESTS -DCMAKE_BUILD_TYPE=Release ..
 make -j tests_dice_hash
 ./test/tests_dice_hash
 ```
+
+`-march=native` is activated by the additional CMake option: `-DDICE_HASH_MARCH=native`
 
 ## usage
 The hash is already defined for a lot of common types. In that case you can use the `DiceHash` just like `std::hash`.
