@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.9.1"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>dice-hash: dice-hash: High-Performance Hash for Hash-Based Container</title>
+<title>dice-hash: dice-hash: A Hashing framework</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -63,10 +63,17 @@ $(function() {
 
 <div class="PageDoc"><div class="header">
   <div class="headertitle">
-<div class="title">dice-hash: High-Performance Hash for Hash-Based Container </div>  </div>
+<div class="title">dice-hash: A Hashing framework </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="md_README"></a> dice-hash is based on the hash from <a href="https://github.com/martinus/robin-hood-hashing">robin-hood-hashing hash map/set</a> by <a href="https://martin.ankerl.com/">Martin Ankerl</a>. It performs well as hash function for most hash-based containers like <code>std::unordered_map/set</code> or <a href="https://github.com/Tessil/sparse-map"><code>tsl::sparse_map/set</code></a>. dice-hash is an extended version with support for all kinds of fixed, ordered and unordered data structures from STL.</p>
+<div class="textblock"><p><a class="anchor" id="md_README"></a> dice-hash provides a framework to generate stable hashes. It provides state-of-the-art hash functions, supports STL containers out of the box and helps you to defines stable hashes for your own structs and classes.</p>
+<p><b>🔋 batteries included</b> dice-hash defines <em>policies</em> to support different hash algorithms. It comes with predefined policies for three state-of-the-art hash functions:</p><ul>
+<li><a href="https://github.com/Cyan4973/xxHash">XXH3</a></li>
+<li><a href="https://github.com/wangyi-fudan/wyhash">wyhash</a></li>
+<li>"martinus", the internal hash function from <a href="https://github.com/martinus/robin-hood-hashing">robin-hood-hashing</a></li>
+</ul>
+<p><b>📦 STL out of the box:</b> dice-hash supports many common STL types already: arithmetic types like <code>bool</code>, <code>int</code>, <code>double</code>, ... etc.; collections like <code>std::unordered_map/set</code>, <code>std::map/set</code>, <code>std::vector</code>, <code>std::tuple</code>, <code>std::pair</code>, <code>std::optional</code>, <code>std::variant</code>, <code>std::array</code> and; all combinations of them.</p>
+<p><b>🔩 extensible:</b> dice-hash supports you with helper functions to define hashes for your own classes. Checkout <a href="#usage">usage</a>.</p>
 <h1><a class="anchor" id="autotoc_md1"></a>
 Requirements</h1>
 <p>A C++20 compatible compiler. Code was only tested on x86_64.</p>
