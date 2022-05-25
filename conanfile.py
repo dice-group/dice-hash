@@ -9,20 +9,18 @@ class DiceHashConan(ConanFile):
     author = "DICE Group <info@dice-research.org>"
     homepage = "https://github.com/dice-group/dice-hash"
     url = homepage
-    options = {'march': 'ANY'}
-    default_options = {'march': None}
     topics = ("hash", "C++", "C++20")
     settings = "build_type", "compiler", "os", "arch"
     generators = "cmake", "cmake_find_package", "cmake_paths"
     exports = "LICENSE"
-    exports_sources = "src/*", "include/*", "CMakeLists.txt", "cmake/*"
+    exports_sources = "include/*", "CMakeLists.txt", "cmake/*"
     no_copy_source = True
     # No settings/options are necessary, this is header only
 
     def set_version(self):
         if not hasattr(self, 'version') or self.version is None:
             cmake_file = load(os.path.join(self.recipe_folder, "CMakeLists.txt"))
-            self.version = re.search("project\(dice-hash VERSION (.*)\)", cmake_file).group(1)
+            self.version = re.search(r"project\([^)]*VERSION\s+(\d+\.\d+.\d+)[^)]*\)", cmake_file).group(1)
 
     def package_id(self):
         self.info.header_only()
@@ -34,8 +32,6 @@ class DiceHashConan(ConanFile):
 
     def package(self):
         cmake = CMake(self)
-        if self.options.march:
-            cmake.definitions['DICE_HASH_MARCH'] = self.options.march
         cmake.configure()
         cmake.install()
 
