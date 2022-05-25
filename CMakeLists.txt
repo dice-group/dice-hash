@@ -53,7 +53,7 @@ include(CMakePackageConfigHelpers)
 write_basic_package_version_file(dice-hash-config-version.cmake COMPATIBILITY SameMajorVersion)
 
 install(TARGETS dice-hash
-        EXPORT dice-hash_Targets
+        EXPORT dice-hash-targets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -66,11 +66,12 @@ write_basic_package_version_file(
         COMPATIBILITY SameMinorVersion
 )
 
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/dice-hash-config-version.cmake DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 # see https://cmake.org/cmake/help/latest/guide/importing-exporting/index.html
-install(EXPORT dice-hash_Targets
-        FILE dice-hashTargets.cmake
+install(EXPORT dice-hash-targets
+        FILE dice-hash-config.cmake
         NAMESPACE Dice::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/dice-hash)
 
