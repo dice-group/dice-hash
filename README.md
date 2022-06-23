@@ -28,7 +28,7 @@ add
 FetchContent_Declare(
         dice-hash
         GIT_REPOSITORY https://github.com/dice-group/dice-hash.git
-        GIT_TAG 0.2.0
+        GIT_TAG 0.4.0
         GIT_SHALLOW TRUE)
 
 FetchContent_MakeAvailable(dice-hash)
@@ -49,9 +49,7 @@ To use it with [conan](https://conan.io/) you need to add the repository:
 conan remote add dice-group https://conan.dice-research.org/artifactory/api/conan/tentris
 ```
 
-To use it add `dice-hash/0.2.0@dice-group/stable` to the `[requires]` section of your conan file.
-
-To activate march=native, you can additionally add `dice-hash:march=native` to the `[options]` section. 
+To use it add `dice-hash/0.4.0@dice-group/stable` to the `[requires]` section of your conan file.
 
 ## build and run tests
 
@@ -62,25 +60,28 @@ cd dice-hash
 #build it
 mkdir build
 cd build
-cmake -DDICE_HASH_BUILD_TESTS -DCMAKE_BUILD_TYPE=Release ..
+cmake -DBUILD_TESTING -DCMAKE_BUILD_TYPE=Release ..
 make -j tests_dice_hash
 ./test/tests_dice_hash
 ```
 
-`-march=native` is activated by the additional CMake option: `-DDICE_HASH_MARCH=native`
-
 ## usage
+You need to include a single header:
+```c++
+#include <dice/hash.hpp>
+```
+
 The hash is already defined for a lot of common types. In that case you can use the `DiceHash` just like `std::hash`.
 ```c++
-Dice::hash::DiceHash<int> hash;
+dice::hash::DiceHash<int> hash;
 hash(42);
 ```
 [basicUsage](examples/basicUsage.cpp) is a run able example for this use-case.
 
-If you need `DiceHash` to be able to work on your own types, you can specialize the `Dice::hash::dice_hash_overload` template:
+If you need `DiceHash` to be able to work on your own types, you can specialize the `dice::hash::dice_hash_overload` template:
 ```c++
 struct YourType{};
-namespace Dice::hash {
+namespace dice::hash {
     template <typename Policy>
     struct dice_hash_overload<Policy, YourType> {
         static std::size_t dice_hash(YourType const& x) noexcept {
@@ -101,7 +102,7 @@ There are the two typetraits `is_ordered_container` and `is_unordered_container`
 You just need to set these typetraits for your own type, and the hash will automatically loop over the entries and hash them.
 ```c++
 struct YourOwnOrderedContainer{...};
-namespace Dice::hash {
+namespace dice::hash {
     template<> struct is_ordered_container<YourOwnOrderedContainer> : std::true_type {};
 }
 ```

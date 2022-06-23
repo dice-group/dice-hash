@@ -21,7 +21,7 @@ jobs:
         run: sudo apt-get -qq update && sudo apt-get -qq install -y git make cmake gcc-10 g++-10 clang-10 libstdc++-10-dev
       # build
       - name: build tests
-        run: mkdir build && cd build && cmake -DDICE_HASH_BUILD_TESTS=ON .. && make -j
+        run: mkdir build && cd build && cmake -DBUILD_TESTING=ON .. && make -j
         env:
           CC: ${{ matrix.CC }}
           CXX: ${{ matrix.CXX }}
@@ -70,7 +70,7 @@ jobs:
         run: sudo apt-get -qq update && sudo apt-get -qq install -y git make cmake gcc-10 g++-10 clang-10 libstdc++-10-dev
       # build
       - name: build examples
-        run: mkdir build && cd build && cmake -DDICE_HASH_BUILD_EXAMPLES=ON .. && make -j
+        run: mkdir build && cd build && cmake -DBUILD_EXAMPLES=ON .. && make -j
         env:
           CC: ${{ matrix.CC }}
           CXX: ${{ matrix.CXX }}
