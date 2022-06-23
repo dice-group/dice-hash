@@ -16,7 +16,6 @@ RUN pip3 install conan && \
 RUN mkdir dice-hash
 WORKDIR /dice-hash
 COPY cmake cmake
-COPY src src
 COPY include include
 COPY tests tests
 COPY CMakeLists.txt CMakeLists.txt
