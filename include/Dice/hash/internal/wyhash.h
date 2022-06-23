@@ -17,7 +17,7 @@
 //protections that produce different results:
 //1: normal valid behavior
 //2: extra protection against entropy loss (probability=2^-63), aka. "blind multiplication"
-#define WYHASH_CONDOM 1
+#define WYHASH_CONDOM 2 // dice-hash always uses comdom 2
 #endif
 
 #ifndef WYHASH_32BIT_MUM
