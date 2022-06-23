@@ -14,7 +14,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
-namespace Dice::hash {
+namespace dice::hash {
 
 	/** Typetrait for checking if a type T is an unordered container.
 	 * An example would be std::unordered_map and std::unordered_set.
@@ -86,6 +86,6 @@ namespace Dice::hash {
 	template<typename T>
 	constexpr bool is_ordered_container_v = is_ordered_container<T>::value;
 
-}// namespace Dice::hash
+}// namespace dice::hash
 
 #endif

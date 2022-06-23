@@ -17,7 +17,7 @@
 //protections that produce different results:
 //1: normal valid behavior
 //2: extra protection against entropy loss (probability=2^-63), aka. "blind multiplication"
-#define WYHASH_CONDOM 1
+#define WYHASH_CONDOM 2 // dice-hash always uses comdom 2
 #endif
 
 #ifndef WYHASH_32BIT_MUM
@@ -42,7 +42,7 @@
 #define _likely_(x) (x)
 #define _unlikely_(x) (x)
 #endif
-namespace Dice::hash::wyhash {
+namespace dice::hash::wyhash {
 	//128bit multiply function
 	static inline uint64_t _wyrot(uint64_t x) { return (x >> 32) | (x << 32); }
 	static inline void _wymum(uint64_t *A, uint64_t *B) {

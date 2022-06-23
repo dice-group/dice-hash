@@ -15,7 +15,7 @@ COPY CMakeLists.txt CMakeLists.txt
 
 #compile
 ENV CC="clang-10" CXX="clang++-10"
-RUN mkdir build && cd build && cmake -DDICE_HASH_BUILD_TESTS=ON .. && make -j
+RUN mkdir build && cd build && cmake -DBUILD_TESTING=ON .. && make -j
 
 #make accessable
 ENTRYPOINT ["build/tests/tests_dice_hash"]

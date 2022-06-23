@@ -1,10 +1,10 @@
-cmake_minimum_required(VERSION 3.13)
-project(dice-hash VERSION 0.3.0)
-include(GNUInstallDirs)
+cmake_minimum_required(VERSION 3.16)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_EXTENSIONS OFF)
+project(
+        dice-hash
+        VERSION 0.4.0
+        DESCRIPTION "dice-hash provides a framework to generate stable hashes. It provides state-of-the-art hash functions, supports STL containers out of the box and helps you to defines stable hashes for your own structs and classes."
+        HOMEPAGE_URL "https://dice-group.github.io/dice-hash/")
 
 # set gcc-10 and clang-10 as minimum versions see
 # https://stackoverflow.com/questions/14933172/how-can-i-add-a-minimum-compiler-version-requisite#14934542
@@ -24,54 +24,23 @@ else()
     MESSAGE(WARNING "Could not verify that your compiler (${CMAKE_CXX_COMPILER}) supports all needed features.")
 endif()
 
+add_library(${PROJECT_NAME} INTERFACE)
+add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
-add_library(dice-hash INTERFACE)
-add_library(dice-hash::dice-hash ALIAS dice-hash)
-add_library(Dice::hash ALIAS dice-hash)
+target_include_directories(
+        ${PROJECT_NAME}
+        INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 
-target_include_directories(dice-hash INTERFACE
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-        )
+include(cmake/install_interface_library.cmake)
+install_interface_library(${PROJECT_NAME} "include")
 
-# non essential code build
-option(DICE_HASH_BUILD_TESTS "Build test programs" OFF)
-if (DICE_HASH_BUILD_TESTS)
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
+    include(CTest)
     enable_testing()
     add_subdirectory(tests)
-endif ()
-option(DICE_HASH_BUILD_EXAMPLES "Build example programs" OFF)
-if (DICE_HASH_BUILD_EXAMPLES)
+endif()
+
+option(BUILD_EXAMPLES "Build example programs" OFF)
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_EXAMPLES)
     add_subdirectory(examples)
-endif ()
-
-# Make package findable
-configure_file(cmake/dummy-config.cmake.in dice-hash-config.cmake @ONLY)
-
-# Enable version checks in find_package
-include(CMakePackageConfigHelpers)
-write_basic_package_version_file(dice-hash-config-version.cmake COMPATIBILITY SameMajorVersion)
-
-install(TARGETS dice-hash
-        EXPORT dice-hash-targets
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-        )
-
-write_basic_package_version_file(
-        dice-hashConfigVersion.cmake
-        VERSION ${PACKAGE_VERSION}
-        COMPATIBILITY SameMinorVersion
-)
-
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/dice-hash-config-version.cmake DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-
-# see https://cmake.org/cmake/help/latest/guide/importing-exporting/index.html
-install(EXPORT dice-hash-targets
-        FILE dice-hash-config.cmake
-        NAMESPACE Dice::
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/dice-hash)
-
+endif()

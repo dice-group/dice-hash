@@ -1,17 +1,17 @@
 #define CATCH_CONFIG_MAIN// This tells Catch to provide a main() - only do this in one cpp file
 
-#include "Dice/hash/DiceHash.hpp"
+#include <dice/hash.hpp>
 #include <catch2/catch.hpp>
 
-#define AllPoliciesToTestForDiceHash Dice::hash::Policies::Martinus, Dice::hash::Policies::xxh3, \
-									 Dice::hash::Policies::wyhash
+#define AllPoliciesToTestForDiceHash dice::hash::Policies::Martinus, dice::hash::Policies::xxh3, \
+									 dice::hash::Policies::wyhash
 #define AllTypesToTestForDiceHash int, long, std::size_t, std::string, std::string_view, int *, long *,                        \
 								  std::string *, std::unique_ptr<int>, std::shared_ptr<int>, std::vector<int>,                 \
 								  std::set<int>, std::unordered_set<int>, (std::array<int, 10>), (std::tuple<int, int, long>), \
 								  (std::pair<int, int>), (std::variant<std::monostate>), (std::variant<int, float, std::string>)
 
 
-namespace Dice::tests::hash {
+namespace dice::tests::hash {
 	struct UserDefinedStruct {
 		int a;
 		UserDefinedStruct(int a) : a(a) {}
@@ -27,7 +27,7 @@ namespace Dice::tests::hash {
 
 	template<typename Policy, typename T>
 	std::size_t getHash(T const &t) {
-		Dice::hash::DiceHash<T, Policy> hasher;
+		dice::hash::DiceHash<T, Policy> hasher;
 		return hasher(t);
 	}
 
@@ -65,7 +65,7 @@ namespace Dice::tests::hash {
 		return p == t;
 	}
 
-	TEMPLATE_PRODUCT_TEST_CASE("DiceHash with default policy compiles for every type", "[DiceHash]", Dice::hash::DiceHash, (AllTypesToTestForDiceHash)) {
+	TEMPLATE_PRODUCT_TEST_CASE("DiceHash with default policy compiles for every type", "[DiceHash]", dice::hash::DiceHash, (AllTypesToTestForDiceHash)) {
 		TestType hasher;
 	}
 
@@ -218,17 +218,17 @@ namespace Dice::tests::hash {
 		}
 
         SECTION("is_faulty returns true if ErrorValue is tested") {
-			REQUIRE(Dice::hash::DiceHash<int, CurrentPolicy>::is_faulty(CurrentPolicy::ErrorValue));
+			REQUIRE(dice::hash::DiceHash<int, CurrentPolicy>::is_faulty(CurrentPolicy::ErrorValue));
 		}
 
         SECTION("is_faulty returns false if value tested isn't ErrorValue") {
-            REQUIRE(Dice::hash::DiceHash<int, CurrentPolicy>::is_faulty(CurrentPolicy::ErrorValue+1) == false);
+            REQUIRE(dice::hash::DiceHash<int, CurrentPolicy>::is_faulty(CurrentPolicy::ErrorValue+1) == false);
         }
 
 		SECTION("Variant monostate returns ErrorValue") {
 			std::variant<std::monostate, int, char> test;
 			auto hashed = getHash<CurrentPolicy>(test);
-            REQUIRE(Dice::hash::DiceHash<decltype(test), CurrentPolicy>::is_faulty(hashed));
+            REQUIRE(dice::hash::DiceHash<decltype(test), CurrentPolicy>::is_faulty(hashed));
 		}
 
 		SECTION("Hash of ill-formed variant is the seed") {
@@ -238,7 +238,7 @@ namespace Dice::tests::hash {
 			} catch (std::domain_error const &) {}
 			// now test is valueless_by_exception
             auto hashed = getHash<CurrentPolicy>(test);
-            REQUIRE(Dice::hash::DiceHash<decltype(test), CurrentPolicy>::is_faulty(hashed));
+            REQUIRE(dice::hash::DiceHash<decltype(test), CurrentPolicy>::is_faulty(hashed));
 		}
 
 		SECTION("user-defined types can be used in collections") {
@@ -254,13 +254,13 @@ namespace Dice::tests::hash {
 			std::size_t b = 4;
 			std::size_t c = 7;
 			std::size_t d = 42;
-			Dice::hash::DiceHash<CurrentPolicy>::hash_invertible_combine({a, b, c, d});
+			dice::hash::DiceHash<CurrentPolicy>::hash_invertible_combine({a, b, c, d});
 		}
 
 		SECTION("dice_hash_invertible_combine is self inverse") {
 			std::size_t a = 3;
 			std::size_t b = 4;
-			REQUIRE(a == Dice::hash::DiceHash<CurrentPolicy>::hash_invertible_combine({a, b, a, a, b}));
+			REQUIRE(a == dice::hash::DiceHash<CurrentPolicy>::hash_invertible_combine({a, b, a, a, b}));
 		}
 
 		SECTION("dice_hash_combine can be called with any number of size_t") {
@@ -268,17 +268,17 @@ namespace Dice::tests::hash {
 			std::size_t b = 4;
 			std::size_t c = 7;
 			std::size_t d = 42;
-			Dice::hash::DiceHash<CurrentPolicy>::hash_combine({a, b, c, d});
+			dice::hash::DiceHash<CurrentPolicy>::hash_combine({a, b, c, d});
 		}
 	}
-}// namespace Dice::tests::hash
+}// namespace dice::tests::hash
 
 /*
 * Define hash for test structures.
 */
-namespace Dice::hash {
-	using Dice::tests::hash::UserDefinedStruct;
-	using Dice::tests::hash::ValuelessByException;
+namespace dice::hash {
+	using dice::tests::hash::UserDefinedStruct;
+	using dice::tests::hash::ValuelessByException;
 
 	template<typename Policy>
 	struct dice_hash_overload<Policy, UserDefinedStruct> {
@@ -292,4 +292,4 @@ namespace Dice::hash {
 			return 0;
 		}
 	};
-}// namespace Dice::hash
+}// namespace dice::hash

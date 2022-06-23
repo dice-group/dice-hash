@@ -38,7 +38,7 @@
 #include <initializer_list>
 
 
-namespace Dice::hash::martinus {
+namespace dice::hash::martinus {
 
 	inline constexpr std::size_t m = 0xc6a4a7935bd1e995UL;
 	inline constexpr std::size_t seed = 0xe17a1465UL;
@@ -171,6 +171,6 @@ namespace Dice::hash::martinus {
 		auto h = rotr(h1 + h2, 32U);
 		return static_cast<size_t>(h);
 	}
-}// namespace Dice::hash::martinus
+}// namespace dice::hash::martinus
 
 #endif//HYPERTRIE_MARTINUS_ROBINHOOD_HASH_HPP

@@ -1,3 +1,7 @@
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 add_executable(basicUsage basicUsage.cpp)
 target_link_libraries(basicUsage PRIVATE
         dice-hash::dice-hash
