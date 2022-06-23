@@ -49,12 +49,6 @@ jobs:
         env:
           CC: gcc-10
           CXX: g++-10
-      - name: upload the package
-        run: |
-          VERSION=$(conan inspect . --raw version)
-          echo "$VERSION"
-          conan remove "$(conan inspect . --raw name)/$(conan inspect . --raw version)@dice-group/stable" -r dice-group -f
-          conan upload "$(conan inspect . --raw name)/$(conan inspect . --raw version)@dice-group/stable" --force --all -r dice-group
 
   #simply build the dockerfile and execute the produced image.
   #If you want to upload a docker image, you probably should have a look at https://github.com/docker/build-push-action
