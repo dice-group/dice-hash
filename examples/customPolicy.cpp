@@ -1,4 +1,4 @@
-#include <Dice/hash/DiceHash.hpp>
+#include <dice/hash.hpp>
 #include <initializer_list>
 #include <iostream>
 #include <numeric>
@@ -40,6 +40,6 @@ struct NotWorkingPolicy {};
 
 
 int main() {
-	std::cout << Dice::hash::DiceHash<int, MyCustomPolicy>()(42) << std::endl;
-    //std::cout << Dice::hash::DiceHash<int, NotWorkingPolicy>()(42) << std::endl;
+	std::cout << dice::hash::DiceHash<int, MyCustomPolicy>()(42) << std::endl;
+    //std::cout << dice::hash::DiceHash<int, NotWorkingPolicy>()(42) << std::endl;
 }

@@ -1,10 +1,10 @@
-#include <Dice/hash/DiceHash.hpp>
+#include <dice/hash.hpp>
 #include <iostream>
 #include <unordered_set>
 
 int main() {
     std::unordered_set<int> setDefault;
-	std::unordered_set<int, Dice::hash::DiceHash<int>> setDice;
+	std::unordered_set<int, dice::hash::DiceHash<int>> setDice;
 	for (int i = 0; i < 100; ++i) {
 		setDefault.insert(i);
         setDice.insert(i);

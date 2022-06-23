@@ -1,4 +1,4 @@
-#include <Dice/hash/DiceHash.hpp>
+#include <dice/hash.hpp>
 #include <iostream>
 #include <string>
 
@@ -12,21 +12,21 @@ public:
 		: a(a), b(b), c(std::move(c)) {}
 
 	// With this, the DiceHash can work on private data
-	template<Dice::hash::Policies::HashPolicy, typename>
-	friend class Dice::hash::dice_hash_overload;
+	template<dice::hash::Policies::HashPolicy, typename>
+	friend class dice::hash::dice_hash_overload;
 };
 
-namespace Dice::hash {
+namespace dice::hash {
 	template<typename Policy>
 	struct dice_hash_overload<Policy, MyCustomClass> {
 		static std::size_t dice_hash(MyCustomClass const &s) noexcept {
 			return dice_hash_templates<Policy>::dice_hash(std::make_tuple(s.a, s.b, s.c));
 		}
 	};
-}// namespace Dice::hash
+}// namespace dice::hash
 
 int main() {
 	MyCustomClass objC{42, 'c', "hello World!"};
-	Dice::hash::DiceHash<MyCustomClass> hasher;
+	dice::hash::DiceHash<MyCustomClass> hasher;
 	std::cout << "hasher(objC): " << hasher(objC) << '\n';
 }

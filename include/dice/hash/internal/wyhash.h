@@ -42,7 +42,7 @@
 #define _likely_(x) (x)
 #define _unlikely_(x) (x)
 #endif
-namespace Dice::hash::wyhash {
+namespace dice::hash::wyhash {
 	//128bit multiply function
 	static inline uint64_t _wyrot(uint64_t x) { return (x >> 32) | (x << 32); }
 	static inline void _wymum(uint64_t *A, uint64_t *B) {

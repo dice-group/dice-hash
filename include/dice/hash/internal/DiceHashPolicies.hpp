@@ -6,7 +6,7 @@
 #include "xxhash.hpp"
 #include <type_traits>
 
-namespace Dice::hash::Policies {
+namespace dice::hash::Policies {
     template<typename T>
     concept HashPolicy =
     std::is_convertible_v<decltype(T::ErrorValue), std::size_t>
@@ -23,29 +23,29 @@ namespace Dice::hash::Policies {
 	struct wyhash {
 		inline static constexpr uint64_t kSeed = 0xe17a1465UL;
 		inline static constexpr uint64_t kWyhashSalt[4] = {
-				Dice::hash::wyhash::_wyp[0],
-				Dice::hash::wyhash::_wyp[1],
-				Dice::hash::wyhash::_wyp[2],
-				Dice::hash::wyhash::_wyp[3]
+				dice::hash::wyhash::_wyp[0],
+				dice::hash::wyhash::_wyp[1],
+				dice::hash::wyhash::_wyp[2],
+				dice::hash::wyhash::_wyp[3]
 		};
 		inline static constexpr std::size_t ErrorValue = kSeed;
 
 		template<typename T>
 		static std::size_t hash_fundamental(T x) noexcept {
 			if constexpr (std::is_integral_v<T>) {
-				return static_cast<std::size_t>(Dice::hash::wyhash::wyhash64(kSeed, x));
+				return static_cast<std::size_t>(dice::hash::wyhash::wyhash64(kSeed, x));
 			}
-			return static_cast<std::size_t>(Dice::hash::wyhash::wyhash(&x, sizeof(T), kSeed, kWyhashSalt));
+			return static_cast<std::size_t>(dice::hash::wyhash::wyhash(&x, sizeof(T), kSeed, kWyhashSalt));
 		}
 
 		static std::size_t hash_bytes(void const *ptr, std::size_t len) noexcept {
-			return static_cast<std::size_t>(Dice::hash::wyhash::wyhash(ptr, len, kSeed, kWyhashSalt));
+			return static_cast<std::size_t>(dice::hash::wyhash::wyhash(ptr, len, kSeed, kWyhashSalt));
 		}
 
 		static std::size_t hash_combine(std::initializer_list<size_t> hashes) noexcept {
 			uint64_t state = kSeed;
 			for (auto hash : hashes) {
-				state = Dice::hash::wyhash::_wymix(state, hash);
+				state = dice::hash::wyhash::_wymix(state, hash);
 			}
 			return static_cast<std::size_t>(state);
 		}
@@ -64,7 +64,7 @@ namespace Dice::hash::Policies {
 		public:
 			explicit HashState(std::size_t) noexcept {}
 			void add (std::size_t hash) noexcept {
-				state = Dice::hash::wyhash::_wymix(state, static_cast<uint64_t>(hash));
+				state = dice::hash::wyhash::_wymix(state, static_cast<uint64_t>(hash));
 			}
             [[nodiscard]] std::size_t digest() noexcept {
 				return static_cast<std::size_t>(state);
@@ -111,22 +111,22 @@ namespace Dice::hash::Policies {
 	};
 
 	struct Martinus {
-		static constexpr std::size_t ErrorValue = Dice::hash::martinus::seed;
+		static constexpr std::size_t ErrorValue = dice::hash::martinus::seed;
 		template<typename T>
 		static std::size_t hash_fundamental(T x) noexcept {
 			if constexpr (sizeof(std::decay_t<T>) == sizeof(size_t)) {
-				return Dice::hash::martinus::hash_int(*reinterpret_cast<size_t const *>(&x));
+				return dice::hash::martinus::hash_int(*reinterpret_cast<size_t const *>(&x));
 			} else if constexpr (sizeof(std::decay_t<T>) > sizeof(size_t) or std::is_floating_point_v<std::decay_t<T>>) {
 				return hash_bytes(&x, sizeof(x));
 			} else {
-				return Dice::hash::martinus::hash_int(static_cast<size_t>(x));
+				return dice::hash::martinus::hash_int(static_cast<size_t>(x));
 			}
 		}
 		static std::size_t hash_bytes(void const *ptr, std::size_t len) noexcept {
-			return Dice::hash::martinus::hash_bytes(ptr, len);
+			return dice::hash::martinus::hash_bytes(ptr, len);
 		}
 		static std::size_t hash_combine(std::initializer_list<size_t> hashes) noexcept {
-			return Dice::hash::martinus::hash_combine(hashes);
+			return dice::hash::martinus::hash_combine(hashes);
 		}
 		static std::size_t hash_invertible_combine(std::initializer_list<size_t> hashes) noexcept {
 			std::size_t result = 0;
@@ -137,7 +137,7 @@ namespace Dice::hash::Policies {
 		}
 		class HashState {
 		private:
-			Dice::hash::martinus::HashState state;
+			dice::hash::martinus::HashState state;
 
 		public:
 			explicit HashState(std::size_t size) noexcept : state(size) {}
@@ -149,5 +149,5 @@ namespace Dice::hash::Policies {
 			}
 		};
 	};
-}// namespace Dice::hash::Policies
+}// namespace dice::hash::Policies
 #endif//DICE_HASH_DICEHASHPOLICIES_HPP

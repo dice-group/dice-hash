@@ -9,8 +9,8 @@
  * Because of that (and to not worry about versioning problems) this hash function was created.
  */
 
-#include "Dice/hash/internal/Container_trait.hpp"
-#include "Dice/hash/internal/DiceHashPolicies.hpp"
+#include "dice/hash/internal/Container_trait.hpp"
+#include "dice/hash/internal/DiceHashPolicies.hpp"
 #include <cstring>
 #include <map>
 #include <memory>
@@ -27,7 +27,7 @@
 /** Home of the DiceHash.
  *
  */
-namespace Dice::hash {
+namespace dice::hash {
 
 	/** Helper struct for defining the hash for custom structs.
 	 * Because of partial specialization problems with functions, this struct must be specialized to define the hash for a custom type.
@@ -116,7 +116,7 @@ namespace Dice::hash {
 	public:
 		/** Base case for dice_hash.
          * This case is only chosen if no other match is found in this struct.
-         * Than it tries to find a specialization of Dice::hash::dice_hash_overload and
+         * Than it tries to find a specialization of dice::hash::dice_hash_overload and
          * if none is found, this function will not compile.
          * @tparam T The type to hash.
          * @return Hash value.
@@ -297,7 +297,7 @@ namespace Dice::hash {
 		}
 	};
 
-	/** Wrapper class for the Dice::hash::dice_hash function.
+	/** Wrapper class for the dice::hash::dice_hash function.
      * It is a typical hash interface.
      * @tparam T The type to define the hash for.
      * @tparam Policy The Policy defines how the hash works on a basic level.
@@ -343,5 +343,5 @@ namespace Dice::hash {
     using DiceHashxxh3 = DiceHash<T, Policies::xxh3>;
     template <typename T>
     using DiceHashwyhash = DiceHash<T, Policies::wyhash>;
-}// namespace Dice::hash
+}// namespace dice::hash
 #endif//DICE_HASH_DICEHASH_HPP
