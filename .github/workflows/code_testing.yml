@@ -42,15 +42,6 @@ jobs:
       - name: run image
         run: docker run dockerimage
 
-  # simply build the dockerfile for the conan package test.
-  build_conanPackageTest:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2
-      # build (and run it directly)
-      - name: build image
-        run: docker build -t dockerimage -f tests/conanPackageTest/Dockerfile .
-
   # simply build the examples and execute them.
   build_examples:
     runs-on: ubuntu-20.04
