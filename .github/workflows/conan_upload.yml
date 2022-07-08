@@ -26,5 +26,5 @@ jobs:
         run: |
           VERSION=$(conan inspect . --raw version)
           echo "$VERSION"
-          conan remove "$(conan inspect . --raw name)/$(conan inspect . --raw version)@dice-group/stable" -r dice-group -f
-          conan upload "$(conan inspect . --raw name)/$(conan inspect . --raw version)@dice-group/stable" --force --all -r dice-group
+          conan remove "$(conan inspect . --raw name)/$(conan inspect . --raw version)" -r dice-group -f
+          conan upload "$(conan inspect . --raw name)/$(conan inspect . --raw version)" --force --all -r dice-group
