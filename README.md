@@ -49,7 +49,7 @@ To use it with [conan](https://conan.io/) you need to add the repository:
 conan remote add dice-group https://conan.dice-research.org/artifactory/api/conan/tentris
 ```
 
-To use it add `dice-hash/0.4.0@dice-group/stable` to the `[requires]` section of your conan file.
+To use it add `dice-hash/0.4.1` to the `[requires]` section of your conan file.
 
 ## build and run tests
 
