@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['hash_69',['hash',['../namespaceDice_1_1hash.html',1,'Dice']]]
+  ['hash_0',['hash',['../namespacedice_1_1hash.html',1,'dice']]]
 ];

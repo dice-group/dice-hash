@@ -1,7 +1,4 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="node1" title=" " alt="" coords="5,144,104,171"/>
-<area shape="rect" id="node2" href="$structDice_1_1hash_1_1is__ordered__container_3_01std_1_1map_3_01Key_00_01T_00_01Compare_00_01Allocator_01_4_01_4.html" title="Specialization for std::map." alt="" coords="154,5,355,61"/>
-<area shape="rect" id="node3" href="$structDice_1_1hash_1_1is__ordered__container_3_01std_1_1set_3_01Key_00_01Compare_00_01Allocator_01_4_01_4.html" title="Specialization for std::set." alt="" coords="161,85,348,141"/>
-<area shape="rect" id="node4" href="$structDice_1_1hash_1_1is__unordered__container_3_01std_1_1unordered__map_3_01Key_00_01T_00_01Has5e7947411899036e45b171fdfd76bf75.html" title="Specialization for std::unordered_map." alt="" coords="152,166,357,237"/>
-<area shape="rect" id="node5" href="$structDice_1_1hash_1_1is__unordered__container_3_01std_1_1unordered__set_3_01Key_00_01Hash_00_011f4d7f8a223955449b962cc51658d1f5.html" title="Specialization for std::unordered_set." alt="" coords="163,261,346,331"/>
+<area shape="rect" id="node1" href="$structdice_1_1hash_1_1Policies_1_1Martinus.html" title=" " alt="" coords="5,5,137,45"/>
+<area shape="rect" id="node2" href="$structdice_1_1hash_1_1DiceHash.html" title="Wrapper class for the dice::hash::dice_hash function." alt="" coords="185,5,328,45"/>
 </map>
