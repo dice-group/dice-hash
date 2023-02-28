@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(
         dice-hash
-        VERSION 0.4.1
+        VERSION 0.4.2
         DESCRIPTION "dice-hash provides a framework to generate stable hashes. It provides state-of-the-art hash functions, supports STL containers out of the box and helps you to defines stable hashes for your own structs and classes."
         HOMEPAGE_URL "https://dice-group.github.io/dice-hash/")
 

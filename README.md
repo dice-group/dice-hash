@@ -28,7 +28,7 @@ add
 FetchContent_Declare(
         dice-hash
         GIT_REPOSITORY https://github.com/dice-group/dice-hash.git
-        GIT_TAG 0.4.0
+        GIT_TAG 0.4.2
         GIT_SHALLOW TRUE)
 
 FetchContent_MakeAvailable(dice-hash)
@@ -49,7 +49,7 @@ To use it with [conan](https://conan.io/) you need to add the repository:
 conan remote add dice-group https://conan.dice-research.org/artifactory/api/conan/tentris
 ```
 
-To use it add `dice-hash/0.4.1` to the `[requires]` section of your conan file.
+To use it add `dice-hash/0.4.2` to the `[requires]` section of your conan file.
 
 ## build and run tests
 
@@ -107,6 +107,7 @@ namespace dice::hash {
 }
 ```
 Now you can use `DiceHash` with your container.
+
 __However__:
 Your container __needs__ to have `begin`, `end` and `size` functions.
 One simple example can be found [here](examples/customContainer.cpp).
