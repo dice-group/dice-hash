@@ -1,7 +1,7 @@
 import re, os
 
 from conan import ConanFile
-from conan.tools.cmake import CMake
+from conan.tools.cmake import CMake, cmake_layout
 from conan.tools.files import load, rmdir, copy
 
 
@@ -32,23 +32,18 @@ class DiceHashConan(ConanFile):
             cmake_file = load(self, os.path.join(self.recipe_folder, "CMakeLists.txt"))
             self.description = re.search(r"project\([^)]*DESCRIPTION\s+\"([^\"]+)\"[^)]*\)", cmake_file).group(1)
 
+    def layout(self):
+        cmake_layout(self)
+
     def package_id(self):
         self.info.header_only()
 
     _cmake = None
 
-    def _configure_cmake(self):
-        if self._cmake:
-            return self._cmake
-        self._cmake = CMake(self)
-        self._cmake.configure()
-        return self._cmake
-
-    def build(self):
-        self._configure_cmake().build()
-
     def package(self):
-        self._configure_cmake().install()
+        cmake = CMake(self)
+        cmake.configure()
+        cmake.install()
         for dir in ("lib", "res", "share"):
             rmdir(self, os.path.join(self.package_folder, dir))
         copy(self, pattern="LICENSE*", dst="licenses", src=self.folders.source_folder)
