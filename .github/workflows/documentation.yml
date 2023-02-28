@@ -3,13 +3,17 @@ name: documentation
 on:
   push:
     branches:
-      - master
+      - main
+
+concurrency:
+  group: publish-conan-branch-package-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   generate_doxygen_docu:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       # https://github.com/marketplace/actions/doxygen-action
       - name: generate docu
         uses: mattnotmitt/doxygen-action@v1
