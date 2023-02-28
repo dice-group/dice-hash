@@ -38,8 +38,6 @@ class DiceHashConan(ConanFile):
     def package_id(self):
         self.info.header_only()
 
-    _cmake = None
-
     def package(self):
         cmake = CMake(self)
         cmake.configure()
