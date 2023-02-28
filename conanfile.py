@@ -32,11 +32,6 @@ class DiceHashConan(ConanFile):
             cmake_file = load(self, os.path.join(self.recipe_folder, "CMakeLists.txt"))
             self.description = re.search(r"project\([^)]*DESCRIPTION\s+\"([^\"]+)\"[^)]*\)", cmake_file).group(1)
 
-    def set_version(self):
-        if not hasattr(self, 'version') or self.version is None:
-            cmake_file = load(self, os.path.join(self.recipe_folder, "CMakeLists.txt"))
-            self.version = re.search(r"project\([^)]*VERSION\s+(\d+\.\d+.\d+)[^)]*\)", cmake_file).group(1)
-
     def package_id(self):
         self.info.header_only()
 
