@@ -19,6 +19,9 @@ class DiceHashConan(ConanFile):
 
     # No settings/options are necessary, this is header only
 
+    def requirements(self):
+        self.requires("libsodium/cci.20220430")
+
     def set_name(self):
         if not hasattr(self, 'name') or self.version is None:
             cmake_file = load(self, os.path.join(self.recipe_folder, "CMakeLists.txt"))

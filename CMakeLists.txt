@@ -24,15 +24,27 @@ else()
     MESSAGE(WARNING "Could not verify that your compiler (${CMAKE_CXX_COMPILER}) supports all needed features.")
 endif()
 
-add_library(${PROJECT_NAME} INTERFACE)
+include(cmake/FindSodium.cmake)
+
+add_library(${PROJECT_NAME} include/dice/hash/internal/lthash/Blake2xb.cpp)
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
 target_include_directories(
         ${PROJECT_NAME}
-        INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 
-include(cmake/install_interface_library.cmake)
-install_interface_library(${PROJECT_NAME} "include")
+target_link_libraries(
+        ${PROJECT_NAME}
+        PRIVATE sodium)
+
+set_target_properties(
+        ${PROJECT_NAME} PROPERTIES
+        CXX_STANDARD 20
+        CXX_EXTENSIONS OFF
+        CXX_STANDARD_REQUIRED ON)
+
+#include(cmake/install_interface_library.cmake)
+#install_interface_library(${PROJECT_NAME} "include")
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
     include(CTest)

@@ -17,6 +17,12 @@ target_link_libraries(tests_dice_hash PRIVATE
         dice-hash::dice-hash
         )
 
+add_executable(tests_lthash TestLtHash.cpp)
+target_link_libraries(tests_lthash PRIVATE
+        Catch2::Catch2
+        dice-hash::dice-hash
+        )
+
 include(CTest)
 list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/contrib)
 include(Catch)
