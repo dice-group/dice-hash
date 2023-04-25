@@ -20,7 +20,7 @@ class DiceHashConan(ConanFile):
     # No settings/options are necessary, this is header only
 
     def requirements(self):
-        self.requires("libsodium/cci.20220430")
+        self.requires("libsodium/cci.20220430") # TODO, I don't think this script is executed
 
     def set_name(self):
         if not hasattr(self, 'name') or self.version is None:
