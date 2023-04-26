@@ -13,9 +13,10 @@
 
 #include <array>
 #include <vector>
+#include <memory>
 
-#include "dice/hash/internal/blake2xb/Blake2xb.hpp"
-#include "dice/hash/internal/lthash/MathEngine.hpp"
+#include "dice/hash/blake2xb/Blake2xb.hpp"
+#include "dice/hash/lthash/MathEngine.hpp"
 
 namespace dice::hash::internal::lthash {
 
@@ -45,6 +46,11 @@ namespace dice::hash::internal::lthash {
 			static constexpr bool needs_padding = false;
 			static constexpr size_t bits_per_element = 32;
 		};
+
+		template<size_t size, size_t align>
+		struct AlignedByteBuffer {
+			alignas(align) std::byte data_[size];
+		};
 	} // namespace detail
 
 	/**
@@ -52,14 +58,15 @@ namespace dice::hash::internal::lthash {
 	 * @tparam B
 	 * @tparam N
 	 */
-	template<size_t n_bits_per_elem, size_t n_elems>
-		requires (n_elems >= 1000 && ((n_bits_per_elem == 16 && n_elems % 32 == 0)
+	template<size_t n_bits_per_elem, size_t n_elems, template<typename> typename MathEngineT = DefaultMathEngine>
+		requires ((n_elems >= 1000 && ((n_bits_per_elem == 16 && n_elems % 32 == 0)
 										 || (n_bits_per_elem == 20 && n_elems % 24 == 0)
 										 || (n_bits_per_elem == 32 && n_elems % 16 == 0)))
+				 && MathEngine<MathEngineT, detail::Bits<n_bits_per_elem>>)
 	struct LtHash {
 	private:
 		using Bits = detail::Bits<n_bits_per_elem>;
-		using MathEngine = detail::MathEngine<Bits>;
+		using MathEngine = MathEngineT<Bits>;
 
 		static constexpr size_t elems_per_uint64() {
 			return Bits::needs_padding ? (sizeof(uint64_t) * 8) / (n_bits_per_elem + 1)
@@ -75,11 +82,20 @@ namespace dice::hash::internal::lthash {
 		static constexpr std::array<std::byte, checksum_len> default_checksum{};
 
 	private:
+		using ChecksumBuf = detail::AlignedByteBuffer<checksum_len, MathEngine::min_buffer_align>;
+
 		std::vector<std::byte> key_;
-		std::vector<std::byte> checksum_;
+		std::unique_ptr<ChecksumBuf> checksum_ = std::make_unique<ChecksumBuf>();
 
 		void hash_object(std::span<std::byte, checksum_len> out, std::span<std::byte const> obj) noexcept {
-			blake2xb::Blake2xb<checksum_len> blake{key_};
+			auto blake = [&]() {
+				if (key_.empty()) {
+					return blake2xb::Blake2xb<checksum_len>{};
+				} else {
+					return blake2xb::Blake2xb<checksum_len>{key_};
+				}
+			}();
+
 			blake.digest(obj);
 			std::move(blake).finish(out);
 
@@ -89,8 +105,41 @@ namespace dice::hash::internal::lthash {
 		}
 
 	public:
-		explicit LtHash(std::span<std::byte const, checksum_len> initial_checksum = default_checksum) noexcept(!needs_padding) : checksum_(checksum_len) {
+		explicit LtHash(std::span<std::byte const, checksum_len> initial_checksum = default_checksum) noexcept(!needs_padding) {
 			set_checksum(initial_checksum);
+		}
+
+		LtHash(LtHash const &other) : key_{other.key_},
+									  checksum_{std::make_unique<ChecksumBuf>(*other.checksum_)} {
+		}
+
+		LtHash(LtHash &&other) noexcept : key_{std::move(other.key_)},
+										  checksum_{std::move(other.checksum_)} {
+		}
+
+		LtHash &operator=(LtHash const &other) {
+			if (this == &other) {
+				return *this;
+			}
+
+			clear_key();
+			if (!other.key_.empty()) {
+				set_key(std::span<std::byte const>{other.key_});
+			}
+
+			set_checksum(other.checksum_->data_);
+			return *this;
+		}
+
+		LtHash &operator=(LtHash &&other) noexcept {
+			if (this == &other) {
+				return *this;
+			}
+
+			clear_key();
+			key_ = std::move(other.key_);
+			checksum_ = std::move(other.checksum_);
+			return *this;
 		}
 
 		~LtHash() noexcept {
@@ -118,16 +167,20 @@ namespace dice::hash::internal::lthash {
 		}
 
 		void set_checksum(std::span<std::byte const, checksum_len> new_checksum) noexcept(!needs_padding) {
-			std::copy(new_checksum.begin(), new_checksum.end(), checksum_.begin());
+			if (checksum_ == nullptr) {
+				checksum_ = std::make_unique<ChecksumBuf>();
+			}
+
+			std::copy(new_checksum.begin(), new_checksum.end(), std::begin(checksum_->data_));
 			if constexpr (needs_padding) {
-				if (!MathEngine::check_padding_bits(checksum_)) [[unlikely]] {
+				if (!MathEngine::check_padding_bits(checksum_->data_)) [[unlikely]] {
 					throw std::runtime_error{"Invalid checksum: found non-zero padding bits"};
 				}
 			}
 		}
 
-		void reset() noexcept {
-			std::fill(checksum_.begin(), checksum_.end(), std::byte{0});
+		void clear_checksum() noexcept {
+			std::fill(std::begin(checksum_->data_), std::end(checksum_->data_), std::byte{0});
 		}
 
 		LtHash &combine_add(LtHash const &other) {
@@ -135,7 +188,7 @@ namespace dice::hash::internal::lthash {
 				throw std::runtime_error{"Cannot combine hashes with different keys"};
 			}
 
-			MathEngine::add(checksum_, other.checksum_, checksum_);
+			MathEngine::add(checksum_->data_, other.checksum_->data_, checksum_->data_);
 			return *this;
 		}
 
@@ -144,28 +197,26 @@ namespace dice::hash::internal::lthash {
 				throw std::runtime_error{"Cannot combine hashes with different keys"};
 			}
 
-			MathEngine::sub(checksum_, other.checksum_, checksum_);
+			MathEngine::sub(checksum_->data_, other.checksum_->data_, checksum_->data_);
 			return *this;
 		}
 
 		LtHash &add(std::span<std::byte const> obj) noexcept {
-			using H = std::array<std::byte, checksum_len>;
-			H h;
-			hash_object(h, obj);
-			MathEngine::add(checksum_, h, checksum_);
+			ChecksumBuf h;
+			hash_object(h.data_, obj);
+			MathEngine::add(checksum_->data_, h.data_, checksum_->data_);
 			return *this;
 		}
 
 		LtHash &remove(std::span<std::byte const> obj) noexcept {
-			using H = std::array<std::byte, checksum_len>;
-			H h;
-			hash_object(h, obj);
-			MathEngine::sub(checksum_, h, checksum_);
+			ChecksumBuf h;
+			hash_object(h.data_, obj);
+			MathEngine::sub(checksum_->data_, h.data_, checksum_->data_);
 			return *this;
 		}
 
 		[[nodiscard]] std::span<std::byte const, checksum_len> checksum() const noexcept {
-			return {*reinterpret_cast<std::byte const (*)[checksum_len]>(checksum_.data())};
+			return checksum_->data_;
 		}
 
 		[[nodiscard]] bool key_equal(std::span<std::byte const> other_key) const noexcept {
@@ -177,7 +228,7 @@ namespace dice::hash::internal::lthash {
 		}
 
 		bool operator==(LtHash const &other) const noexcept {
-			return sodium_memcmp(checksum_.data(), other.checksum_.data(), checksum_.size()) == 0;
+			return sodium_memcmp(checksum_->data_, other.checksum_->data_, checksum_len) == 0;
 		}
 
 		bool operator!=(LtHash const &other) const noexcept {

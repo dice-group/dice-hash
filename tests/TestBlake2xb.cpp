@@ -1,9 +1,5 @@
-#define CATCH_CONFIG_MAIN// This tells Catch to provide a main() - only do this in one cpp file
-
-#include <dice/hash.hpp>
-#include <catch2/catch.hpp>
-
-#include <dice/hash/internal/blake2xb/Blake2xb.hpp>
+#include <catch2/catch_all.hpp>
+#include <dice/hash/blake2xb/Blake2xb.hpp>
 
 #include "TestBlake2xb_data.hpp"
 

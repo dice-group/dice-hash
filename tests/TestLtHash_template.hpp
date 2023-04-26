@@ -1,6 +1,4 @@
-#define CATCH_CONFIG_MAIN// This tells Catch to provide a main() - only do this in one cpp file
-
-#include <dice/hash/internal/lthash/LtHash.hpp>
+#include <dice/hash/lthash/LtHash.hpp>
 #include <iostream>
 
 // integer value -> hexadecimal ascii representation (e.g 0 => '0', 10 => 'a')
@@ -37,7 +35,7 @@ namespace dice::hash::internal::lthash {
 	}
 } // namespace dice::hash::internal::lthash
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 #include <algorithm>
 #include <memory>
@@ -87,7 +85,7 @@ struct LtHashTest {
 /**
  * @note tests are adapted from: https://github.com/facebook/folly/blob/main/folly/experimental/crypto/test/LtHashTest.cpp
  */
-TEMPLATE_TEST_CASE("LtHash using " DICE_HASH_TEST_INSTRUCTION_SET, "[DiceHash]", ALL_CONFIGS) {
+TEMPLATE_TEST_CASE("Test LtHash using " DICE_HASH_TEST_INSTRUCTION_SET, "[DiceHash]", ALL_CONFIGS) {
 	using H = TestType;
 	using T = LtHashTest<H>;
 
@@ -104,7 +102,7 @@ TEMPLATE_TEST_CASE("LtHash using " DICE_HASH_TEST_INSTRUCTION_SET, "[DiceHash]",
 		H h;
 		h.add(T::obj1);
 		CHECK(h != T::empty_hash);
-		h.reset();
+		h.clear_checksum();
 		CHECK(h == T::empty_hash);
 	}
 
