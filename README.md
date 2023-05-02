@@ -2,10 +2,12 @@
 
 dice-hash provides a framework to generate stable hashes. It provides state-of-the-art hash functions, supports STL containers out of the box and helps you to defines stable hashes for your own structs and classes. 
 
-**🔋 batteries included:** dice-hash defines _policies_ to support different hash algorithms. It comes with predefined policies for three state-of-the-art hash functions:
+**🔋 batteries included:** dice-hash defines _policies_ to support different hash algorithms. It comes with predefined policies for five state-of-the-art hash functions:
 - [XXH3](https://github.com/Cyan4973/xxHash)
 - [wyhash](https://github.com/wangyi-fudan/wyhash)
 - "martinus", the internal hash function from [robin-hood-hashing](https://github.com/martinus/robin-hood-hashing)
+- [Blake2xb](https://www.blake2.net/blake2x.pdf)
+- [LtHash](https://engineering.fb.com/2019/03/01/security/homomorphic-hashing/)
 
 **📦 STL out of the box:** dice-hash supports many common STL types already: 
 arithmetic types like `bool`, `int`, `double`, ... etc.; collections like `std::unordered_map/set`, `std::map/set`, `std::vector`, `std::tuple`, `std::pair`, `std::optional`, `std::variant`, `std::array` and; all combinations of them. 
