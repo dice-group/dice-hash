@@ -6,6 +6,9 @@ project(
         DESCRIPTION "dice-hash provides a framework to generate stable hashes. It provides state-of-the-art hash functions, supports STL containers out of the box and helps you to defines stable hashes for your own structs and classes."
         HOMEPAGE_URL "https://dice-group.github.io/dice-hash/")
 
+include(cmake/boilerplate_init.cmake)
+boilerplate_init()
+
 # set gcc-10 and clang-10 as minimum versions see
 # https://stackoverflow.com/questions/14933172/how-can-i-add-a-minimum-compiler-version-requisite#14934542
 set(MIN_COMPILER_VERSION_GCC "10.0.0")
