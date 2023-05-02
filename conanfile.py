@@ -12,7 +12,7 @@ class DiceHashConan(ConanFile):
     url = homepage
     topics = ("hash", "wyhash", "xxh3", "robin-hood-hash", "Blake2xb", "LtHash", "C++", "C++20")
     settings = "build_type", "compiler", "os", "arch"
-    generators = ("CMakeDeps", "CMakeToolchain")
+    generators = ("cmake_find_package", "CMakeDeps", "CMakeToolchain")
     exports = "LICENSE"
     exports_sources = "include/*", "CMakeLists.txt", "cmake/*", "LICENSE"
     no_copy_source = True

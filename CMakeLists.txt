@@ -36,10 +36,18 @@ if (PROJECT_IS_TOP_LEVEL AND USE_CONAN)
     install_packages_via_conan("${CMAKE_SOURCE_DIR}/conanfile.py" "${CONAN_OPTIONS}")
 endif ()
 
-find_package(sodium QUIET)
-
+find_package(sodium QUIET) # try canonical name first
+set(sodium_dep "sodium")
 if (NOT sodium_FOUND)
-    include(cmake/FindSodium.cmake)
+    find_package(libsodium QUIET) #  next try the name used by conan
+    set(sodium_dep "libsodium::libsodium")
+    if (NOT libsodium_FOUND)
+        message(libsodium not found)
+        include(cmake/FindSodium.cmake) # finally try the FindSodium.cmake provided with this repo
+        if (NOT sodium_FOUND)
+            message(FATAL_ERROR "Sodium was not found.")
+        endif ()
+    endif ()
 endif ()
 
 add_library(${PROJECT_NAME} INTERFACE)
@@ -51,7 +59,7 @@ target_include_directories(
 
 target_link_libraries(
         ${PROJECT_NAME}
-        INTERFACE sodium)
+        INTERFACE ${sodium_dep})
 
 set_target_properties(
         ${PROJECT_NAME} PROPERTIES

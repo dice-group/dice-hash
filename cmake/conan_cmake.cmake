@@ -18,7 +18,8 @@ macro(install_packages_via_conan conanfile conan_options)
         conan_cmake_install(PATH_OR_REFERENCE ${conanfile}
                 BUILD missing
                 SETTINGS ${settings}
-                OPTIONS "${conan_options}")
+                OPTIONS "${conan_options}"
+                ENV_HOST "CONAN_DISABLE_STRICT_MODE=1;CXX=${CMAKE_CXX_COMPILER};CC=${CMAKE_C_COMPILER}")
     else ()
         message(WARNING "No conan executable was found. Dependency retrieval via conan is disabled. System dependencies will be used if available.")
     endif ()
