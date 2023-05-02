@@ -140,7 +140,7 @@ namespace dice::hash::blake2xb {
 		}
 
 		struct PrivateTag {};
-		static constexpr PrivateTag private_tag;
+		static constexpr PrivateTag private_tag{};
 
 		Blake2xb(PrivateTag,
 				 size_t output_len,
