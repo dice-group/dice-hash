@@ -42,9 +42,9 @@ if (NOT sodium_FOUND)
     find_package(libsodium QUIET) #  next try the name used by conan
     set(sodium_dep "libsodium::libsodium")
     if (NOT libsodium_FOUND)
-        message(libsodium not found)
         include(cmake/FindSodium.cmake) # finally try the FindSodium.cmake provided with this repo
-        if (NOT sodium_FOUND)
+        set(sodium_dep "sodium")
+        if (NOT Sodium_FOUND)
             message(FATAL_ERROR "Sodium was not found.")
         endif ()
     endif ()
@@ -60,12 +60,6 @@ target_include_directories(
 target_link_libraries(
         ${PROJECT_NAME}
         INTERFACE ${sodium_dep})
-
-set_target_properties(
-        ${PROJECT_NAME} PROPERTIES
-        CXX_STANDARD 20
-        CXX_EXTENSIONS OFF
-        CXX_STANDARD_REQUIRED ON)
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND NOT DEFINED DICE_HASH_CACHE_LINE_SIZE)
     execute_process(COMMAND getconf LEVEL1_DCACHE_LINESIZE OUTPUT_VARIABLE DICE_HASH_GET_CLSZ_OUT OUTPUT_STRIP_TRAILING_WHITESPACE RESULT_VARIABLE DICE_HASH_GET_CLSZ_RES)
