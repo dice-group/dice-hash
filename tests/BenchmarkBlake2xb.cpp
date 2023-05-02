@@ -5,7 +5,7 @@
 * @note Benchmarks adapted from https://github.com/facebook/folly/blob/main/folly/experimental/crypto/test/Blake2xbBenchmark.cpp
 */
 
-using namespace dice::hash::internal;
+using namespace dice::hash;
 
 void benchmark_blake2b(size_t input_size, size_t n) {
 	std::array<uint8_t, crypto_generichash_blake2b_BYTES_MAX> result;

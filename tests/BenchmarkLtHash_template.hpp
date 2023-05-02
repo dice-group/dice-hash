@@ -27,7 +27,7 @@ std::vector<std::vector<std::byte>> objects = []() {
 	return ret;
 }();
 
-using namespace dice::hash::internal::lthash;
+using namespace dice::hash::lthash;
 
 template<size_t B, size_t N>
 void run_benchmark(size_t n) {

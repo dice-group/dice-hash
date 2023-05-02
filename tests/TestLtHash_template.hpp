@@ -27,13 +27,13 @@ std::string to_hex(std::span<std::byte const> bytes) noexcept {
 	return buf;
 }
 
-namespace dice::hash::internal::lthash {
+namespace dice::hash::lthash {
 	template <size_t B, size_t N>
 	std::ostream &operator<<(std::ostream &os, LtHash<B, N> const &h) {
 		os << to_hex(h.checksum());
 		return os;
 	}
-} // namespace dice::hash::internal::lthash
+} // namespace dice::hash::lthash
 
 #include <catch2/catch_all.hpp>
 
@@ -46,7 +46,7 @@ namespace dice::hash::internal::lthash {
 
 #include <sodium.h>
 
-using namespace dice::hash::internal::lthash;
+using namespace dice::hash::lthash;
 
 std::vector<std::byte> make_random_data(size_t length) {
 	std::vector<std::byte> data;

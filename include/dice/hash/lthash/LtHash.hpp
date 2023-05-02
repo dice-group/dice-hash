@@ -266,14 +266,9 @@ namespace dice::hash::lthash {
 		}
 	};
 
-	template<template<typename> typename MathEngine = DefaultMathEngine, typename Allocator = std::allocator<std::byte>>
-	using LtHash16 = LtHash<16, 1024, MathEngine, Allocator>;
-
-	template<template<typename> typename MathEngine = DefaultMathEngine, typename Allocator = std::allocator<std::byte>>
-	using LtHash20 = LtHash<20, 1008, MathEngine, Allocator>;
-
-	template<template<typename> typename MathEngine = DefaultMathEngine, typename Allocator = std::allocator<std::byte>>
-	using LtHash32 = LtHash<32, 1024, MathEngine, Allocator>;
+	using LtHash16 = LtHash<16, 1024>;
+	using LtHash20 = LtHash<20, 1008>;
+	using LtHash32 = LtHash<32, 1024>;
 
 } // namespace dice::hash::lthash
 

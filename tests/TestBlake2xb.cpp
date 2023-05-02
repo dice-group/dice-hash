@@ -3,7 +3,7 @@
 
 #include "TestBlake2xb_data.hpp"
 
-using namespace dice::hash::internal;
+using namespace dice::hash;
 
 // integer value -> hexadecimal ascii representation (e.g 0 => '0', 10 => 'a')
 static constexpr std::array<char, 16> encode_lut{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
