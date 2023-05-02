@@ -11,7 +11,7 @@
 
 #include "dice/hash/lthash/MathEngine_Simple.hpp"
 
-namespace dice::hash::internal::lthash {
+namespace dice::hash::lthash {
 	template<typename B>
 	concept UnpaddedBits = requires {
 		{ B::bits_per_element } -> std::convertible_to<size_t>;
@@ -53,6 +53,6 @@ namespace dice::hash::internal::lthash {
 	using DefaultMathEngine = MathEngine_Simple<Bits>;
 #endif
 
-} // namespace dice::hash::internal::lthash
+} // namespace dice::hash::lthash
 
 #endif//DICE_HASH_MATHENGINE_HPP

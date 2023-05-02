@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <span>
 
-namespace dice::hash::internal::lthash {
+namespace dice::hash::lthash {
 
 	// todo deduplicate with other definitions
 	template<typename T>
@@ -137,6 +137,6 @@ namespace dice::hash::internal::lthash {
 		}
 	};
 
-} // namespace dice::hash::internal::lthash
+} // namespace dice::hash::lthash
 
 #endif//DICE_HASH_MATHENGINE_SIMPLE_HPP

@@ -7,7 +7,7 @@
 
 #include <emmintrin.h>
 
-namespace dice::hash::internal::lthash {
+namespace dice::hash::lthash {
 
 	template<typename Bits>
 	struct MathEngine_SSE2 {
@@ -141,6 +141,6 @@ namespace dice::hash::internal::lthash {
 		}
 	};
 
-} // namespace dice::hash::internal::lthash
+} // namespace dice::hash::lthash
 
 #endif//DICE_HASH_MATHENGINE_SSE2_HPP

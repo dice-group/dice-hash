@@ -17,7 +17,7 @@
 
 #include <sodium.h>
 
-namespace dice::hash::internal::blake2xb {
+namespace dice::hash::blake2xb {
 
 	namespace detail {
 		template<typename T>
@@ -253,6 +253,6 @@ namespace dice::hash::internal::blake2xb {
 		}
 	};
 
-} // namespace dice::hash::internal::blake2xb
+} // namespace dice::hash::blake2xb
 
 #endif//DICE_HASH_BLAKE2XB_HPP

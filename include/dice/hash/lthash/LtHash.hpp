@@ -13,12 +13,13 @@
 
 #include <array>
 #include <vector>
+#include <utility>
 #include <memory>
 
 #include "dice/hash/blake2xb/Blake2xb.hpp"
 #include "dice/hash/lthash/MathEngine.hpp"
 
-namespace dice::hash::internal::lthash {
+namespace dice::hash::lthash {
 
 	namespace detail {
 		template <size_t B>
@@ -58,7 +59,7 @@ namespace dice::hash::internal::lthash {
 	 * @tparam B
 	 * @tparam N
 	 */
-	template<size_t n_bits_per_elem, size_t n_elems, template<typename> typename MathEngineT = DefaultMathEngine>
+	template<size_t n_bits_per_elem, size_t n_elems, template<typename> typename MathEngineT = DefaultMathEngine, typename Allocator = std::allocator<std::byte>>
 		requires ((n_elems >= 1000 && ((n_bits_per_elem == 16 && n_elems % 32 == 0)
 										 || (n_bits_per_elem == 20 && n_elems % 24 == 0)
 										 || (n_bits_per_elem == 32 && n_elems % 16 == 0)))
@@ -74,6 +75,7 @@ namespace dice::hash::internal::lthash {
 		}
 
 	public:
+		using allocator_type = Allocator;
 		static constexpr size_t element_bits = n_bits_per_elem;
 		static constexpr bool needs_padding = Bits::needs_padding;
 		static constexpr size_t element_count = n_elems;
@@ -83,16 +85,22 @@ namespace dice::hash::internal::lthash {
 
 	private:
 		using ChecksumBuf = detail::AlignedByteBuffer<checksum_len, MathEngine::min_buffer_align>;
+		using alloc_traits = std::allocator_traits<Allocator>;
+		using ChecksumBuf_alloc_traits = typename alloc_traits::template rebind_traits<ChecksumBuf>;
+		using ChecksumBuf_allocator = typename ChecksumBuf_alloc_traits::allocator_type;
+		using ChecksumBuf_pointer = typename ChecksumBuf_alloc_traits::pointer;
 
-		std::vector<std::byte> key_;
-		std::unique_ptr<ChecksumBuf> checksum_ = std::make_unique<ChecksumBuf>();
+		std::vector<std::byte, Allocator> key_;
+
+		ChecksumBuf_allocator checksum_alloc_;
+		ChecksumBuf_pointer checksum_;
 
 		void hash_object(std::span<std::byte, checksum_len> out, std::span<std::byte const> obj) noexcept {
 			auto blake = [&]() {
 				if (key_.empty()) {
 					return blake2xb::Blake2xb<checksum_len>{};
 				} else {
-					return blake2xb::Blake2xb<checksum_len>{key_};
+					return blake2xb::Blake2xb<checksum_len>{std::span<std::byte const>{key_.data(), key_.size()}};
 				}
 			}();
 
@@ -104,17 +112,33 @@ namespace dice::hash::internal::lthash {
 			}
 		}
 
+		void set_checksum_unchecked(std::span<std::byte const, checksum_len> new_checksum) noexcept {
+			std::copy(new_checksum.begin(), new_checksum.end(), std::begin(checksum_->data_));
+		}
+
 	public:
-		explicit LtHash(std::span<std::byte const, checksum_len> initial_checksum = default_checksum) noexcept(!needs_padding) {
+		explicit LtHash(allocator_type alloc = allocator_type{}) : key_{alloc},
+																   checksum_alloc_{alloc},
+																   checksum_{ChecksumBuf_alloc_traits::allocate(checksum_alloc_, 1)} {
+			set_checksum_unchecked(default_checksum);
+		}
+
+		explicit LtHash(std::span<std::byte const, checksum_len> initial_checksum,
+						allocator_type alloc = allocator_type{}) : key_{alloc},
+																   checksum_alloc_{alloc},
+																   checksum_{ChecksumBuf_alloc_traits::allocate(checksum_alloc_, 1)} {
 			set_checksum(initial_checksum);
 		}
 
 		LtHash(LtHash const &other) : key_{other.key_},
-									  checksum_{std::make_unique<ChecksumBuf>(*other.checksum_)} {
+									  checksum_alloc_{ChecksumBuf_alloc_traits::select_on_container_copy_construction(other.checksum_alloc_)} {
+			checksum_ = ChecksumBuf_alloc_traits::allocate(checksum_alloc_, 1);
+			set_checksum_unchecked(other.checksum_->data_);
 		}
 
 		LtHash(LtHash &&other) noexcept : key_{std::move(other.key_)},
-										  checksum_{std::move(other.checksum_)} {
+										  checksum_alloc_{std::move(other.checksum_alloc_)},
+										  checksum_{std::exchange(other.checksum_, ChecksumBuf_pointer{})} {
 		}
 
 		LtHash &operator=(LtHash const &other) {
@@ -127,7 +151,12 @@ namespace dice::hash::internal::lthash {
 				set_key(std::span<std::byte const>{other.key_});
 			}
 
-			set_checksum(other.checksum_->data_);
+			checksum_alloc_ = ChecksumBuf_alloc_traits::select_on_container_copy_construction(other.checksum_alloc_);
+			if (checksum_ == nullptr) {
+				checksum_ = ChecksumBuf_alloc_traits::allocate(checksum_alloc_, 1);
+			}
+			set_checksum_unchecked(other.checksum_->data_);
+
 			return *this;
 		}
 
@@ -138,12 +167,17 @@ namespace dice::hash::internal::lthash {
 
 			clear_key();
 			key_ = std::move(other.key_);
-			checksum_ = std::move(other.checksum_);
+			checksum_alloc_ = std::move(other.checksum_alloc_);
+			checksum_ = std::exchange(other.checksum_, ChecksumBuf_pointer{});
 			return *this;
 		}
 
 		~LtHash() noexcept {
 			clear_key();
+
+			if (checksum_ != nullptr) {
+				checksum_alloc_.deallocate(checksum_, 1);
+			}
 		}
 
 		template<size_t supplied_key_len>
@@ -167,11 +201,7 @@ namespace dice::hash::internal::lthash {
 		}
 
 		void set_checksum(std::span<std::byte const, checksum_len> new_checksum) noexcept(!needs_padding) {
-			if (checksum_ == nullptr) {
-				checksum_ = std::make_unique<ChecksumBuf>();
-			}
-
-			std::copy(new_checksum.begin(), new_checksum.end(), std::begin(checksum_->data_));
+			set_checksum_unchecked(new_checksum);
 			if constexpr (needs_padding) {
 				if (!MathEngine::check_padding_bits(checksum_->data_)) [[unlikely]] {
 					throw std::runtime_error{"Invalid checksum: found non-zero padding bits"};
@@ -236,10 +266,15 @@ namespace dice::hash::internal::lthash {
 		}
 	};
 
-	using LtHash16 = LtHash<16, 1024>;
-	using LtHash20 = LtHash<20, 1008>;
-	using LtHash32 = LtHash<32, 1024>;
+	template<template<typename> typename MathEngine = DefaultMathEngine, typename Allocator = std::allocator<std::byte>>
+	using LtHash16 = LtHash<16, 1024, MathEngine, Allocator>;
 
-} // namespace dice::hash::internal::lthash
+	template<template<typename> typename MathEngine = DefaultMathEngine, typename Allocator = std::allocator<std::byte>>
+	using LtHash20 = LtHash<20, 1008, MathEngine, Allocator>;
+
+	template<template<typename> typename MathEngine = DefaultMathEngine, typename Allocator = std::allocator<std::byte>>
+	using LtHash32 = LtHash<32, 1024, MathEngine, Allocator>;
+
+} // namespace dice::hash::lthash
 
 #endif//DICE_HASH_LTHASH_HPP

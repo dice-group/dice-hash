@@ -10,17 +10,24 @@ class DiceHashConan(ConanFile):
     author = "DICE Group <info@dice-research.org>"
     homepage = "https://github.com/dice-group/dice-hash"
     url = homepage
-    topics = ("hash", "wyhash", "xxh3", "robin-hood-hash", "C++", "C++20")
+    topics = ("hash", "wyhash", "xxh3", "robin-hood-hash", "Blake2xb", "LtHash", "C++", "C++20")
     settings = "build_type", "compiler", "os", "arch"
     generators = ("CMakeDeps", "CMakeToolchain")
     exports = "LICENSE"
     exports_sources = "include/*", "CMakeLists.txt", "cmake/*", "LICENSE"
     no_copy_source = True
+    options = {"with_test_deps": [True, False]}
+    default_options = {"with_test_deps": False}
 
     # No settings/options are necessary, this is header only
 
     def requirements(self):
-        self.requires("libsodium/cci.20220430") # TODO, I don't think this script is executed
+        self.requires("libsodium/cci.20220430")
+
+        if self.options.with_test_deps:
+            self.requires("metall/0.21")
+
+        # TODO needs boost override to be able to compile on clang16
 
     def set_name(self):
         if not hasattr(self, 'name') or self.version is None:

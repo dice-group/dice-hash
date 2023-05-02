@@ -9,9 +9,7 @@
 #include <immintrin.h>
 #include <sodium.h>
 
-// TODO: buffer alignment??
-
-namespace dice::hash::internal::lthash {
+namespace dice::hash::lthash {
 
 	template<typename Bits>
 	struct MathEngine_AVX2 {
@@ -145,6 +143,6 @@ namespace dice::hash::internal::lthash {
 		}
 	};
 
-} // namespace dice::hash::internal::lthash
+} // namespace dice::hash::lthash
 
 #endif//DICE_HASH_MATHENGINE_AVX2_HPP

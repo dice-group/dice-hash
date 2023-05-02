@@ -86,3 +86,34 @@ target_link_libraries(benchmark_LtHash_AVX2 PRIVATE
         )
 set_target_properties(benchmark_LtHash_AVX2 PROPERTIES CXX_STANDARD 20)
 catch_discover_tests(benchmark_LtHash_AVX2)
+
+set(Metall_DIR ../build/Debug/generators) # TODO FIX PROPERLY
+set(Boost_DIR ../build/Debug/generators)
+set(BZip2_DIR ../build/Debug/generators)
+set(ZLIB_DIR ../build/Debug/generators)
+set(libbacktrace_DIR ../build/Debug/generators)
+find_package(Metall REQUIRED)
+
+add_executable(TestLtHash_metall_phase1 TestLtHash_metall_phase1.cpp)
+target_link_libraries(TestLtHash_metall_phase1 PRIVATE
+        dice-hash::dice-hash
+        Metall::Metall
+        )
+set_target_properties(TestLtHash_metall_phase1 PROPERTIES CXX_STANDARD 20)
+
+add_executable(TestLtHash_metall_phase2 TestLtHash_metall_phase2.cpp)
+target_link_libraries(TestLtHash_metall_phase2 PRIVATE
+        dice-hash::dice-hash
+        Metall::Metall
+        )
+set_target_properties(TestLtHash_metall_phase2 PROPERTIES CXX_STANDARD 20)
+
+add_executable(tests_LtHash_metall TestLtHash_metall.cpp)
+add_dependencies(tests_LtHash_metall TestLtHash_metall_phase1 TestLtHash_metall_phase2)
+target_link_libraries(tests_LtHash_metall PRIVATE
+        Catch2::Catch2 Catch2WithMain
+        dice-hash::dice-hash
+        Metall::Metall
+        )
+set_target_properties(tests_LtHash_metall PROPERTIES CXX_STANDARD 20)
+catch_discover_tests(tests_LtHash_metall)
