@@ -101,9 +101,11 @@ jobs:
       - name: run examples
         run: |
           build/examples/basicUsage
+          build/examples/blake2xb
           build/examples/policyUsage
           build/examples/customContainer
           build/examples/customPolicy
           build/examples/customType
+          build/examples/ltHash
           build/examples/usageForUnorderedSet
           build/examples/combineHashes
