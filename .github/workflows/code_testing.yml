@@ -25,7 +25,7 @@ jobs:
         run: |
           sudo apt-get -qq update && sudo apt-get -qq install -y git make cmake gcc-10 g++-10 clang-10 libstdc++-10-dev
           sudo pip3 install "conan==1.59"
-          conan profile --detect default
+          conan profile new --detect default
           conan profile update settings.compiler.libcxx=libstdc++11 default
       # build
       - name: build tests
