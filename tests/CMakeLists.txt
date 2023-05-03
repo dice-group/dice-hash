@@ -87,11 +87,6 @@ target_link_libraries(benchmark_LtHash_AVX2 PRIVATE
 set_target_properties(benchmark_LtHash_AVX2 PROPERTIES CXX_STANDARD 20)
 catch_discover_tests(benchmark_LtHash_AVX2)
 
-set(Metall_DIR ../build/Debug/generators) # TODO FIX PROPERLY
-set(Boost_DIR ../build/Debug/generators)
-set(BZip2_DIR ../build/Debug/generators)
-set(ZLIB_DIR ../build/Debug/generators)
-set(libbacktrace_DIR ../build/Debug/generators)
 find_package(Metall REQUIRED)
 
 add_executable(TestLtHash_metall_phase1 TestLtHash_metall_phase1.cpp)
