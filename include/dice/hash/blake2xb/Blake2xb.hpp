@@ -181,7 +181,7 @@ namespace dice::hash::blake2xb {
 		explicit Blake2xb(std::span<std::byte const> key = {},
 						  std::span<std::byte const, salt_extent> salt = default_salt,
 						  std::span<std::byte const, personality_extent> personality = default_personality)
-			: Blake2xb{private_tag, output_extent, key, salt, personality} {
+			: Blake2xb{private_tag, output_extent == dynamic_output_extent ? 0 : output_extent, key, salt, personality} {
 		}
 
 		void digest(std::span<std::byte const> data) noexcept {
