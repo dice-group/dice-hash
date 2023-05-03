@@ -35,7 +35,12 @@ jobs:
           CXX: ${{ matrix.CXX }}
       # execute
       - name: run tests
-        run: build/tests/tests_dice_hash
+        run: |
+          build/tests/tests_Blake2xb
+          build/tests/tests_dice_hash
+          build/tests/tests_LtHash_AVX2
+          build/tests/tests_LtHash_simple
+          build/tests/tests_LtHash_SSE2
 
   test_conan_packaging:
     runs-on: ubuntu-20.04
