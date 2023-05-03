@@ -27,7 +27,7 @@ class DiceHashConan(ConanFile):
         if self.options.with_test_deps:
             self.requires("metall/0.21")
 
-        # TODO needs boost override to be able to compile on clang16
+        self.requires("boost/1.81.0")  # override because older boost versions don't build with clang-16+
 
     def set_name(self):
         if not hasattr(self, 'name') or self.version is None:

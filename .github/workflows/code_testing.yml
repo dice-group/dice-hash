@@ -22,7 +22,11 @@ jobs:
       - uses: actions/checkout@v3
       # setup
       - name: install needed packages
-        run: sudo apt-get -qq update && sudo apt-get -qq install -y git make cmake gcc-10 g++-10 clang-10 libstdc++-10-dev
+        run: |
+          sudo apt-get -qq update && sudo apt-get -qq install -y git make cmake gcc-10 g++-10 clang-10 libstdc++-10-dev
+          sudo pip3 install "conan==1.59"
+          conan profile --detect default
+          conan profile update settings.compiler.libcxx=libstdc++11 default
       # build
       - name: build tests
         run: mkdir build && cd build && cmake -DBUILD_TESTING=ON .. && make -j
