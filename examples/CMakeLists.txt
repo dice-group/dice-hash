@@ -36,3 +36,13 @@ add_executable(combineHashes combineHashes.cpp)
 target_link_libraries(combineHashes PRIVATE
         dice-hash::dice-hash
         )
+
+add_executable(blake2xb blake2xb.cpp)
+target_link_libraries(blake2xb PRIVATE
+        dice-hash::dice-hash
+        )
+
+add_executable(ltHash ltHash.cpp)
+target_link_libraries(ltHash PRIVATE
+        dice-hash::dice-hash
+        )
