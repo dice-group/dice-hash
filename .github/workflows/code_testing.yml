@@ -36,7 +36,8 @@ jobs:
       # execute
       - name: run tests
         run: |
-          build/tests/tests_Blake2xb
+          build/tests/tests_Blake2b
+          build/tests/tests_Blake2Xb
           build/tests/tests_dice_hash
           build/tests/tests_LtHash_AVX2
           build/tests/tests_LtHash_simple
@@ -106,6 +107,7 @@ jobs:
       - name: run examples
         run: |
           build/examples/basicUsage
+          build/examples/blake2b
           build/examples/blake2xb
           build/examples/policyUsage
           build/examples/customContainer

@@ -32,13 +32,13 @@ if (WITH_SODIUM)
     set_target_properties(tests_Blake2b PROPERTIES CXX_STANDARD 20)
     catch_discover_tests(tests_Blake2b)
 
-    add_executable(tests_Blake2xb TestBlake2xb.cpp)
-    target_link_libraries(tests_Blake2xb PRIVATE
+    add_executable(tests_Blake2Xb TestBlake2Xb.cpp)
+    target_link_libraries(tests_Blake2Xb PRIVATE
             Catch2::Catch2 Catch2WithMain
             dice-hash::dice-hash
             )
-    set_target_properties(tests_Blake2xb PROPERTIES CXX_STANDARD 20)
-    catch_discover_tests(tests_Blake2xb)
+    set_target_properties(tests_Blake2Xb PROPERTIES CXX_STANDARD 20)
+    catch_discover_tests(tests_Blake2Xb)
 
     add_executable(tests_LtHash_simple TestLtHash_simple.cpp)
     target_link_libraries(tests_LtHash_simple PRIVATE
