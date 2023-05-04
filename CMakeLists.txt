@@ -27,8 +27,10 @@ else()
     MESSAGE(WARNING "Could not verify that your compiler (${CMAKE_CXX_COMPILER}) supports all needed features.")
 endif()
 
+OPTION(WITH_SODIUM "Enabled usage of libsodium for Blake2b, Blake2Xb and LtHash" ON)
+
 OPTION(USE_CONAN "If available, use conan to retrieve dependencies." ON)
-if (PROJECT_IS_TOP_LEVEL AND USE_CONAN)
+if (PROJECT_IS_TOP_LEVEL AND USE_CONAN AND (BUILD_TESTING OR WITH_SODIUM))
     include(cmake/conan_cmake.cmake)
     if (PROJECT_IS_TOP_LEVEL AND BUILD_TESTING)
         set(CONAN_DICE_HASH_WITH_TEST_DEPS "True")
@@ -39,17 +41,29 @@ if (PROJECT_IS_TOP_LEVEL AND USE_CONAN)
     install_packages_via_conan("${CMAKE_SOURCE_DIR}/conanfile.py" "${CONAN_OPTIONS}")
 endif ()
 
-find_package(sodium QUIET) # try canonical name first
-set(sodium_dep "sodium")
-if (NOT sodium_FOUND)
-    find_package(libsodium QUIET) #  next try the name used by conan
-    set(sodium_dep "libsodium::libsodium")
-    if (NOT libsodium_FOUND)
-        include(cmake/FindSodium.cmake) # finally try the FindSodium.cmake provided with this repo
-        set(sodium_dep "sodium")
-        if (NOT Sodium_FOUND)
-            message(FATAL_ERROR "Sodium was not found.")
+if (WITH_SODIUM)
+    find_package(sodium QUIET) # try canonical name first
+    set(sodium_dep "sodium")
+    if (NOT sodium_FOUND)
+        find_package(libsodium QUIET) #  next try the name used by conan
+        set(sodium_dep "libsodium::libsodium")
+        if (NOT libsodium_FOUND)
+            include(cmake/FindSodium.cmake) # finally try the FindSodium.cmake provided with this repo
+            set(sodium_dep "sodium")
+            if (NOT Sodium_FOUND)
+                message(FATAL_ERROR "Sodium was not found.")
+            endif ()
         endif ()
+    endif ()
+
+    if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND NOT DEFINED DICE_HASH_CACHE_LINE_SIZE)
+        execute_process(COMMAND getconf LEVEL1_DCACHE_LINESIZE OUTPUT_VARIABLE DICE_HASH_GET_CLSZ_OUT OUTPUT_STRIP_TRAILING_WHITESPACE RESULT_VARIABLE DICE_HASH_GET_CLSZ_RES)
+        if (DICE_HASH_GET_CLSZ_RES STREQUAL 0)
+            set(DICE_HASH_CACHE_LINE_SIZE ${DICE_HASH_GET_CLSZ_OUT})
+        endif ()
+
+        unset(DICE_HASH_GET_CLSZ_OUT)
+        unset(DICE_HASH_GET_CLSZ_RES)
     endif ()
 endif ()
 
@@ -64,19 +78,15 @@ target_link_libraries(
         ${PROJECT_NAME}
         INTERFACE ${sodium_dep})
 
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND NOT DEFINED DICE_HASH_CACHE_LINE_SIZE)
-    execute_process(COMMAND getconf LEVEL1_DCACHE_LINESIZE OUTPUT_VARIABLE DICE_HASH_GET_CLSZ_OUT OUTPUT_STRIP_TRAILING_WHITESPACE RESULT_VARIABLE DICE_HASH_GET_CLSZ_RES)
-    if(DICE_HASH_GET_CLSZ_RES STREQUAL 0)
-        set(DICE_HASH_CACHE_LINE_SIZE ${DICE_HASH_GET_CLSZ_OUT})
-    endif()
+if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+    if (WITH_SODIUM)
+        target_compile_definitions(${PROJECT_NAME} INTERFACE DICE_HASH_WITH_SODIUM=1)
+    endif ()
 
-    unset(DICE_HASH_GET_CLSZ_OUT)
-    unset(DICE_HASH_GET_CLSZ_RES)
-endif()
-
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND DEFINED DICE_HASH_CACHE_LINE_SIZE)
-    target_compile_definitions(${PROJECT_NAME} INTERFACE DICE_HASH_CACHE_LINE_SIZE=${DICE_HASH_CACHE_LINE_SIZE})
-endif()
+    if (DEFINED DICE_HASH_CACHE_LINE_SIZE)
+        target_compile_definitions(${PROJECT_NAME} INTERFACE DICE_HASH_CACHE_LINE_SIZE=${DICE_HASH_CACHE_LINE_SIZE})
+    endif ()
+endif ()
 
 include(cmake/install_interface_library.cmake)
 install_interface_library(${PROJECT_NAME} "include")

@@ -37,12 +37,19 @@ target_link_libraries(combineHashes PRIVATE
         dice-hash::dice-hash
         )
 
-add_executable(blake2xb blake2xb.cpp)
-target_link_libraries(blake2xb PRIVATE
-        dice-hash::dice-hash
-        )
+if (WITH_SODIUM)
+    add_executable(blake2b blake2b.cpp)
+    target_link_libraries(blake2b PRIVATE
+            dice-hash::dice-hash
+            )
 
-add_executable(ltHash ltHash.cpp)
-target_link_libraries(ltHash PRIVATE
-        dice-hash::dice-hash
-        )
+    add_executable(blake2xb blake2xb.cpp)
+    target_link_libraries(blake2xb PRIVATE
+            dice-hash::dice-hash
+            )
+
+    add_executable(ltHash ltHash.cpp)
+    target_link_libraries(ltHash PRIVATE
+            dice-hash::dice-hash
+            )
+endif ()

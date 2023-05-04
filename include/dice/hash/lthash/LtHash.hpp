@@ -1,6 +1,9 @@
 #ifndef DICE_HASH_LTHASH_HPP
 #define DICE_HASH_LTHASH_HPP
 
+#ifndef DICE_HASH_WITH_SODIUM
+#error "Cannot include LtHash if libsodium support is disabled."
+#else
 /**
  * Implementation of LtHash from the following paper:
  * 		Title: Securing Update Propagation with Homomorphic Hashing
@@ -272,4 +275,5 @@ namespace dice::hash::lthash {
 
 } // namespace dice::hash::lthash
 
+#endif//DICE_HASH_WITH_SODIUM
 #endif//DICE_HASH_LTHASH_HPP

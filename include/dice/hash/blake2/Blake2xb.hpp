@@ -1,6 +1,9 @@
 #ifndef DICE_HASH_BLAKE2XB_HPP
 #define DICE_HASH_BLAKE2XB_HPP
 
+#ifndef DICE_HASH_WITH_SODIUM
+#error "Cannot include Blake2Xb if libsodium support is disabled."
+#else
 /**
  * @brief Implementation of Blake2xb (https://www.blake2.net/blake2x.pdf)
  * @note Implementation adapted from https://github.com/facebook/folly/blob/main/folly/experimental/crypto/Blake2xb.h
@@ -268,4 +271,5 @@ namespace dice::hash::blake2xb {
 
 } // namespace dice::hash::blake2xb
 
+#endif//DICE_HASH_WITH_SODIUM
 #endif//DICE_HASH_BLAKE2XB_HPP
