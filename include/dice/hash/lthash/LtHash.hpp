@@ -16,7 +16,7 @@
 #include <utility>
 #include <memory>
 
-#include "dice/hash/blake2xb/Blake2xb.hpp"
+#include "dice/hash/blake2/Blake2xb.hpp"
 #include "dice/hash/lthash/MathEngine.hpp"
 
 namespace dice::hash::lthash {

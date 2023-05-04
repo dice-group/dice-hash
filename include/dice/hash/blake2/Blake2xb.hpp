@@ -6,6 +6,8 @@
  * @note Implementation adapted from https://github.com/facebook/folly/blob/main/folly/experimental/crypto/Blake2xb.h
  */
 
+#include "dice/hash/blake2/Blake2b.hpp"
+
 #include <algorithm>
 #include <bit>
 #include <cstddef>
@@ -48,11 +50,19 @@ namespace dice::hash::blake2xb {
 	inline constexpr size_t min_output_extent = 1;
 	inline constexpr size_t max_output_extent = std::numeric_limits<uint32_t>::max() - 1;
 	inline constexpr size_t dynamic_output_extent = std::dynamic_extent;
-	inline constexpr size_t salt_extent = crypto_generichash_blake2b_SALTBYTES;
-	inline constexpr size_t personality_extent = crypto_generichash_blake2b_PERSONALBYTES;
 
-	inline constexpr std::array<std::byte, salt_extent> default_salt{};
-	inline constexpr std::array<std::byte, personality_extent> default_personality{};
+	using ::dice::hash::blake2b::salt_extent;
+	using ::dice::hash::blake2b::default_salt;
+
+	using ::dice::hash::blake2b::personality_extent;
+	using ::dice::hash::blake2b::default_personality;
+
+	using ::dice::hash::blake2b::min_key_extent;
+	using ::dice::hash::blake2b::max_key_extent;
+	using ::dice::hash::blake2b::default_key_extent;
+	using ::dice::hash::blake2b::dynamic_key_extent;
+
+	using ::dice::hash::blake2b::generate_key;
 
 	/**
 	 * @brief Blake2xb ported from folly::experimental::crypto
@@ -125,10 +135,6 @@ namespace dice::hash::blake2xb {
 					  std::byte{});
 
 			if (!key.empty()) {
-				if (key.size() < crypto_generichash_blake2b_KEYBYTES_MIN || key.size() > crypto_generichash_blake2b_KEYBYTES_MAX) {
-					throw std::runtime_error{"Invalid blake2b key size"};
-				}
-
 				std::array<std::byte, 128> block; {
 					auto write_end = std::copy(key.begin(), key.end(), block.begin());
 					std::fill(write_end, block.end(), std::byte{});
@@ -154,6 +160,12 @@ namespace dice::hash::blake2xb {
 				throw std::runtime_error{"Output length too large"};
 			}
 
+			if (!key.empty()) {
+				if (key.size() < min_key_extent || key.size() > max_key_extent) {
+					throw std::runtime_error{"Invalid blake2b key size"};
+				}
+			}
+
 			if (auto const res = sodium_init(); res == -1) {
 				throw std::runtime_error{"Could not initialize sodium"};
 			}
@@ -174,13 +186,14 @@ namespace dice::hash::blake2xb {
 		explicit Blake2xb(size_t output_len,
 						  std::span<std::byte const> key = {},
 						  std::span<std::byte const, salt_extent> salt = default_salt,
-						  std::span<std::byte const, personality_extent> personality = default_personality) requires (output_extent == dynamic_output_extent)
+						  std::span<std::byte const, personality_extent> personality = default_personality) /*noexcept(sodium is initialized && output_len is within size constraints && key.size() is within size constaints)*/
+			requires (output_extent == dynamic_output_extent)
 			: Blake2xb{private_tag, output_len, key, salt, personality} {
 		}
 
 		explicit Blake2xb(std::span<std::byte const> key = {},
 						  std::span<std::byte const, salt_extent> salt = default_salt,
-						  std::span<std::byte const, personality_extent> personality = default_personality)
+						  std::span<std::byte const, personality_extent> personality = default_personality) /*noexcept(sodium is initialized && key.size() is within size constraints)*/
 			: Blake2xb{private_tag, output_extent == dynamic_output_extent ? 0 : output_extent, key, salt, personality} {
 		}
 

@@ -23,6 +23,14 @@ target_link_libraries(tests_dice_hash PRIVATE
 set_target_properties(tests_dice_hash PROPERTIES CXX_STANDARD 20)
 catch_discover_tests(tests_dice_hash)
 
+add_executable(tests_Blake2b TestBlake2b.cpp)
+target_link_libraries(tests_Blake2b PRIVATE
+        Catch2::Catch2 Catch2WithMain
+        dice-hash::dice-hash
+        )
+set_target_properties(tests_Blake2b PROPERTIES CXX_STANDARD 20)
+catch_discover_tests(tests_Blake2b)
+
 add_executable(tests_Blake2xb TestBlake2xb.cpp)
 target_link_libraries(tests_Blake2xb PRIVATE
         Catch2::Catch2 Catch2WithMain

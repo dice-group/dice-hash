@@ -1,5 +1,5 @@
 #include <catch2/catch_all.hpp>
-#include <dice/hash/blake2xb/Blake2xb.hpp>
+#include <dice/hash/blake2/Blake2xb.hpp>
 
 #include "TestBlake2xb_data.hpp"
 
