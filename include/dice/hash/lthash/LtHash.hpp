@@ -59,8 +59,10 @@ namespace dice::hash::lthash {
 
 	/**
 	 * @brief LtHash ported from folly::experimental::crypto
-	 * @tparam B
-	 * @tparam N
+	 * @tparam n_bits_per_elem how many bits the individual state elements occupy
+	 * @tparam n_elems how many individual state elements there are
+	 * @tparam MathEngineT the math engine/instruction set to use for computations (defaults to the best your platform supports in order AVX2, SSE2, x86_64)
+	 * @tparam Allocator allocator for internal state
 	 */
 	template<size_t n_bits_per_elem, size_t n_elems, template<typename> typename MathEngineT = DefaultMathEngine, typename Allocator = std::allocator<std::byte>>
 		requires ((n_elems >= 1000 && ((n_bits_per_elem == 16 && n_elems % 32 == 0)
@@ -99,16 +101,7 @@ namespace dice::hash::lthash {
 		ChecksumBuf_pointer checksum_;
 
 		void hash_object(std::span<std::byte, checksum_len> out, std::span<std::byte const> obj) noexcept {
-			auto blake = [&]() {
-				if (key_.empty()) {
-					return blake2xb::Blake2Xb<checksum_len>{};
-				} else {
-					return blake2xb::Blake2Xb<checksum_len>{std::span<std::byte const>{key_.data(), key_.size()}};
-				}
-			}();
-
-			blake.digest(obj);
-			std::move(blake).finish(out);
+			blake2xb::Blake2Xb<checksum_len>::hash_single(obj, out, std::span<std::byte>{key_.data(), key_.size()});
 
 			if constexpr (needs_padding) {
 				MathEngine::clear_padding_bits(out);
@@ -120,12 +113,18 @@ namespace dice::hash::lthash {
 		}
 
 	public:
+		/**
+		 * @brief construct an LtHash using the (optionally) given allocator
+		 */
 		explicit LtHash(allocator_type alloc = allocator_type{}) : key_{alloc},
 																   checksum_alloc_{alloc},
 																   checksum_{ChecksumBuf_alloc_traits::allocate(checksum_alloc_, 1)} {
 			set_checksum_unchecked(default_checksum);
 		}
 
+		/**
+		 * @brief construct an LtHash using the given initial checksum and (optional) allocator
+		 */
 		explicit LtHash(std::span<std::byte const, checksum_len> initial_checksum,
 						allocator_type alloc = allocator_type{}) : key_{alloc},
 																   checksum_alloc_{alloc},
@@ -183,6 +182,25 @@ namespace dice::hash::lthash {
 			}
 		}
 
+		/**
+		 * @brief Checks if the internal Blake2Xb key is equal to the given key
+		 * @note this functions is not secured against timing attacks
+		 */
+		[[nodiscard]] bool key_equal(std::span<std::byte const> other_key) const noexcept {
+			return std::equal(key_.begin(), key_.end(), other_key.begin(), other_key.end());
+		}
+
+		/**
+		 * @brief Checks if *this and other have the same key for their Blake2Xb instances
+		 * @note this functions is not secured against timing attacks
+		 */
+		[[nodiscard]] bool key_equal(LtHash const &other) const noexcept {
+			return key_equal(other.key_);
+		}
+
+		/**
+		 * @brief Sets the internal key for the Blake2Xb instance to the given key; securely erases the old key
+		 */
 		template<size_t supplied_key_len>
 			requires (supplied_key_len == std::dynamic_extent || (supplied_key_len >= crypto_generichash_blake2b_KEYBYTES_MIN
 																 && supplied_key_len <= crypto_generichash_blake2b_KEYBYTES_MAX))
@@ -198,11 +216,21 @@ namespace dice::hash::lthash {
 			std::copy(key.begin(), key.end(), key_.begin());
 		}
 
+		/**
+		 * @brief Clears the internal key for the Blake2Xb instance by securely erasing it
+		 */
 		void clear_key() noexcept {
 			sodium_memzero(key_.data(), key_.size());
 			key_.resize(0);
 		}
 
+		[[nodiscard]] std::span<std::byte const, checksum_len> checksum() const noexcept {
+			return checksum_->data_;
+		}
+
+		/**
+		 * @brief Explicitly sets the current checksum to the given one
+		 */
 		void set_checksum(std::span<std::byte const, checksum_len> new_checksum) noexcept(!needs_padding) {
 			set_checksum_unchecked(new_checksum);
 			if constexpr (needs_padding) {
@@ -212,10 +240,18 @@ namespace dice::hash::lthash {
 			}
 		}
 
+		/**
+		 * @brief Clears the current checksum
+		 */
 		void clear_checksum() noexcept {
 			std::fill(std::begin(checksum_->data_), std::end(checksum_->data_), std::byte{0});
 		}
 
+		/**
+		 * @brief Adds another LtHash to *this (via multiset-union)
+		 * @param other another LtHash instance with the same key as *this
+		 * @return reference to *this
+		 */
 		LtHash &combine_add(LtHash const &other) {
 			if (!key_equal(other)) [[unlikely]] {
 				throw std::runtime_error{"Cannot combine hashes with different keys"};
@@ -225,6 +261,11 @@ namespace dice::hash::lthash {
 			return *this;
 		}
 
+		/**
+		 * @brief Removes another LtHash from *this (via multiset-minus)
+		 * @param other another LtHash instance with the same key as *this
+		 * @return reference to *this
+		 */
 		LtHash &combine_remove(LtHash const &other) {
 			if (!key_equal(other)) [[unlikely]] {
 				throw std::runtime_error{"Cannot combine hashes with different keys"};
@@ -234,6 +275,11 @@ namespace dice::hash::lthash {
 			return *this;
 		}
 
+		/**
+		 * @brief Adds a single object to this LtHash instance
+		 * @param obj object to add
+		 * @return reference to *this
+		 */
 		LtHash &add(std::span<std::byte const> obj) noexcept {
 			ChecksumBuf h;
 			hash_object(h.data_, obj);
@@ -241,6 +287,11 @@ namespace dice::hash::lthash {
 			return *this;
 		}
 
+		/**
+		 * @brief Removes a single object from this LtHash instance
+		 * @param obj object to remove
+		 * @return reference to *this
+		 */
 		LtHash &remove(std::span<std::byte const> obj) noexcept {
 			ChecksumBuf h;
 			hash_object(h.data_, obj);
@@ -248,22 +299,18 @@ namespace dice::hash::lthash {
 			return *this;
 		}
 
-		[[nodiscard]] std::span<std::byte const, checksum_len> checksum() const noexcept {
-			return checksum_->data_;
-		}
-
-		[[nodiscard]] bool key_equal(std::span<std::byte const> other_key) const noexcept {
-			return std::equal(key_.begin(), key_.end(), other_key.begin(), other_key.end());
-		}
-
-		[[nodiscard]] bool key_equal(LtHash const &other) const noexcept {
-			return key_equal(other.key_);
-		}
-
+		/**
+		 * @brief Checks if *this and other have the same checksum (i.e. represent the same multiset)
+		 * @note this function _is_ secured against timing attacks
+		 */
 		bool operator==(LtHash const &other) const noexcept {
 			return sodium_memcmp(checksum_->data_, other.checksum_->data_, checksum_len) == 0;
 		}
 
+		/**
+		 * @brief Checks if *this and other _do not_ have the same checksum (i.e. represent the same multiset)
+		 * @note this function _is_ secured against timing attacks
+		 */
 		bool operator!=(LtHash const &other) const noexcept {
 			return !LtHash::operator==(other);
 		}

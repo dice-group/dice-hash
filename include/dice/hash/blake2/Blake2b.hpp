@@ -18,6 +18,7 @@
 
 namespace dice::hash::blake2b {
 
+	inline constexpr size_t unknown_output_extent = 0;
 	inline constexpr size_t min_output_extent = crypto_generichash_blake2b_BYTES_MIN;
 	inline constexpr size_t max_output_extent = crypto_generichash_blake2b_BYTES_MAX;
 	inline constexpr size_t dynamic_output_extent = std::dynamic_extent;
@@ -33,6 +34,9 @@ namespace dice::hash::blake2b {
 	inline constexpr size_t default_key_extent = crypto_generichash_blake2b_KEYBYTES;
 	inline constexpr size_t dynamic_key_extent = std::dynamic_extent;
 
+	/**
+	 * @brief Generates a random key by filling key_out using std::random_device
+	 */
 	template<size_t KeyExtent>
 		requires (KeyExtent == dynamic_key_extent || (KeyExtent >= min_key_extent && KeyExtent <= max_key_extent))
 	void generate_key(std::span<std::byte, KeyExtent> key_out) {
@@ -55,6 +59,9 @@ namespace dice::hash::blake2b {
 	template<size_t OutputExtent = dynamic_output_extent>
 		requires (OutputExtent == dynamic_output_extent || (OutputExtent >= min_output_extent && OutputExtent <= max_output_extent))
 	struct Blake2b {
+		/**
+		 * @brief if known at compile time, the size of the resulting hash, otherwise dynamic_output_extent
+		 */
 		static constexpr size_t output_extent = OutputExtent;
 
 	private:
@@ -108,6 +115,13 @@ namespace dice::hash::blake2b {
 		}
 
 	public:
+		/**
+		 * @brief Construct a BLAKE2b instance
+		 * @param output_len either unknown_output_extent for yet-unknown output length or a concrete length (>= min_output_extent && <= max_output_extent)
+		 * @param key optionally a key with a length (>= min_key_length && <= max_key_length)
+		 * @param salt BLAKE2b salt
+		 * @param personality BLAKE2b personality
+		 */
 		explicit Blake2b(size_t output_len,
 						 std::span<std::byte const> key = {},
 						 std::span<std::byte const, salt_extent> salt = default_salt,
@@ -116,12 +130,21 @@ namespace dice::hash::blake2b {
 			init(output_len, key, salt, personality);
 		}
 
+		/**
+		 * @brief Constructs a BLAKE2b instance either using an unknown output length (if output_extent == dynamic_output_extent) or a statically determined output length of output_extent
+		 * @param key optionally a key with a length (>= min_key_length && <= max_key_length)
+		 * @param salt BLAKE2b salt
+		 * @param personality BLAKE2b personality
+		 */
 		explicit Blake2b(std::span<std::byte const> key = {},
 						 std::span<std::byte const, salt_extent> salt = default_salt,
 						 std::span<std::byte const, personality_extent> personality = default_personality) /*noexcept(sodium is initialized && key.size() is within size constraints)*/ {
-			init(output_extent == dynamic_output_extent ? 0 : output_extent, key, salt, personality);
+			init(output_extent == dynamic_output_extent ? unknown_output_extent : output_extent, key, salt, personality);
 		}
 
+		/**
+		 * @brief digests data into the underlying BLAKE2b state
+		 */
 		void digest(std::span<std::byte const> data) noexcept {
 			auto const res = crypto_generichash_blake2b_update(&inner_.state_,
 															   reinterpret_cast<unsigned char const *>(data.data()),
@@ -130,6 +153,11 @@ namespace dice::hash::blake2b {
 			assert(res == 0);
 		}
 
+		/**
+		 * @brief produces the hash corresponding to the previously digested bytes
+		 * @param out location to write the hash to, if output_extent == dynamic_output_extent and the output length was specified on construction
+		 * 			the length of the span has to match the previously provided length
+		 */
 		void finish(std::span<std::byte, output_extent> out) && noexcept(output_extent != dynamic_output_extent /*|| output is within size constraints*/) {
 			if constexpr (output_extent == dynamic_output_extent) {
 				auto const expected_out_len = inner_.specified_output_len_;
@@ -146,12 +174,35 @@ namespace dice::hash::blake2b {
 			assert(res == 0);
 		}
 
+		/**
+		 * @brief returns the possibly runtime-determined output length or the underlying BLAKE2b
+		 * @note different to Blake2b::output_extent this also considers values provided to the constructor at runtime.
+		 * @return required length for output buffer, if known otherwise unknown_output_extent
+		 */
+		[[nodiscard]] constexpr size_t concrete_output_extent() const noexcept {
+			if constexpr (output_extent == dynamic_output_extent) {
+				return inner_.specified_output_len_;
+			} else {
+				return output_extent;
+			}
+		}
+
+		/**
+		 * @brief convenience function to hash a single byte-span
+		 */
 		static void hash_single(std::span<std::byte const> data,
 								std::span<std::byte, output_extent> out,
 								std::span<std::byte const> key = {},
 								std::span<std::byte const, salt_extent> salt = default_salt,
 								std::span<std::byte const, personality_extent> personality = default_personality) /*noexcept(sodium is initialized && output is within size constraints && key is within size constraints)*/ {
-			Blake2b blake{out.size(), key, salt, personality};
+			auto blake = [&]() {
+				if constexpr (output_extent == dynamic_output_extent) {
+					return Blake2b{out.size(), key, salt, personality};
+				} else {
+					return Blake2b{key, salt, personality};
+				}
+			}();
+
 			blake.digest(data);
 			std::move(blake).finish(out);
 		}
