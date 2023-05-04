@@ -1,5 +1,5 @@
 #include <catch2/catch_all.hpp>
-#include <dice/hash/blake2/Blake2xb.hpp>
+#include <dice/hash/blake2/Blake2Xb.hpp>
 
 /**
 * @note Benchmarks adapted from https://github.com/facebook/folly/blob/main/folly/experimental/crypto/test/Blake2xbBenchmark.cpp
@@ -65,11 +65,11 @@ void benchmark_blake2xb(size_t input_size, size_t output_size, size_t n) {
 	output.resize(output_size);
 
 	for (size_t i = 0; i < static_cast<size_t>(n); ++i) {
-		blake2xb::Blake2xb<>::hash_single(input, output);
+		blake2xb::Blake2Xb<>::hash_single(input, output);
 	}
 }
 
-TEST_CASE("Benchmark Blake2xb") {
+TEST_CASE("Benchmark Blake2Xb") {
 	BENCHMARK("blake2b 100b in 64b out", n) {
 		benchmark_blake2b(100, n);
 	};

@@ -1,4 +1,4 @@
-#include <dice/hash/blake2/Blake2xb.hpp>
+#include <dice/hash/blake2/Blake2Xb.hpp>
 
 #include <iostream>
 #include <string_view>
@@ -20,7 +20,7 @@ int main() {
 	auto data3 = as_bytes(std::span<char const>{"penguins"});
 
 	{ // stateful hashing
-		Blake2xb blake;
+		Blake2Xb blake;
 		blake.digest(data1);
 		blake.digest(data2);
 
@@ -35,7 +35,7 @@ int main() {
 	{ // one-off hashing
 		std::vector<std::byte> output;
 		output.resize(58);
-		Blake2xb<>::hash_single(data3, output);
+		Blake2Xb<>::hash_single(data3, output);
 
 		print_bytes(output);
 	}

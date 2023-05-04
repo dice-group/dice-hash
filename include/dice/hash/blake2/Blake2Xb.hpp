@@ -5,8 +5,8 @@
 #error "Cannot include Blake2Xb if libsodium support is disabled."
 #else
 /**
- * @brief Implementation of Blake2xb (https://www.blake2.net/blake2x.pdf)
- * @note Implementation adapted from https://github.com/facebook/folly/blob/main/folly/experimental/crypto/Blake2xb.h
+ * @brief Implementation of Blake2Xb (https://www.blake2.net/blake2x.pdf)
+ * @note Implementation adapted from https://github.com/facebook/folly/blob/main/folly/experimental/crypto/Blake2Xb.h
  */
 
 #include "dice/hash/blake2/Blake2b.hpp"
@@ -68,11 +68,11 @@ namespace dice::hash::blake2xb {
 	using ::dice::hash::blake2b::generate_key;
 
 	/**
-	 * @brief Blake2xb ported from folly::experimental::crypto
+	 * @brief Blake2Xb ported from folly::experimental::crypto
 	 */
 	template<size_t OutputExtent = dynamic_output_extent>
 		requires (OutputExtent == dynamic_output_extent || (OutputExtent >= min_output_extent && OutputExtent <= max_output_extent))
-	struct Blake2xb {
+	struct Blake2Xb {
 		static constexpr size_t output_extent = OutputExtent;
 
 	private:
@@ -151,7 +151,7 @@ namespace dice::hash::blake2xb {
 		struct PrivateTag {};
 		static constexpr PrivateTag private_tag{};
 
-		Blake2xb(PrivateTag,
+		Blake2Xb(PrivateTag,
 				 size_t output_len,
 				 std::span<std::byte const> key,
 				 std::span<std::byte const, salt_extent> salt,
@@ -186,18 +186,18 @@ namespace dice::hash::blake2xb {
 		}
 
 	public:
-		explicit Blake2xb(size_t output_len,
+		explicit Blake2Xb(size_t output_len,
 						  std::span<std::byte const> key = {},
 						  std::span<std::byte const, salt_extent> salt = default_salt,
 						  std::span<std::byte const, personality_extent> personality = default_personality) /*noexcept(sodium is initialized && output_len is within size constraints && key.size() is within size constaints)*/
 			requires (output_extent == dynamic_output_extent)
-			: Blake2xb{private_tag, output_len, key, salt, personality} {
+			: Blake2Xb{private_tag, output_len, key, salt, personality} {
 		}
 
-		explicit Blake2xb(std::span<std::byte const> key = {},
+		explicit Blake2Xb(std::span<std::byte const> key = {},
 						  std::span<std::byte const, salt_extent> salt = default_salt,
 						  std::span<std::byte const, personality_extent> personality = default_personality) /*noexcept(sodium is initialized && key.size() is within size constraints)*/
-			: Blake2xb{private_tag, output_extent == dynamic_output_extent ? 0 : output_extent, key, salt, personality} {
+			: Blake2Xb{private_tag, output_extent == dynamic_output_extent ? 0 : output_extent, key, salt, personality} {
 		}
 
 		void digest(std::span<std::byte const> data) noexcept {
@@ -263,7 +263,7 @@ namespace dice::hash::blake2xb {
 								std::span<std::byte const, salt_extent> salt = default_salt,
 								std::span<std::byte const, personality_extent> personality = default_personality) /*noexcept(sodium is initialized && key is within size constraints)*/ {
 
-			Blake2xb blake{out.size(), key, salt, personality};
+			Blake2Xb blake{out.size(), key, salt, personality};
 			blake.digest(data);
 			std::move(blake).finish(out);
 		}

@@ -1,5 +1,5 @@
 #include <catch2/catch_all.hpp>
-#include <dice/hash/blake2/Blake2xb.hpp>
+#include <dice/hash/blake2/Blake2Xb.hpp>
 
 #include "TestBlake2xb_data.hpp"
 
@@ -39,7 +39,7 @@ void check(std::span<std::byte> k, std::vector<std::string> const &data) {
 			std::vector<std::byte> actual;
 			actual.resize(expected_hex.size() / 2);
 
-			blake2xb::Blake2xb<>::hash_single(input, actual, k);
+			blake2xb::Blake2Xb<>::hash_single(input, actual, k);
 			std::string const actual_hex = to_hex(actual);
 
 			CHECK(expected_hex == actual_hex);
@@ -50,7 +50,7 @@ void check(std::span<std::byte> k, std::vector<std::string> const &data) {
 /**
  * @note tests are adapted from: https://github.com/facebook/folly/blob/main/folly/experimental/crypto/test/Blake2xbTest.cpp
  */
-TEST_CASE("Blake2xb", "[DiceHash]") {
+TEST_CASE("Blake2Xb", "[DiceHash]") {
 	SECTION("keyless") {
 		check({}, test_data);
 	}

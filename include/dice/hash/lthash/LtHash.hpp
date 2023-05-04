@@ -19,7 +19,7 @@
 #include <utility>
 #include <memory>
 
-#include "dice/hash/blake2/Blake2xb.hpp"
+#include "dice/hash/blake2/Blake2Xb.hpp"
 #include "dice/hash/lthash/MathEngine.hpp"
 
 namespace dice::hash::lthash {
@@ -101,9 +101,9 @@ namespace dice::hash::lthash {
 		void hash_object(std::span<std::byte, checksum_len> out, std::span<std::byte const> obj) noexcept {
 			auto blake = [&]() {
 				if (key_.empty()) {
-					return blake2xb::Blake2xb<checksum_len>{};
+					return blake2xb::Blake2Xb<checksum_len>{};
 				} else {
-					return blake2xb::Blake2xb<checksum_len>{std::span<std::byte const>{key_.data(), key_.size()}};
+					return blake2xb::Blake2Xb<checksum_len>{std::span<std::byte const>{key_.data(), key_.size()}};
 				}
 			}();
 
