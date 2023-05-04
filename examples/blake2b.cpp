@@ -17,7 +17,7 @@ int main() {
 
 	auto data1 = as_bytes(std::span<char const>{"spherical cow"sv});
 	auto data2 = as_bytes(std::span<char const>{"hello world"sv});
-	auto data3 = as_bytes(std::span<char const>{"penguins"});
+	auto data3 = as_bytes(std::span<char const>{"penguins"sv});
 
 	{ // stateful hashing
 		Blake2b blake;
