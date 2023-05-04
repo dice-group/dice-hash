@@ -18,9 +18,9 @@
 
 namespace dice::hash::blake2b {
 
-	inline constexpr size_t unknown_output_extent = 0;
 	inline constexpr size_t min_output_extent = crypto_generichash_blake2b_BYTES_MIN;
 	inline constexpr size_t max_output_extent = crypto_generichash_blake2b_BYTES_MAX;
+	inline constexpr size_t default_output_extent = crypto_generichash_blake2b_BYTES;
 	inline constexpr size_t dynamic_output_extent = std::dynamic_extent;
 
 	inline constexpr size_t salt_extent = crypto_generichash_blake2b_SALTBYTES;
@@ -85,7 +85,7 @@ namespace dice::hash::blake2b {
 				  std::span<std::byte const, salt_extent> salt,
 				  std::span<std::byte const, personality_extent> personality) {
 
-			if (output_len != 0 && (output_len < min_output_extent || output_len > max_output_extent)) {
+			if (output_len < min_output_extent || output_len > max_output_extent) {
 				throw std::runtime_error{"Invalid blake2b output size"};
 			}
 
@@ -119,7 +119,7 @@ namespace dice::hash::blake2b {
 	public:
 		/**
 		 * @brief Construct a BLAKE2b instance
-		 * @param output_len either unknown_output_extent for yet-unknown output length or a concrete length (>= min_output_extent && <= max_output_extent)
+		 * @param output_len either a dynamically determined concrete length (>= min_output_extent && <= max_output_extent)
 		 * @param key optionally a key with a length (>= min_key_length && <= max_key_length)
 		 * @param salt BLAKE2b salt
 		 * @param personality BLAKE2b personality
@@ -133,15 +133,16 @@ namespace dice::hash::blake2b {
 		}
 
 		/**
-		 * @brief Constructs a BLAKE2b instance either using an unknown output length (if output_extent == dynamic_output_extent) or a statically determined output length of output_extent
+		 * @brief Constructs a BLAKE2b instance either using a statically determined output length of output_extent
 		 * @param key optionally a key with a length (>= min_key_length && <= max_key_length)
 		 * @param salt BLAKE2b salt
 		 * @param personality BLAKE2b personality
 		 */
 		explicit Blake2b(std::span<std::byte const> key = {},
 						 std::span<std::byte const, salt_extent> salt = default_salt,
-						 std::span<std::byte const, personality_extent> personality = default_personality) /*noexcept(sodium is initialized && key.size() is within size constraints)*/ {
-			init(output_extent == dynamic_output_extent ? unknown_output_extent : output_extent, key, salt, personality);
+						 std::span<std::byte const, personality_extent> personality = default_personality) /*noexcept(sodium is initialized && key.size() is within size constraints)*/
+			requires (output_extent != dynamic_output_extent) {
+			init(output_extent, key, salt, personality);
 		}
 
 		/**

@@ -20,7 +20,7 @@ int main() {
 	auto data3 = as_bytes(std::span<char const>{"penguins"sv});
 
 	{ // stateful hashing
-		Blake2b blake;
+		Blake2b blake{max_output_extent};
 		blake.digest(data1);
 		blake.digest(data2);
 

@@ -50,7 +50,7 @@ namespace dice::hash::blake2xb {
 		}
 	} // namespace detail
 
-	using ::dice::hash::blake2b::unknown_output_extent;
+	inline constexpr size_t unknown_output_extent = 0;
 	inline constexpr size_t min_output_extent = 1;
 	inline constexpr size_t max_output_extent = std::numeric_limits<uint32_t>::max() - 1;
 	using ::dice::hash::blake2b::dynamic_output_extent;
