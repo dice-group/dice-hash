@@ -56,6 +56,19 @@ namespace dice::hash::blake2b {
 		});
 	}
 
+	namespace detail {
+		template<size_t InnerOutputExtent>
+		struct Blake2bInner {
+			crypto_generichash_blake2b_state state_;
+		};
+
+		template<>
+		struct Blake2bInner<dynamic_output_extent> {
+			crypto_generichash_blake2b_state state_;
+			size_t specified_output_len_;
+		};
+	} // namespace detail
+
 	template<size_t OutputExtent = dynamic_output_extent>
 		requires (OutputExtent == dynamic_output_extent || (OutputExtent >= min_output_extent && OutputExtent <= max_output_extent))
 	struct Blake2b {
@@ -65,18 +78,7 @@ namespace dice::hash::blake2b {
 		static constexpr size_t output_extent = OutputExtent;
 
 	private:
-		template<size_t InnerOutputExtent>
-		struct Inner {
-			crypto_generichash_blake2b_state state_;
-		};
-
-		template<>
-		struct Inner<dynamic_output_extent> {
-			crypto_generichash_blake2b_state state_;
-			size_t specified_output_len_;
-		};
-
-		Inner<output_extent> inner_;
+		detail::Blake2bInner<output_extent> inner_;
 
 		void init(size_t output_len,
 				  std::span<std::byte const> key,
