@@ -25,11 +25,11 @@ namespace dice::hash::lthash {
 	};
 
 	template<template<typename> typename ME, typename B>
-	concept UnpaddedMathEngine = requires (std::span<std::byte const> a, std::span<std::byte const> b, std::span<std::byte> out) {
+	concept UnpaddedMathEngine = requires (std::span<std::byte> dst, std::span<std::byte const> src) {
 		requires UnpaddedBits<B>;
 		{ ME<B>::min_buffer_align } -> std::convertible_to<size_t>;
-		ME<B>::add(a, b, out);
-		ME<B>::sub(a, b, out);
+		ME<B>::add(dst, src);
+		ME<B>::sub(dst, src);
 	};
 
 	template<template<typename> typename ME, typename B>

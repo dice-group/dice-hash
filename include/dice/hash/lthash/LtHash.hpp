@@ -15,6 +15,7 @@
  */
 
 #include <array>
+#include <cstring>
 #include <vector>
 #include <utility>
 #include <memory>
@@ -97,11 +98,11 @@ namespace dice::hash::lthash {
 
 		std::vector<std::byte, Allocator> key_;
 
-		ChecksumBuf_allocator checksum_alloc_;
+		[[no_unique_address]] ChecksumBuf_allocator checksum_alloc_;
 		ChecksumBuf_pointer checksum_;
 
-		void hash_object(std::span<std::byte, checksum_len> out, std::span<std::byte const> obj) noexcept {
-			blake2xb::Blake2Xb<checksum_len>::hash_single(obj, out, std::span<std::byte>{key_.data(), key_.size()});
+		void hash_object(std::span<std::byte, checksum_len> out, std::span<std::byte const> obj) const noexcept {
+			blake2xb::Blake2Xb<checksum_len>::hash_single(obj, out, std::span<std::byte const>{key_.data(), key_.size()});
 
 			if constexpr (needs_padding) {
 				MathEngine::clear_padding_bits(out);
@@ -109,38 +110,61 @@ namespace dice::hash::lthash {
 		}
 
 		void set_checksum_unchecked(std::span<std::byte const, checksum_len> new_checksum) noexcept {
-			std::copy(new_checksum.begin(), new_checksum.end(), std::begin(checksum_->data_));
+			std::memcpy(checksum_->data_, new_checksum.data(), checksum_len);
+		}
+
+		std::span<std::byte, checksum_len> checksum_mut() noexcept {
+			return checksum_->data_;
 		}
 
 	public:
 		/**
-		 * @brief construct an LtHash using the (optionally) given allocator
+		 * @brief construct an LtHash using the (optionally) given initial_checksum
 		 */
-		explicit LtHash(allocator_type alloc = allocator_type{}) : key_{alloc},
-																   checksum_alloc_{alloc},
-																   checksum_{ChecksumBuf_alloc_traits::allocate(checksum_alloc_, 1)} {
+		explicit LtHash(std::span<std::byte const, checksum_len> initial_checksum = default_checksum) : key_{},
+																										checksum_alloc_{},
+																										checksum_{ChecksumBuf_alloc_traits::allocate(checksum_alloc_, 1)} {
+			set_checksum_unchecked(initial_checksum);
+		}
+
+		/**
+		 * @brief construct an LtHash using the given allocator
+		 */
+		explicit LtHash(allocator_type const &alloc) : key_{alloc},
+													   checksum_alloc_{alloc},
+													   checksum_{ChecksumBuf_alloc_traits::allocate(checksum_alloc_, 1)} {
 			set_checksum_unchecked(default_checksum);
 		}
 
 		/**
-		 * @brief construct an LtHash using the given initial checksum and (optional) allocator
+		 * @brief construct an LtHash using the given initial checksum and allocator
 		 */
-		explicit LtHash(std::span<std::byte const, checksum_len> initial_checksum,
-						allocator_type alloc = allocator_type{}) : key_{alloc},
-																   checksum_alloc_{alloc},
-																   checksum_{ChecksumBuf_alloc_traits::allocate(checksum_alloc_, 1)} {
+		explicit LtHash(std::span<std::byte const, checksum_len> initial_checksum, allocator_type const &alloc) : key_{alloc},
+																												  checksum_alloc_{alloc},
+																												  checksum_{ChecksumBuf_alloc_traits::allocate(checksum_alloc_, 1)} {
 			set_checksum(initial_checksum);
 		}
 
 		LtHash(LtHash const &other) : key_{other.key_},
-									  checksum_alloc_{ChecksumBuf_alloc_traits::select_on_container_copy_construction(other.checksum_alloc_)} {
-			checksum_ = ChecksumBuf_alloc_traits::allocate(checksum_alloc_, 1);
-			set_checksum_unchecked(other.checksum_->data_);
+									  checksum_alloc_{ChecksumBuf_alloc_traits::select_on_container_copy_construction(other.checksum_alloc_)},
+									  checksum_{ChecksumBuf_alloc_traits::allocate(checksum_alloc_, 1)} {
+			set_checksum_unchecked(other.checksum());
+		}
+
+		LtHash(LtHash const &other, allocator_type const &alloc) : key_{other.key_, alloc},
+																   checksum_alloc_{alloc},
+																   checksum_{ChecksumBuf_alloc_traits::allocate(checksum_alloc_, 1)} {
+			set_checksum_unchecked(other.checksum());
 		}
 
 		LtHash(LtHash &&other) noexcept : key_{std::move(other.key_)},
 										  checksum_alloc_{std::move(other.checksum_alloc_)},
 										  checksum_{std::exchange(other.checksum_, ChecksumBuf_pointer{})} {
+		}
+
+		LtHash(LtHash &&other, allocator_type const &alloc) : key_{std::move(other.key_), alloc},
+															  checksum_alloc_{alloc},
+															  checksum_{std::exchange(other.checksum_, ChecksumBuf_pointer{})} {
 		}
 
 		LtHash &operator=(LtHash const &other) {
@@ -157,7 +181,7 @@ namespace dice::hash::lthash {
 			if (checksum_ == nullptr) {
 				checksum_ = ChecksumBuf_alloc_traits::allocate(checksum_alloc_, 1);
 			}
-			set_checksum_unchecked(other.checksum_->data_);
+			set_checksum_unchecked(other.checksum());
 
 			return *this;
 		}
@@ -184,10 +208,14 @@ namespace dice::hash::lthash {
 
 		/**
 		 * @brief Checks if the internal Blake2Xb key is equal to the given key
-		 * @note this functions is not secured against timing attacks
+		 * @note this function is not secured against timing attacks
 		 */
 		[[nodiscard]] bool key_equal(std::span<std::byte const> other_key) const noexcept {
-			return std::equal(key_.begin(), key_.end(), other_key.begin(), other_key.end());
+			if (key_.size() != other_key.size()) {
+				return false;
+			}
+
+			return std::memcmp(key_.data(), other_key.data(), key_.size()) == 0;
 		}
 
 		/**
@@ -213,7 +241,7 @@ namespace dice::hash::lthash {
 
 			sodium_memzero(key_.data(), key_.size());
 			key_.resize(key.size());
-			std::copy(key.begin(), key.end(), key_.begin());
+			std::memcpy(key_.data(), key.data(), key.size());
 		}
 
 		/**
@@ -229,12 +257,44 @@ namespace dice::hash::lthash {
 		}
 
 		/**
+		 * @brief Checks if this->checksum() is equal to other_checksum (i.e. represent the same multiset)
+		 * @note this function is _not_ secured against timing attacks
+		 */
+		[[nodiscard]] bool checksum_equal(std::span<std::byte const, checksum_len> other_checksum) const noexcept {
+			return std::memcmp(checksum_->data_, other_checksum.data(), checksum_len) == 0;
+		}
+
+		/**
+		 * @brief Checks if *this and other have the same checksum (i.e. represent the same multiset)
+		 * @note this function is _not_ secured against timing attacks
+		 */
+		[[nodiscard]] bool checksum_equal(LtHash const &other) const noexcept {
+			return checksum_equal(other.checksum());
+		}
+
+		/**
+		 * @brief Checks if this->checksum() is equal to other_checksum (i.e. represent the same multiset)
+		 * @note this function is secured against timing attacks
+		 */
+		[[nodiscard]] bool checksum_equal_constant_time(std::span<std::byte const, checksum_len> other_checksum) const noexcept {
+			return sodium_memcmp(checksum_->data_, other_checksum.data(), checksum_len) == 0;
+		}
+
+		/**
+		 * @brief Checks if *this and other have the same checksum (i.e. represent the same multiset)
+		 * @note this function is secured against timing attacks
+		 */
+		[[nodiscard]] bool checksum_equal_constant_time(LtHash const &other) const noexcept {
+			return checksum_equal_constant_time(other.checksum());
+		}
+
+		/**
 		 * @brief Explicitly sets the current checksum to the given one
 		 */
 		void set_checksum(std::span<std::byte const, checksum_len> new_checksum) noexcept(!needs_padding) {
 			set_checksum_unchecked(new_checksum);
 			if constexpr (needs_padding) {
-				if (!MathEngine::check_padding_bits(checksum_->data_)) [[unlikely]] {
+				if (!MathEngine::check_padding_bits(checksum())) [[unlikely]] {
 					throw std::runtime_error{"Invalid checksum: found non-zero padding bits"};
 				}
 			}
@@ -244,7 +304,7 @@ namespace dice::hash::lthash {
 		 * @brief Clears the current checksum
 		 */
 		void clear_checksum() noexcept {
-			std::fill(std::begin(checksum_->data_), std::end(checksum_->data_), std::byte{0});
+			std::memset(checksum_->data_, 0, checksum_len);
 		}
 
 		/**
@@ -257,7 +317,7 @@ namespace dice::hash::lthash {
 				throw std::runtime_error{"Cannot combine hashes with different keys"};
 			}
 
-			MathEngine::add(checksum_->data_, other.checksum_->data_, checksum_->data_);
+			MathEngine::add(checksum_mut(), other.checksum());
 			return *this;
 		}
 
@@ -271,7 +331,7 @@ namespace dice::hash::lthash {
 				throw std::runtime_error{"Cannot combine hashes with different keys"};
 			}
 
-			MathEngine::sub(checksum_->data_, other.checksum_->data_, checksum_->data_);
+			MathEngine::sub(checksum_mut(), other.checksum());
 			return *this;
 		}
 
@@ -283,7 +343,7 @@ namespace dice::hash::lthash {
 		LtHash &add(std::span<std::byte const> obj) noexcept {
 			ChecksumBuf h;
 			hash_object(h.data_, obj);
-			MathEngine::add(checksum_->data_, h.data_, checksum_->data_);
+			MathEngine::add(checksum_mut(), std::span<std::byte const, checksum_len>{h.data_});
 			return *this;
 		}
 
@@ -295,16 +355,16 @@ namespace dice::hash::lthash {
 		LtHash &remove(std::span<std::byte const> obj) noexcept {
 			ChecksumBuf h;
 			hash_object(h.data_, obj);
-			MathEngine::sub(checksum_->data_, h.data_, checksum_->data_);
+			MathEngine::sub(checksum_mut(), std::span<std::byte const, checksum_len>{h.data_});
 			return *this;
 		}
 
 		/**
 		 * @brief Checks if *this and other have the same checksum (i.e. represent the same multiset)
-		 * @note this function _is_ secured against timing attacks
+		 * @note this function is _not_ secured against timing attacks
 		 */
 		bool operator==(LtHash const &other) const noexcept {
-			return sodium_memcmp(checksum_->data_, other.checksum_->data_, checksum_len) == 0;
+			return checksum_equal(other);
 		}
 
 		/**
