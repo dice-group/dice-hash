@@ -52,9 +52,13 @@ namespace dice::tests::hash {
 
 	template<typename Policy, typename... Args>
 	bool test_vec_arr(Args &&...args) {
-		size_t vec = getHash<Policy>(std::vector({args...}));
-		size_t arr = getHash<Policy>(std::array<Head_t<Args...>, sizeof...(Args)>({args...}));
-		return vec == arr;
+		std::vector const vec{args...};
+		std::array<Head_t<Args...>, sizeof...(Args)> arr{args...};
+		size_t vech = getHash<Policy>(vec);
+		size_t arrh = getHash<Policy>(arr);
+		size_t spanh1 = getHash<Policy>(std::span{vec});
+		size_t spanh2 = getHash<Policy>(std::span{arr});
+		return equal({vech, arrh, spanh1, spanh2});
 	}
 
 	template<typename Policy, typename T, typename V>

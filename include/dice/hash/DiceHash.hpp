@@ -15,6 +15,7 @@
 #include <map>
 #include <memory>
 #include <set>
+#include <span>
 #include <string>
 #include <string_view>
 #include <tuple>
@@ -215,10 +216,23 @@ namespace dice::hash {
 		static std::size_t dice_hash(std::vector<T> const &vec) noexcept {
 			if constexpr (std::is_fundamental_v<T>) {
 				static_assert(!std::is_same_v<std::decay_t<T>, bool>,
-							  "vector of booleans has a special implementation which results into errors!");
+							  "vector of booleans has a special implementation which results in errors!");
 				return Policy::hash_bytes(vec.data(), sizeof(T) * vec.size());
 			} else {
 				return dice_hash_ordered_container(vec);
+			}
+		}
+
+		/** Implementation for byte spans
+		 * @param bytes byte span to hash
+		 * @return Hash value.
+		 */
+		template<typename T, std::size_t Extent>
+		static std::size_t dice_hash(std::span<T, Extent> const &span) noexcept {
+			if constexpr (std::is_fundamental_v<T>) {
+				return Policy::hash_bytes(span.data(), span.size_bytes());
+			} else {
+				return dice_hash_ordered_container(span);
 			}
 		}
 
