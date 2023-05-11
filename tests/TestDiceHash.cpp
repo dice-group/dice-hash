@@ -4,7 +4,7 @@
 
 #define AllPoliciesToTestForDiceHash dice::hash::Policies::Martinus, dice::hash::Policies::xxh3, \
 									 dice::hash::Policies::wyhash
-#define AllTypesToTestForDiceHash int, long, std::size_t, std::string, std::string_view, int *, long *,                        \
+#define AllTypesToTestForDiceHash int, long, std::size_t, std::byte, std::string, std::string_view, int *, long *,             \
 								  std::string *, std::unique_ptr<int>, std::shared_ptr<int>, std::vector<int>,                 \
 								  std::set<int>, std::unordered_set<int>, (std::array<int, 10>), (std::tuple<int, int, long>), \
 								  (std::pair<int, int>), (std::variant<std::monostate>), (std::variant<int, float, std::string>)
@@ -54,10 +54,13 @@ namespace dice::tests::hash {
 	bool test_vec_arr(Args &&...args) {
 		std::vector const vec{args...};
 		std::array<Head_t<Args...>, sizeof...(Args)> arr{args...};
+		std::span span1{vec};
+		std::span span2{arr};
+
 		size_t vech = getHash<Policy>(vec);
 		size_t arrh = getHash<Policy>(arr);
-		size_t spanh1 = getHash<Policy>(std::span{vec});
-		size_t spanh2 = getHash<Policy>(std::span{arr});
+		size_t spanh1 = getHash<Policy>(span1);
+		size_t spanh2 = getHash<Policy>(span2);
 		return equal({vech, arrh, spanh1, spanh2});
 	}
 
@@ -95,6 +98,10 @@ namespace dice::tests::hash {
 
 		SECTION("Vectors and arrays of double generate the same hash (basic type)") {
 			REQUIRE(test_vec_arr<CurrentPolicy>(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0));
+		}
+
+		SECTION("Vectors and arrays of std::byte generate the same hash (basic type)") {
+			REQUIRE(test_vec_arr<CurrentPolicy>(std::byte{1}, std::byte{2}, std::byte{3}, std::byte{4}, std::byte{5}, std::byte{6}, std::byte{7}, std::byte{8}, std::byte{9}));
 		}
 
 		SECTION("Vectors and arrays of tuples generate the same hash (non-basic type)") {
