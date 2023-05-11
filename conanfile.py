@@ -10,9 +10,9 @@ class DiceHashConan(ConanFile):
     author = "DICE Group <info@dice-research.org>"
     homepage = "https://github.com/dice-group/dice-hash"
     url = homepage
-    topics = ("hash", "wyhash", "xxh3", "robin-hood-hash", "Blake2xb", "LtHash", "C++", "C++20")
+    topics = ("hash", "wyhash", "xxh3", "robin-hood-hash", "Blake2b", "Blake2Xb", "LtHash", "C++", "C++20")
     settings = "build_type", "compiler", "os", "arch"
-    generators = ("cmake_find_package", "CMakeDeps", "CMakeToolchain")
+    generators = ("CMakeDeps", "CMakeToolchain")
     exports = "LICENSE"
     exports_sources = "include/*", "CMakeLists.txt", "cmake/*", "LICENSE"
     no_copy_source = True
@@ -41,16 +41,21 @@ class DiceHashConan(ConanFile):
             cmake_file = load(self, os.path.join(self.recipe_folder, "CMakeLists.txt"))
             self.description = re.search(r"project\([^)]*DESCRIPTION\s+\"([^\"]+)\"[^)]*\)", cmake_file).group(1)
 
-    def layout(self):
-        cmake_layout(self)
+    _cmake = None
 
-    def package_id(self):
-        self.info.header_only()
+    def _configure_cmake(self):
+        if self._cmake is None:
+            self._cmake = CMake(self)
+            self._cmake.configure(variables={"USE_CONAN": False})
+            self._cmake.configure()
+
+        return self._cmake
+
+    def build(self):
+        self._configure_cmake().build()
 
     def package(self):
-        cmake = CMake(self)
-        cmake.configure()
-        cmake.install()
+        self._configure_cmake().install()
         for dir in ("lib", "res", "share"):
             rmdir(self, os.path.join(self.package_folder, dir))
         copy(self, pattern="LICENSE*", dst="licenses", src=self.folders.source_folder)
