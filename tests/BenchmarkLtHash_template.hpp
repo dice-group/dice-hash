@@ -30,23 +30,18 @@ std::vector<std::vector<std::byte>> objects = []() {
 using namespace dice::hash::lthash;
 
 template<size_t B, size_t N>
+using H = LtHash<B, N, DICE_HASH_BENCHMARK_LTHASH_MATH_ENGINE>;
+
+template<size_t B, size_t N>
 void run_benchmark(size_t n) {
-	LtHash<B, N> lt;
+	H<B, N> lt;
 	for (size_t i = 0; i < n; ++i) {
 		auto const &obj = objects[i % objects.size()];
 		lt.add(obj);
 	}
 }
 
-#if defined(__AVX2__)
-#define DICE_HASH_TEST_INSTRUCTION_SET "AVX2"
-#elif defined(__SSE2__)
-#define DICE_HASH_TEST_INSTRUCTION_SET "SSE2"
-#else
-#define DICE_HASH_TEST_INSTRUCTION_SET "x86_64"
-#endif
-
-TEST_CASE("Benchmark LtHash using " DICE_HASH_TEST_INSTRUCTION_SET, "[DiceHash]") {
+TEST_CASE("Benchmark LtHash using " DICE_HASH_BENCHMARK_LTHASH_INSTRUCTION_SET, "[DiceHash]") {
 	BENCHMARK("LtHash<16, 1024>", n) {
 		run_benchmark<16, 1024>(n);
 	};

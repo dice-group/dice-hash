@@ -5,6 +5,7 @@ int main() {
 	assert(false);
 }
 #else
-#undef __AVX2__
+#define DICE_HASH_BENCHMARK_LTHASH_MATH_ENGINE MathEngine_SSE2
+#define DICE_HASH_BENCHMARK_LTHASH_INSTRUCTION_SET "SSE2"
 #include "BenchmarkLtHash_template.hpp"
 #endif
