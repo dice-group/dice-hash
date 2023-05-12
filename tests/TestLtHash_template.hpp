@@ -106,6 +106,17 @@ TEMPLATE_TEST_CASE("Test LtHash using " DICE_HASH_TEST_INSTRUCTION_SET, "[DiceHa
 		CHECK(h == T::empty_hash);
 	}
 
+	SECTION("copy ctor") {
+		H h1;
+		h1.add(T::obj1);
+
+		H h2{h1};
+		CHECK(h1 == h2);
+
+		h2.add(T::obj2);
+		CHECK(h1 != h2);
+	}
+
 	SECTION("copy assignment") {
 		H h1;
 		h1.add(T::obj1);

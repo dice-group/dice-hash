@@ -64,7 +64,6 @@ namespace dice::hash::blake2xb {
 	using ::dice::hash::blake2b::min_key_extent;
 	using ::dice::hash::blake2b::max_key_extent;
 	using ::dice::hash::blake2b::default_key_extent;
-	using ::dice::hash::blake2b::dynamic_key_extent;
 
 	using ::dice::hash::blake2b::generate_key;
 

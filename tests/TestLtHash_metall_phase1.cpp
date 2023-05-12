@@ -10,6 +10,6 @@ int main(int argc, char **argv) {
 
 	metall::manager manager(metall::open_only, path);
 
-	auto lthash_ptr = manager.construct<LtHash_t<allocator_type>>(lthash_name)(manager.get_allocator());
+	auto lthash_ptr = manager.construct<LtHash_t>(lthash_name)();
 	lthash_ptr->add(obj);
 }

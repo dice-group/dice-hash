@@ -13,8 +13,7 @@ using namespace dice::hash::lthash;
 using allocator_type = metall::manager::allocator_type<std::byte>;
 inline constexpr char const *lthash_name = "lthash0";
 
-template<typename Allocator>
-using LtHash_t = LtHash<20, 1008, MathEngine_Simple, Allocator>;
+using LtHash_t = LtHash<20, 1008, MathEngine_Simple>;
 
 inline std::span<std::byte const> obj = as_bytes(std::span<char const>{"spherical cow"});
 

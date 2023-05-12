@@ -6,12 +6,12 @@ int main(int argc, char **argv) {
 
 	{ // reopen and read the segment
 		metall::manager manager(metall::open_only, path);
-		auto lthash_ptr = std::get<0>(manager.find<LtHash_t<allocator_type>>(lthash_name));
+		auto lthash_ptr = std::get<0>(manager.find<LtHash_t>(lthash_name));
 
-		LtHash_t<allocator_type> other_lthash1{manager.get_allocator()};
+		LtHash_t other_lthash1;
 		other_lthash1.add(obj);
 
-		LtHash_t<std::allocator<std::byte>> other_lthash2;
+		LtHash_t other_lthash2;
 		other_lthash2.add(obj);
 
 		print_span(lthash_ptr->checksum());

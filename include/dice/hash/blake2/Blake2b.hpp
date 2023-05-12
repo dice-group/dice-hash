@@ -32,15 +32,14 @@ namespace dice::hash::blake2b {
 	inline constexpr size_t min_key_extent = crypto_generichash_blake2b_KEYBYTES_MIN;
 	inline constexpr size_t max_key_extent = crypto_generichash_blake2b_KEYBYTES_MAX;
 	inline constexpr size_t default_key_extent = crypto_generichash_blake2b_KEYBYTES;
-	inline constexpr size_t dynamic_key_extent = std::dynamic_extent;
 
 	/**
 	 * @brief Generates a random key by filling key_out using std::random_device
 	 */
 	template<size_t KeyExtent>
-		requires (KeyExtent == dynamic_key_extent || (KeyExtent >= min_key_extent && KeyExtent <= max_key_extent))
+		requires (KeyExtent == std::dynamic_extent || (KeyExtent >= min_key_extent && KeyExtent <= max_key_extent))
 	void generate_key(std::span<std::byte, KeyExtent> key_out) {
-		if constexpr (KeyExtent == dynamic_key_extent) {
+		if constexpr (KeyExtent == std::dynamic_extent) {
 			if (key_out.size() < min_key_extent || key_out.size() > max_key_extent) {
 				throw std::runtime_error{"Invalid blake2b key size"};
 			}
