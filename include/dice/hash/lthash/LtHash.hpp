@@ -63,9 +63,9 @@ namespace dice::hash::lthash {
 	 * @tparam MathEngineT the math engine/instruction set to use for computations (defaults to the best your platform supports in order (best to worst): AVX2, SSE2, x86_64)
 	 */
 	template<size_t n_bits_per_elem, size_t n_elems, template<typename> typename MathEngineT = DefaultMathEngine>
-		requires ((n_elems >= 1000 && ((n_bits_per_elem == 16 && n_elems % 32 == 0)
-										 || (n_bits_per_elem == 20 && n_elems % 24 == 0)
-										 || (n_bits_per_elem == 32 && n_elems % 16 == 0)))
+		requires (((n_bits_per_elem == 16 && n_elems % 32 == 0)
+				  	|| (n_bits_per_elem == 20 && n_elems % 24 == 0)
+				  	|| (n_bits_per_elem == 32 && n_elems % 16 == 0))
 				 && MathEngine<MathEngineT, detail::Bits<n_bits_per_elem>>)
 	struct LtHash {
 	private:
