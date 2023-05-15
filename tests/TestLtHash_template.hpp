@@ -84,6 +84,20 @@ TEMPLATE_TEST_CASE("Test LtHash using " DICE_HASH_TEST_LTHASH_INSTRUCTION_SET, "
 	using H = TestType;
 	using T = LtHashTest<H>;
 
+	SECTION("constexpr") {
+		static constexpr H h = []() {
+			constexpr std::array<std::byte, dice::hash::blake2xb::default_key_extent> key{};
+
+			H tmp;
+			tmp.set_key(std::span{key});
+
+			[[maybe_unused]] bool b1 = tmp.checksum_equal(H::default_checksum);
+			[[maybe_unused]] bool b2 = tmp.key_equal(key);
+
+			return tmp;
+		}();
+	}
+
 	SECTION("empty") {
 		H h;
 		auto checksum_len = T::checksum_len;
