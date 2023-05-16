@@ -77,6 +77,14 @@ struct LtHashTest {
 									  (LtHash<20, 1008, DICE_HASH_TEST_LTHASH_MATH_ENGINE>), \
 									  (LtHash<32, 1024, DICE_HASH_TEST_LTHASH_MATH_ENGINE>)
 
+template<typename T, OptimizationPolicy new_optim_pol>
+struct RebindLtHash;
+
+template<size_t n_bits_per_elem, size_t n_elems, template<typename> typename MathEngine, OptimizationPolicy optim_pol, OptimizationPolicy new_optim_pol>
+struct RebindLtHash<LtHash<n_bits_per_elem, n_elems, MathEngine, optim_pol>, new_optim_pol> {
+	using type = LtHash<n_bits_per_elem, n_elems, MathEngine, new_optim_pol>;
+};
+
 /**
  * @note tests are adapted from: https://github.com/facebook/folly/blob/main/folly/experimental/crypto/test/LtHashTest.cpp
  */
@@ -96,6 +104,14 @@ TEMPLATE_TEST_CASE("Test LtHash using " DICE_HASH_TEST_LTHASH_INSTRUCTION_SET, "
 
 			return tmp;
 		}();
+	}
+
+	SECTION("change optim policy") {
+		H h1;
+		h1.add(T::obj1);
+
+		typename RebindLtHash<H, OptimizationPolicy::OptimizeForStorage>::type h2{h1};
+		CHECK(h1.checksum_equal(h2.checksum()));
 	}
 
 	SECTION("empty") {
