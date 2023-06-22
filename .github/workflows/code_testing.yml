@@ -72,5 +72,6 @@ jobs:
         working-directory: build
         run: |
           for example in $(find ./examples -maxdepth 1 -type f -executable); do
+            echo "running ${example}"
             ./${example}
           done
