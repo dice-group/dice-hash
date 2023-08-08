@@ -25,18 +25,14 @@ namespace dice::hash::lthash {
 
 	template<typename Bits>
 	struct MathEngine_Simple {
-#ifdef DICE_HASH_CACHE_LINE_SIZE
-		static_assert(DICE_HASH_CACHE_LINE_SIZE % alignof(uint64_t) == 0,
-					  "Buffer alignment must be compatible with data alignment");
-		static constexpr size_t min_buffer_align = DICE_HASH_CACHE_LINE_SIZE;
-#else
 		static constexpr size_t min_buffer_align = alignof(uint64_t);
-#endif
 
 		template<size_t DstExtent, size_t SrcExtent>
 		static void add(std::span<std::byte, DstExtent> dst, std::span<std::byte const, SrcExtent> src) noexcept {
 			assert(dst.size() == src.size());
 			assert(dst.size() % sizeof(uint64_t) == 0);
+			assert(reinterpret_cast<uintptr_t>(dst.data()) % alignof(uint64_t) == 0);
+			assert(reinterpret_cast<uintptr_t>(src.data()) % alignof(uint64_t) == 0);
 
 			std::span<uint64_t> dst64{reinterpret_cast<uint64_t *>(dst.data()), dst.size() / sizeof(uint64_t)};
 			std::span<uint64_t const> src64{reinterpret_cast<uint64_t const *>(src.data()), src.size() / sizeof(uint64_t)};
@@ -76,6 +72,8 @@ namespace dice::hash::lthash {
 		static void sub(std::span<std::byte, DstExtent> dst, std::span<std::byte const, SrcExtent> src) noexcept {
 			assert(dst.size() == src.size());
 			assert(dst.size() % sizeof(uint64_t) == 0);
+			assert(reinterpret_cast<uintptr_t>(dst.data()) % alignof(uint64_t) == 0);
+			assert(reinterpret_cast<uintptr_t>(src.data()) % alignof(uint64_t) == 0);
 
 			std::span<uint64_t> dst64{reinterpret_cast<uint64_t *>(dst.data()), dst.size() / sizeof(uint64_t)};
 			std::span<uint64_t const> src64{reinterpret_cast<uint64_t const *>(src.data()), src.size() / sizeof(uint64_t)};
@@ -114,6 +112,7 @@ namespace dice::hash::lthash {
 		template<size_t Extent>
 		static bool check_padding_bits(std::span<std::byte const, Extent> data) noexcept requires (Bits::needs_padding) {
 			assert(data.size() % sizeof(uint64_t) == 0);
+			assert(reinterpret_cast<uintptr_t>(data.data()) % alignof(uint64_t) == 0);
 
 			std::span<uint64_t const> data64{reinterpret_cast<uint64_t const *>(data.data()), data.size() / sizeof(uint64_t)};
 			for (auto const val : data64) {
@@ -127,6 +126,7 @@ namespace dice::hash::lthash {
 		template<size_t Extent>
 		static void clear_padding_bits(std::span<std::byte, Extent> data) noexcept requires (Bits::needs_padding) {
 			assert(data.size() % sizeof(uint64_t) == 0);
+			assert(reinterpret_cast<uintptr_t>(data.data()) % alignof(uint64_t) == 0);
 
 			if constexpr (Bits::needs_padding) {
 				std::span<uint64_t> data64{reinterpret_cast<uint64_t *>(data.data()), data.size() / sizeof(uint64_t)};

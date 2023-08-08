@@ -9,6 +9,7 @@ required_conan_version = ">=1.59"
 class TestPackageConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
     generators = "CMakeDeps", "CMakeToolchain"
+    options = {"dice-hash:with_sodium": True}
 
     def layout(self):
         cmake_layout(self)

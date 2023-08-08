@@ -14,20 +14,13 @@ namespace dice::hash::lthash {
 		// Note: SSE2 is x86_64 only therefore this platform must be little endian
 		static_assert(std::endian::native == std::endian::little);
 
-#ifdef DICE_HASH_CACHE_LINE_SIZE
-		static_assert(DICE_HASH_CACHE_LINE_SIZE % alignof(__m128i) == 0,
-					  "Buffer alignment must be compatible with data alignment");
-		static constexpr size_t min_buffer_align = DICE_HASH_CACHE_LINE_SIZE;
-#else
-		static constexpr size_t min_buffer_align = alignof(__m128i);
-#endif
+		// using unaligned load+store to not bloat memory with data of such high alignment
+		static constexpr size_t min_buffer_align = 1;
 
 		template<size_t DstExtent, size_t SrcExtent>
 		static void add(std::span<std::byte, DstExtent> dst, std::span<std::byte const, SrcExtent> src) noexcept {
 			assert(dst.size() == src.size());
 			assert(dst.size() % sizeof(__m128i) == 0);
-			assert(reinterpret_cast<uintptr_t>(dst.data()) % alignof(__m128i) == 0);
-			assert(reinterpret_cast<uintptr_t>(src.data()) % alignof(__m128i) == 0);
 
 			auto *dst128 = reinterpret_cast<__m128i *>(dst.data());
 			auto const *src128 = reinterpret_cast<__m128i const *>(src.data());
@@ -37,24 +30,24 @@ namespace dice::hash::lthash {
 							  "Only 16 and 32 bit elements are implemented for non-padded data");
 
 				for (size_t ix = 0; ix < dst.size() / sizeof(__m128i); ++ix) {
-					auto const ai = _mm_load_si128(dst128 + ix);
-					auto const bi = _mm_load_si128(src128 + ix);
+					auto const ai = _mm_loadu_si128(dst128 + ix);
+					auto const bi = _mm_loadu_si128(src128 + ix);
 
 					if constexpr (Bits::bits_per_element == 16) {
-						_mm_store_si128(dst128 + ix, _mm_add_epi16(ai, bi));
+						_mm_storeu_si128(dst128 + ix, _mm_add_epi16(ai, bi));
 					} else { // Bits::bits_per_element == 32
-						_mm_store_si128(dst128 + ix, _mm_add_epi32(ai, bi));
+						_mm_storeu_si128(dst128 + ix, _mm_add_epi32(ai, bi));
 					}
 				}
 			} else {
 				__m128i const mask = _mm_set1_epi64x(Bits::data_mask);
 
 				for (size_t ix = 0; ix < dst.size() / sizeof(__m128i); ++ix) {
-					auto const ai = _mm_load_si128(dst128 + ix);
-					auto const bi = _mm_load_si128(src128 + ix);
+					auto const ai = _mm_loadu_si128(dst128 + ix);
+					auto const bi = _mm_loadu_si128(src128 + ix);
 
-					_mm_store_si128(dst128 + ix, _mm_and_si128(_mm_add_epi64(ai, bi),
-															   mask));
+					_mm_storeu_si128(dst128 + ix, _mm_and_si128(_mm_add_epi64(ai, bi),
+																mask));
 				}
 			}
 		}
@@ -63,8 +56,6 @@ namespace dice::hash::lthash {
 		static void sub(std::span<std::byte, DstExtent> dst, std::span<std::byte const, SrcExtent> src) noexcept {
 			assert(dst.size() == src.size());
 			assert(dst.size() % sizeof(__m128i) == 0);
-			assert(reinterpret_cast<uintptr_t>(dst.data()) % alignof(__m128i) == 0);
-			assert(reinterpret_cast<uintptr_t>(src.data()) % alignof(__m128i) == 0);
 
 			auto *dst128 = reinterpret_cast<__m128i *>(dst.data());
 			auto const *src128 = reinterpret_cast<__m128i const *>(src.data());
@@ -74,13 +65,13 @@ namespace dice::hash::lthash {
 							  "Only 16 and 32 bit elements are implemented for non-padded data");
 
 				for (size_t ix = 0; ix < dst.size() / sizeof(__m128i); ++ix) {
-					auto const ai = _mm_load_si128(dst128 + ix);
-					auto const bi = _mm_load_si128(src128 + ix);
+					auto const ai = _mm_loadu_si128(dst128 + ix);
+					auto const bi = _mm_loadu_si128(src128 + ix);
 
 					if constexpr (Bits::bits_per_element == 16) {
-						_mm_store_si128(dst128 + ix, _mm_sub_epi16(ai, bi));
+						_mm_storeu_si128(dst128 + ix, _mm_sub_epi16(ai, bi));
 					} else { // Bits::bits_per_element == 32
-						_mm_store_si128(dst128 + ix, _mm_sub_epi32(ai, bi));
+						_mm_storeu_si128(dst128 + ix, _mm_sub_epi32(ai, bi));
 					}
 				}
 			} else {
@@ -88,12 +79,12 @@ namespace dice::hash::lthash {
 				__m128i const padding_mask = _mm_set1_epi64x(~Bits::data_mask);
 
 				for (size_t ix = 0; ix < dst.size() / sizeof(__m128i); ++ix) {
-					auto const ai = _mm_load_si128(dst128 + ix);
-					auto const bi = _mm_load_si128(src128 + ix);
+					auto const ai = _mm_loadu_si128(dst128 + ix);
+					auto const bi = _mm_loadu_si128(src128 + ix);
 					auto const inv_bi = _mm_and_si128(_mm_sub_epi64(padding_mask, bi), mask);
 
-					_mm_store_si128(dst128 + ix, _mm_and_si128(_mm_add_epi64(ai, inv_bi),
-															   mask));
+					_mm_storeu_si128(dst128 + ix, _mm_and_si128(_mm_add_epi64(ai, inv_bi),
+																mask));
 				}
 			}
 		}
@@ -101,7 +92,6 @@ namespace dice::hash::lthash {
 		template<size_t Extent>
 		static bool check_padding_bits(std::span<std::byte const, Extent> data) noexcept requires (Bits::needs_padding) {
 			assert(data.size() % sizeof(__m128i) == 0);
-			assert(reinterpret_cast<uintptr_t>(data.data()) % alignof(__m128i) == 0);
 
 			if constexpr (Bits::needs_padding) {
 				__m128i const padding_mask = _mm_set1_epi64x(~Bits::data_mask);
@@ -109,7 +99,7 @@ namespace dice::hash::lthash {
 
 				auto const *data128 = reinterpret_cast<__m128i const *>(data.data());
 				for (size_t ix = 0; ix < data.size() / sizeof(__m128i); ++ix) {
-					auto const val = _mm_load_si128(data128 + ix);
+					auto const val = _mm_loadu_si128(data128 + ix);
 					auto const padding = _mm_and_si128(val, padding_mask);
 
 					// apparently there is no instruction that does that
@@ -125,15 +115,14 @@ namespace dice::hash::lthash {
 		template<size_t Extent>
 		static void clear_padding_bits(std::span<std::byte, Extent> data) noexcept requires (Bits::needs_padding) {
 			assert(data.size() % sizeof(__m128i) == 0);
-			assert(reinterpret_cast<uintptr_t>(data.data()) % alignof(__m128i) == 0);
 
 			if constexpr (Bits::needs_padding) {
 				__m128i const mask = _mm_set1_epi64x(Bits::data_mask);
 
 				auto *data128 = reinterpret_cast<__m128i *>(data.data());
 				for (size_t ix = 0; ix < data.size() / sizeof(__m128i); ++ix) {
-					_mm_store_si128(data128 + ix,
-									_mm_and_si128(_mm_load_si128(data128 + ix), mask));
+					_mm_storeu_si128(data128 + ix,
+									 _mm_and_si128(_mm_loadu_si128(data128 + ix), mask));
 				}
 			}
 		}

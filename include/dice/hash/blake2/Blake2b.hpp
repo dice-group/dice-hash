@@ -1,9 +1,6 @@
 #ifndef DICE_HASH_BLAKE2B_HPP
 #define DICE_HASH_BLAKE2B_HPP
 
-#ifndef DICE_HASH_WITH_SODIUM
-#error "Cannot include Blake2b if libsodium support is disabled."
-#else
 /**
  * @brief A thin wrapper around libsodium's Blake2b implementation
  */
@@ -212,5 +209,4 @@ namespace dice::hash::blake2b {
 
 } // namespace dice::hash::blake2b
 
-#endif//DICE_HASH_WITH_SODIUM
 #endif//DICE_HASH_BLAKE2B_HPP

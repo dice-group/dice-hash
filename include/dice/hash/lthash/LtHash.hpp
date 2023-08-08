@@ -1,9 +1,6 @@
 #ifndef DICE_HASH_LTHASH_HPP
 #define DICE_HASH_LTHASH_HPP
 
-#ifndef DICE_HASH_WITH_SODIUM
-#error "Cannot include LtHash if libsodium support is disabled."
-#else
 /**
  * Implementation of LtHash from the following paper:
  * 		Title: Securing Update Propagation with Homomorphic Hashing
@@ -51,18 +48,13 @@ namespace dice::hash::lthash {
 		};
 	} // namespace detail
 
-	enum struct OptimizationPolicy {
-		FullFunctionality,
-		OptimizeForStorage,
-	};
-
 	/**
 	 * @brief LtHash ported from folly::experimental::crypto
 	 * @tparam n_bits_per_elem how many bits the individual state elements occupy
 	 * @tparam n_elems how many individual state elements there are
 	 * @tparam MathEngineT the math engine/instruction set to use for computations (defaults to the best your platform supports; in order (best to worst): AVX2, SSE2, x86_64)
 	 */
-	template<size_t n_bits_per_elem, size_t n_elems, template<typename> typename MathEngineT = DefaultMathEngine, OptimizationPolicy optim_pol = OptimizationPolicy::FullFunctionality>
+	template<size_t n_bits_per_elem, size_t n_elems, template<typename> typename MathEngineT = DefaultMathEngine>
 	struct LtHash {
 		static_assert((n_bits_per_elem == 16 && n_elems % 32 == 0)
 					  || (n_bits_per_elem == 20 && n_elems % 24 == 0)
@@ -71,7 +63,7 @@ namespace dice::hash::lthash {
 		static_assert(MathEngine<MathEngineT, detail::Bits<n_bits_per_elem>>);
 
 	private:
-		template<size_t, size_t, template<typename> typename, OptimizationPolicy>
+		template<size_t, size_t, template<typename> typename>
 		friend struct LtHash;
 
 		using Bits = detail::Bits<n_bits_per_elem>;
@@ -79,7 +71,6 @@ namespace dice::hash::lthash {
 
 	public:
 		static constexpr bool needs_padding = Bits::needs_padding;
-		static constexpr OptimizationPolicy optimization_policy = optim_pol;
 
 		static constexpr size_t element_bits = n_bits_per_elem;
 		static constexpr size_t element_count = n_elems;
@@ -88,15 +79,13 @@ namespace dice::hash::lthash {
 																	: (sizeof(uint64_t) * 8) / element_bits;
 
 		static constexpr size_t checksum_len = (element_count / elements_per_uint64) * sizeof(uint64_t);
-		static constexpr size_t checksum_align = optimization_policy == OptimizationPolicy::FullFunctionality ? MathEngine::min_buffer_align
-																											  : alignof(std::array<std::byte, checksum_len>);
+		static constexpr size_t checksum_align = MathEngine::min_buffer_align;
 
 		static constexpr std::array<std::byte, checksum_len> default_checksum{};
 
 	private:
 		size_t key_len_;
 		std::array<std::byte, blake2xb::max_key_extent> key_;
-
 		alignas(checksum_align) std::array<std::byte, checksum_len> checksum_;
 
 
@@ -127,7 +116,6 @@ namespace dice::hash::lthash {
 			blake2xb::Blake2Xb<checksum_len>::hash_single(obj, out, key());
 
 			if constexpr (needs_padding) {
-				static_assert(optimization_policy == OptimizationPolicy::FullFunctionality, "Cannot use math engine if in storage optimized mode");
 				MathEngine::clear_padding_bits(out);
 			}
 		}
@@ -143,10 +131,10 @@ namespace dice::hash::lthash {
 
 		constexpr LtHash(LtHash const &other) noexcept = default;
 
-		template<template<typename> typename MathEngineT2, OptimizationPolicy optim_pol2>
-		constexpr LtHash(LtHash<n_bits_per_elem, n_elems, MathEngineT2, optim_pol2> const &other) noexcept : key_len_{other.key_len_},
-																											 key_{other.key_},
-																											 checksum_{other.checksum_} {
+		template<template<typename> typename MathEngineT2>
+		constexpr LtHash(LtHash<n_bits_per_elem, n_elems, MathEngineT2> const &other) noexcept : key_len_{other.key_len_},
+																								 key_{other.key_},
+																								 checksum_{other.checksum_} {
 		}
 
 		constexpr LtHash(LtHash &&other) noexcept : key_len_{other.key_len_},
@@ -156,10 +144,10 @@ namespace dice::hash::lthash {
 		}
 
 
-		template<template<typename> typename MathEngineT2, OptimizationPolicy optim_pol2>
-		constexpr LtHash(LtHash<n_bits_per_elem, n_elems, MathEngineT2, optim_pol2> &&other) noexcept : key_len_{other.key_len_},
-																										key_{other.key_},
-																										checksum_{other.checksum_} {
+		template<template<typename> typename MathEngineT2>
+		constexpr LtHash(LtHash<n_bits_per_elem, n_elems, MathEngineT2> &&other) noexcept : key_len_{other.key_len_},
+																							key_{other.key_},
+																							checksum_{other.checksum_} {
 			other.clear_key();
 		}
 
@@ -280,8 +268,6 @@ namespace dice::hash::lthash {
 		constexpr void set_checksum(std::span<std::byte const, checksum_len> new_checksum) noexcept(!needs_padding) {
 			set_checksum_unchecked(new_checksum);
 			if constexpr (needs_padding) {
-				static_assert(optimization_policy == OptimizationPolicy::FullFunctionality, "Cannot use math engine if in storage optimized mode");
-
 				if (!MathEngine::check_padding_bits(checksum())) [[unlikely]] {
 					throw std::invalid_argument{"Invalid checksum: found non-zero padding bits"};
 				}
@@ -302,8 +288,6 @@ namespace dice::hash::lthash {
 		 * @throws std::invalid_argument if !this->key_equal(other)
 		 */
 		LtHash &combine_add(LtHash const &other) {
-			static_assert(optimization_policy == OptimizationPolicy::FullFunctionality, "Cannot use math engine if in storage optimized mode");
-
 			if (!key_equal(other)) [[unlikely]] {
 				throw std::invalid_argument{"Cannot combine hashes with different keys"};
 			}
@@ -319,8 +303,6 @@ namespace dice::hash::lthash {
 		 * @throws std::invalid_argument if !this->key_equal(other)
 		 */
 		LtHash &combine_remove(LtHash const &other) {
-			static_assert(optimization_policy == OptimizationPolicy::FullFunctionality, "Cannot use math engine if in storage optimized mode");
-
 			if (!key_equal(other)) [[unlikely]] {
 				throw std::invalid_argument{"Cannot combine hashes with different keys"};
 			}
@@ -335,8 +317,6 @@ namespace dice::hash::lthash {
 		 * @return reference to *this
 		 */
 		LtHash &add(std::span<std::byte const> obj) noexcept {
-			static_assert(optimization_policy == OptimizationPolicy::FullFunctionality, "Cannot use math engine if in storage optimized mode");
-
 			alignas(MathEngine::min_buffer_align) std::array<std::byte, checksum_len> obj_hash;
 			hash_object(obj_hash, obj);
 			MathEngine::add(checksum_mut(), std::span<std::byte const, checksum_len>{obj_hash});
@@ -349,8 +329,6 @@ namespace dice::hash::lthash {
 		 * @return reference to *this
 		 */
 		LtHash &remove(std::span<std::byte const> obj) noexcept {
-			static_assert(optimization_policy == OptimizationPolicy::FullFunctionality, "Cannot use math engine if in storage optimized mode");
-
 			alignas(MathEngine::min_buffer_align) std::array<std::byte, checksum_len> obj_hash;
 			hash_object(obj_hash, obj);
 			MathEngine::sub(checksum_mut(), std::span<std::byte const, checksum_len>{obj_hash});
@@ -380,5 +358,4 @@ namespace dice::hash::lthash {
 
 } // namespace dice::hash::lthash
 
-#endif//DICE_HASH_WITH_SODIUM
 #endif//DICE_HASH_LTHASH_HPP

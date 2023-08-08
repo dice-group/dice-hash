@@ -32,12 +32,19 @@ OPTION(WITH_SODIUM "Enabled usage of libsodium for Blake2b, Blake2Xb and LtHash"
 OPTION(USE_CONAN "If available, use conan to retrieve dependencies." ON)
 if (PROJECT_IS_TOP_LEVEL AND USE_CONAN AND (BUILD_TESTING OR WITH_SODIUM))
     include(cmake/conan_cmake.cmake)
-    if (PROJECT_IS_TOP_LEVEL AND BUILD_TESTING)
+    if (BUILD_TESTING)
         set(CONAN_DICE_HASH_WITH_TEST_DEPS "True")
     else()
         set(CONAN_DICE_HASH_WITH_TEST_DEPS "False")
     endif()
-    set(CONAN_OPTIONS "with_test_deps=${CONAN_DICE_HASH_WITH_TEST_DEPS}")
+
+    if (WITH_SODIUM)
+        set(CONAN_DICE_HASH_WITH_SODIUM "True")
+    else()
+        set(CONAN_DICE_HASH_WITH_SODIUM "False")
+    endif()
+
+    set(CONAN_OPTIONS "with_test_deps=${CONAN_DICE_HASH_WITH_TEST_DEPS};with_sodium=${CONAN_DICE_HASH_WITH_SODIUM};boost:header_only=True")
     install_packages_via_conan("${CMAKE_SOURCE_DIR}/conanfile.py" "${CONAN_OPTIONS}")
 endif ()
 
@@ -55,16 +62,6 @@ if (WITH_SODIUM)
             endif ()
         endif ()
     endif ()
-
-    if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND NOT DEFINED DICE_HASH_CACHE_LINE_SIZE)
-        execute_process(COMMAND getconf LEVEL1_DCACHE_LINESIZE OUTPUT_VARIABLE DICE_HASH_GET_CLSZ_OUT OUTPUT_STRIP_TRAILING_WHITESPACE RESULT_VARIABLE DICE_HASH_GET_CLSZ_RES)
-        if (DICE_HASH_GET_CLSZ_RES STREQUAL 0)
-            set(DICE_HASH_CACHE_LINE_SIZE ${DICE_HASH_GET_CLSZ_OUT})
-        endif ()
-
-        unset(DICE_HASH_GET_CLSZ_OUT)
-        unset(DICE_HASH_GET_CLSZ_RES)
-    endif ()
 endif ()
 
 add_library(${PROJECT_NAME} INTERFACE)
@@ -74,18 +71,8 @@ target_include_directories(
         ${PROJECT_NAME}
         INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 
-target_link_libraries(
-        ${PROJECT_NAME}
-        INTERFACE ${sodium_dep})
-
-if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-    if (WITH_SODIUM)
-        target_compile_definitions(${PROJECT_NAME} INTERFACE DICE_HASH_WITH_SODIUM=1)
-    endif ()
-
-    if (DEFINED DICE_HASH_CACHE_LINE_SIZE)
-        target_compile_definitions(${PROJECT_NAME} INTERFACE DICE_HASH_CACHE_LINE_SIZE=${DICE_HASH_CACHE_LINE_SIZE})
-    endif ()
+if (WITH_SODIUM)
+    target_link_libraries(${PROJECT_NAME} INTERFACE ${sodium_dep})
 endif ()
 
 include(cmake/install_interface_library.cmake)
