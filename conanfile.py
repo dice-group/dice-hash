@@ -22,7 +22,8 @@ class DiceHashConan(ConanFile):
     # No settings/options are necessary, this is header only
 
     def requirements(self):
-        self.requires("libsodium/cci.20220430")
+        if self.options.with_sodium:
+            self.requires("libsodium/cci.20220430")
 
         if self.options.with_test_deps:
             self.requires("metall/0.21")
@@ -63,12 +64,12 @@ class DiceHashConan(ConanFile):
         self.cpp_info.components["global"].set_property("cmake_target_name", f"{self.name}::{self.name}")
         self.cpp_info.components["global"].names["cmake_find_package_multi"] = f"{self.name}"
         self.cpp_info.components["global"].names["cmake_find_package"] = f"{self.name}"
-        self.cpp_info.components["global"].includedirs = ["include/dice/hash"]
+        self.cpp_info.components["global"].includedirs = ["include"]
         self.cpp_info.components["global"].requires = []
 
         if self.options.with_sodium:
             self.cpp_info.components["global"].requires += [
-                "sodium"
+                "libsodium::libsodium"
             ]
 
         if self.options.with_test_deps:
