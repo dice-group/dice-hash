@@ -28,9 +28,10 @@ std::vector<std::vector<std::byte>> objects = []() {
 }();
 
 using namespace dice::hash::lthash;
+using namespace dice::hash::blake3;
 
 template<size_t B, size_t N>
-using H = LtHash<B, N, DICE_HASH_BENCHMARK_LTHASH_MATH_ENGINE>;
+using H = LtHash<B, N, Blake3, DICE_HASH_BENCHMARK_LTHASH_MATH_ENGINE>;
 
 template<size_t B, size_t N>
 void run_benchmark(size_t n) {

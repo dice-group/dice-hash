@@ -1,4 +1,5 @@
 #include <dice/hash/lthash/LtHash.hpp>
+#include <dice/hash/blake/Blake2Xb.hpp>
 #include <iostream>
 
 // integer value -> hexadecimal ascii representation (e.g 0 => '0', 10 => 'a')
@@ -46,6 +47,7 @@ namespace dice::hash::lthash {
 
 #include <sodium.h>
 
+using namespace dice::hash::blake2xb;
 using namespace dice::hash::lthash;
 
 std::vector<std::byte> make_random_data(size_t length) {
@@ -72,10 +74,10 @@ struct LtHashTest {
 	inline static H const empty_hash;
 };
 
-#define DICE_HASH_TEST_LTHASH_CONFIGS (LtHash<16, 512, DICE_HASH_TEST_LTHASH_MATH_ENGINE>), \
-									  (LtHash<16, 1024, DICE_HASH_TEST_LTHASH_MATH_ENGINE>), \
-									  (LtHash<20, 1008, DICE_HASH_TEST_LTHASH_MATH_ENGINE>), \
-									  (LtHash<32, 1024, DICE_HASH_TEST_LTHASH_MATH_ENGINE>)
+#define DICE_HASH_TEST_LTHASH_CONFIGS (LtHash<16, 512, Blake2Xb, DICE_HASH_TEST_LTHASH_MATH_ENGINE>), \
+									  (LtHash<16, 1024, Blake2Xb, DICE_HASH_TEST_LTHASH_MATH_ENGINE>), \
+									  (LtHash<20, 1008, Blake2Xb, DICE_HASH_TEST_LTHASH_MATH_ENGINE>), \
+									  (LtHash<32, 1024, Blake2Xb, DICE_HASH_TEST_LTHASH_MATH_ENGINE>)
 
 /**
  * @note tests are adapted from: https://github.com/facebook/folly/blob/main/folly/experimental/crypto/test/LtHashTest.cpp

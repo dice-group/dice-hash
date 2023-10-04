@@ -53,3 +53,8 @@ if (WITH_SODIUM)
             dice-hash::dice-hash
             )
 endif ()
+
+add_executable(blake3_example blake3.cpp)
+target_link_libraries(blake3_example PRIVATE
+        dice-hash::dice-hash
+)

@@ -17,7 +17,7 @@
 #include <utility>
 #include <memory>
 
-#include "dice/hash/blake2/Blake2Xb.hpp"
+#include "dice/hash/blake/Blake3.hpp"
 #include "dice/hash/lthash/MathEngine.hpp"
 
 namespace dice::hash::lthash {
@@ -46,6 +46,59 @@ namespace dice::hash::lthash {
 			static constexpr bool needs_padding = false;
 			static constexpr size_t bits_per_element = 32;
 		};
+
+		template<size_t min_key_extent, size_t max_key_extent>
+		struct Key {
+			std::array<std::byte, max_key_extent> key_{};
+			size_t key_len_{};
+
+			[[nodiscard]] constexpr std::span<std::byte const> get() const noexcept {
+				return {key_.data(), key_len_};
+			}
+
+			constexpr void clear() noexcept {
+				if (!std::is_constant_evaluated()) {
+					sodium_memzero(key_.data(), key_.size());
+				} else {
+					std::fill(key_.begin(), key_.end(), std::byte{0});
+				}
+
+				key_len_ = 0;
+			}
+
+			template<size_t supplied_key_len>
+				requires (supplied_key_len == std::dynamic_extent || (supplied_key_len >= min_key_extent
+																	 && supplied_key_len <= max_key_extent))
+			constexpr void set_unchecked(std::span<std::byte const, supplied_key_len> new_key) noexcept {
+				assert(new_key.size() >= min_key_extent && new_key.size() <= max_key_extent);
+
+				clear();
+				std::copy(new_key.begin(), new_key.end(), key_.begin());
+				key_len_ = new_key.size();
+			}
+		};
+
+		template<size_t KeyExtent>
+		struct Key<KeyExtent, KeyExtent> {
+			std::array<std::byte, KeyExtent> key_{};
+
+			[[nodiscard]] constexpr std::span<std::byte const, KeyExtent> get() const noexcept {
+				return key_;
+			}
+
+			constexpr void clear() noexcept {
+				if (!std::is_constant_evaluated()) {
+					sodium_memzero(key_.data(), key_.size());
+				} else {
+					std::fill(key_.begin(), key_.end(), std::byte{0});
+				}
+			}
+
+			constexpr void set_unchecked(std::span<std::byte const, KeyExtent> new_key) noexcept {
+				clear();
+				std::copy(new_key.begin(), new_key.end(), key_.begin());
+			}
+		};
 	} // namespace detail
 
 	/**
@@ -54,7 +107,7 @@ namespace dice::hash::lthash {
 	 * @tparam n_elems how many individual state elements there are
 	 * @tparam MathEngineT the math engine/instruction set to use for computations (defaults to the best your platform supports; in order (best to worst): AVX2, SSE2, x86_64)
 	 */
-	template<size_t n_bits_per_elem, size_t n_elems, template<typename> typename MathEngineT = DefaultMathEngine>
+	template<size_t n_bits_per_elem, size_t n_elems, template<size_t> typename HashT = blake3::Blake3, template<typename> typename MathEngineT = DefaultMathEngine>
 	struct LtHash {
 		static_assert((n_bits_per_elem == 16 && n_elems % 32 == 0)
 					  || (n_bits_per_elem == 20 && n_elems % 24 == 0)
@@ -63,7 +116,7 @@ namespace dice::hash::lthash {
 		static_assert(MathEngine<MathEngineT, detail::Bits<n_bits_per_elem>>);
 
 	private:
-		template<size_t, size_t, template<typename> typename>
+		template<size_t, size_t, template<size_t> typename, template<typename> typename>
 		friend struct LtHash;
 
 		using Bits = detail::Bits<n_bits_per_elem>;
@@ -84,8 +137,9 @@ namespace dice::hash::lthash {
 		static constexpr std::array<std::byte, checksum_len> default_checksum{};
 
 	private:
-		size_t key_len_;
-		std::array<std::byte, blake2xb::max_key_extent> key_;
+		using Hash = HashT<checksum_len>;
+
+		detail::Key<Hash::min_key_extent, Hash::max_key_extent> key_;
 		alignas(checksum_align) std::array<std::byte, checksum_len> checksum_;
 
 
@@ -97,23 +151,8 @@ namespace dice::hash::lthash {
 			return checksum_;
 		}
 
-		template<size_t supplied_key_len>
-			requires (supplied_key_len == std::dynamic_extent || (supplied_key_len >= blake2xb::min_key_extent
-																 && supplied_key_len <= blake2xb::max_key_extent))
-		constexpr void set_key_unchecked(std::span<std::byte const, supplied_key_len> new_key) noexcept {
-			assert(new_key.size() >= blake2xb::min_key_extent && new_key.size() <= blake2xb::max_key_extent);
-
-			clear_key();
-			std::copy(new_key.begin(), new_key.end(), key_.begin());
-			key_len_ = new_key.size();
-		}
-
-		[[nodiscard]] constexpr std::span<std::byte const> key() const noexcept {
-			return {key_.data(), key_len_};
-		}
-
 		void hash_object(std::span<std::byte, checksum_len> out, std::span<std::byte const> obj) const noexcept {
-			blake2xb::Blake2Xb<checksum_len>::hash_single(obj, out, key());
+			Hash::hash_single(obj, out, key_.get());
 
 			if constexpr (needs_padding) {
 				MathEngine::clear_padding_bits(out);
@@ -124,30 +163,26 @@ namespace dice::hash::lthash {
 		/**
 		 * @brief construct an LtHash using the (optionally) given initial_checksum
 		 */
-		explicit constexpr LtHash(std::span<std::byte const, checksum_len> initial_checksum = default_checksum) noexcept : key_len_{0},
-																														   key_{} {
+		explicit constexpr LtHash(std::span<std::byte const, checksum_len> initial_checksum = default_checksum) noexcept {
 			set_checksum_unchecked(initial_checksum);
 		}
 
 		constexpr LtHash(LtHash const &other) noexcept = default;
 
 		template<template<typename> typename MathEngineT2>
-		constexpr LtHash(LtHash<n_bits_per_elem, n_elems, MathEngineT2> const &other) noexcept : key_len_{other.key_len_},
-																								 key_{other.key_},
-																								 checksum_{other.checksum_} {
+		constexpr LtHash(LtHash<n_bits_per_elem, n_elems, HashT, MathEngineT2> const &other) noexcept : key_{other.key_},
+																										checksum_{other.checksum_} {
 		}
 
-		constexpr LtHash(LtHash &&other) noexcept : key_len_{other.key_len_},
-													key_{other.key_},
+		constexpr LtHash(LtHash &&other) noexcept : key_{other.key_},
 													checksum_{other.checksum_} {
 			other.clear_key();
 		}
 
 
 		template<template<typename> typename MathEngineT2>
-		constexpr LtHash(LtHash<n_bits_per_elem, n_elems, MathEngineT2> &&other) noexcept : key_len_{other.key_len_},
-																							key_{other.key_},
-																							checksum_{other.checksum_} {
+		constexpr LtHash(LtHash<n_bits_per_elem, n_elems, HashT, MathEngineT2> &&other) noexcept : key_{other.key_},
+																								   checksum_{other.checksum_} {
 			other.clear_key();
 		}
 
@@ -157,7 +192,6 @@ namespace dice::hash::lthash {
 			}
 
 			clear_key();
-			key_len_ = other.key_len_;
 			key_ = other.key_;
 			checksum_ = other.checksum_;
 			return *this;
@@ -167,7 +201,6 @@ namespace dice::hash::lthash {
 			assert(this != &other);
 
 			clear_key();
-			key_len_ = other.key_len_;
 			key_ = other.key_;
 			other.clear_key();
 			checksum_ = other.checksum_;
@@ -183,7 +216,7 @@ namespace dice::hash::lthash {
 		 * @note this function is not secured against timing attacks
 		 */
 		[[nodiscard]] constexpr bool key_equal(std::span<std::byte const> other_key) const noexcept {
-			auto const this_key = key();
+			auto const this_key = key_.get();
 			return std::equal(this_key.begin(), this_key.end(), other_key.begin(), other_key.end());
 		}
 
@@ -192,7 +225,7 @@ namespace dice::hash::lthash {
 		 * @note this functions is not secured against timing attacks
 		 */
 		[[nodiscard]] constexpr bool key_equal(LtHash const &other) const noexcept {
-			return key_equal(other.key());
+			return key_equal(other.key_.get());
 		}
 
 		/**
@@ -200,29 +233,23 @@ namespace dice::hash::lthash {
 		 * @throws std::invalid_argument if key.size() is not in blake2xb::min_key_extent..blake2xb::max_key_extent (inclusive); only if supplied_key_len == std::dynamic_extent
 		 */
 		template<size_t supplied_key_len>
-			requires (supplied_key_len == std::dynamic_extent || (supplied_key_len >= blake2xb::min_key_extent
-																 && supplied_key_len <= blake2xb::max_key_extent))
+			requires (supplied_key_len == std::dynamic_extent || (supplied_key_len >= Hash::min_key_extent
+																 && supplied_key_len <= Hash::max_key_extent))
 		constexpr void set_key(std::span<std::byte const, supplied_key_len> key) noexcept(supplied_key_len != std::dynamic_extent) {
 			if constexpr (supplied_key_len == std::dynamic_extent) {
-				if (key.size() < blake2xb::min_key_extent || key.size() > blake2xb::max_key_extent) [[unlikely]] {
+				if (key.size() < Hash::min_key_extent || key.size() > Hash::max_key_extent) [[unlikely]] {
 					throw std::invalid_argument{"Invalid key size for Blake2Xb"};
 				}
 			}
 
-			set_key_unchecked(key);
+			key_.set_unchecked(key);
 		}
 
 		/**
 		 * @brief Clears the internal key for the Blake2Xb instance by securely erasing it
 		 */
 		constexpr void clear_key() noexcept {
-			if (!std::is_constant_evaluated()) {
-				sodium_memzero(key_.data(), key_.size());
-			} else {
-				std::fill(key_.begin(), key_.end(), std::byte{0});
-			}
-
-			key_len_ = 0;
+			key_.clear();
 		}
 
 		[[nodiscard]] constexpr std::span<std::byte const, checksum_len> checksum() const noexcept {

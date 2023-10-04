@@ -2,7 +2,7 @@
 #include <iostream>
 #include <catch2/catch_all.hpp>
 
-#include <dice/hash/blake2/Blake2b.hpp>
+#include <dice/hash/blake/Blake2b.hpp>
 
 using namespace dice::hash::blake2b;
 

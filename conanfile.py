@@ -14,7 +14,7 @@ class DiceHashConan(ConanFile):
     settings = "build_type", "compiler", "os", "arch"
     generators = ("CMakeDeps", "CMakeToolchain")
     exports = "LICENSE"
-    exports_sources = "include/*", "CMakeLists.txt", "cmake/*", "LICENSE"
+    exports_sources = "src/*", "CMakeLists.txt", "cmake/*", "LICENSE"
     no_copy_source = True
     options = {"with_test_deps": [True, False], "with_sodium": [True, False]}
     default_options = {"with_test_deps": False, "with_sodium": False}
@@ -56,7 +56,7 @@ class DiceHashConan(ConanFile):
 
     def package(self):
         self._configure_cmake().install()
-        for dir in ("lib", "res", "share"):
+        for dir in ("res", "share"):
             rmdir(self, os.path.join(self.package_folder, dir))
         copy(self, pattern="LICENSE*", dst="licenses", src=self.folders.source_folder)
 
@@ -64,7 +64,7 @@ class DiceHashConan(ConanFile):
         self.cpp_info.components["global"].set_property("cmake_target_name", f"{self.name}::{self.name}")
         self.cpp_info.components["global"].names["cmake_find_package_multi"] = f"{self.name}"
         self.cpp_info.components["global"].names["cmake_find_package"] = f"{self.name}"
-        self.cpp_info.components["global"].includedirs = ["include"]
+        self.cpp_info.components["global"].includedirs = ["src"]
         self.cpp_info.components["global"].requires = []
 
         if self.options.with_sodium:

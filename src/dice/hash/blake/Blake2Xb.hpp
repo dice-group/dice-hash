@@ -6,7 +6,7 @@
  * @note Implementation adapted from https://github.com/facebook/folly/blob/main/folly/experimental/crypto/Blake2Xb.h
  */
 
-#include "dice/hash/blake2/Blake2b.hpp"
+#include "dice/hash/blake/Blake2b.hpp"
 
 #include <algorithm>
 #include <bit>
@@ -74,6 +74,10 @@ namespace dice::hash::blake2xb {
 		 * @brief if known at compile time, the size of the resulting hash, otherwise dynamic_output_extent
 		 */
 		static constexpr size_t output_extent = OutputExtent;
+
+		static constexpr size_t min_key_extent = ::dice::hash::blake2xb::min_key_extent;
+		static constexpr size_t max_key_extent = ::dice::hash::blake2xb::max_key_extent;
+		static constexpr size_t default_key_extent = ::dice::hash::blake2xb::default_key_extent;
 
 	private:
 		static constexpr uint32_t unknown_output_extend_magic = std::numeric_limits<uint32_t>::max();

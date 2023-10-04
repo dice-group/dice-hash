@@ -2,6 +2,7 @@
 #define DICE_HASH_MATHENGINE_AVX2_HPP
 
 #include <bit>
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <span>

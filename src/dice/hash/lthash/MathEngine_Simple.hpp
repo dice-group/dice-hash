@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <span>
+#include <cassert>
 
 namespace dice::hash::lthash {
 

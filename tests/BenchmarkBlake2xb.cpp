@@ -1,5 +1,5 @@
 #include <catch2/catch_all.hpp>
-#include <dice/hash/blake2/Blake2Xb.hpp>
+#include <dice/hash/blake/Blake2Xb.hpp>
 
 /**
 * @note Benchmarks adapted from https://github.com/facebook/folly/blob/main/folly/experimental/crypto/test/Blake2xbBenchmark.cpp

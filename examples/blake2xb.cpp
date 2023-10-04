@@ -1,4 +1,4 @@
-#include <dice/hash/blake2/Blake2Xb.hpp>
+#include <dice/hash/blake/Blake2Xb.hpp>
 
 #include <iostream>
 #include <string_view>
