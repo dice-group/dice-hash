@@ -1,13 +1,4 @@
-cmake_minimum_required(VERSION 3.9)
-
-project(libblake3
-  VERSION 1.5.0
-  DESCRIPTION "BLAKE3 C implementation"
-  LANGUAGES C ASM
-)
-
-include(FeatureSummary)
-include(GNUInstallDirs)
+cmake_minimum_required(VERSION 3.16)
 
 # default SIMD compiler flag configuration (can be overriden by toolchains or CLI)
 if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
@@ -30,36 +21,12 @@ set(BLAKE3_AMD64_NAMES amd64 AMD64 x86_64)
 set(BLAKE3_X86_NAMES i686 x86 X86)
 set(BLAKE3_ARMv8_NAMES aarch64 AArch64 arm64 ARM64 armv8 armv8a)
 
-# library target
-add_library(blake3
-        blake3.c
-        blake3_dispatch.c
-        blake3_portable.c
-)
-add_library(BLAKE3::blake3 ALIAS blake3)
-
-# library configuration
-set(BLAKE3_PKGCONFIG_CFLAGS)
-if (BUILD_SHARED_LIBS)
-  target_compile_definitions(blake3 
-    PUBLIC BLAKE3_DLL
-    PRIVATE BLAKE3_DLL_EXPORTS
-  )
-  list(APPEND BLAKE3_PKGCONFIG_CFLAGS -DBLAKE3_DLL)
-endif()
-target_include_directories(blake3 PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-set_target_properties(blake3 PROPERTIES
-  VERSION ${PROJECT_VERSION}
-  SOVERSION 0
-  C_VISIBILITY_PRESET hidden
-)
-
 # optional SIMD sources
 macro(BLAKE3_DISABLE_SIMD)
   set(BLAKE3_SIMD_AMD64_ASM OFF)
   set(BLAKE3_SIMD_X86_INTRINSICS OFF)
   set(BLAKE3_SIMD_NEON_INTRINSICS OFF)
-  target_compile_definitions(blake3 PRIVATE
+  target_compile_definitions(${PROJECT_NAME} PRIVATE
     BLAKE3_USE_NEON=0
     BLAKE3_NO_SSE2
     BLAKE3_NO_SSE41
@@ -68,12 +35,19 @@ macro(BLAKE3_DISABLE_SIMD)
   )
 endmacro()
 
+set(BLAKE3_SOURCES
+        blake3.c
+        blake3_dispatch.c
+        blake3_portable.c
+)
+
 if(CMAKE_SYSTEM_PROCESSOR IN_LIST BLAKE3_AMD64_NAMES OR BLAKE3_USE_AMD64_ASM)
   set(BLAKE3_SIMD_AMD64_ASM ON)
 
   if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
     enable_language(ASM_MASM)
-    target_sources(blake3 PRIVATE
+
+    list(APPEND BLAKE3_SOURCES
             blake3_avx2_x86-64_windows_msvc.asm
             blake3_avx512_x86-64_windows_msvc.asm
             blake3_sse2_x86-64_windows_msvc.asm
@@ -84,7 +58,7 @@ if(CMAKE_SYSTEM_PROCESSOR IN_LIST BLAKE3_AMD64_NAMES OR BLAKE3_USE_AMD64_ASM)
          OR CMAKE_C_COMPILER_ID STREQUAL "Clang"
          OR CMAKE_C_COMPILER_ID STREQUAL "AppleClang")
     if (WIN32)
-      target_sources(blake3 PRIVATE
+      list(APPEND BLAKE3_SOURCES
               blake3_avx2_x86-64_windows_gnu.S
               blake3_avx512_x86-64_windows_gnu.S
               blake3_sse2_x86-64_windows_gnu.S
@@ -92,7 +66,7 @@ if(CMAKE_SYSTEM_PROCESSOR IN_LIST BLAKE3_AMD64_NAMES OR BLAKE3_USE_AMD64_ASM)
       )
 
     elseif(UNIX)
-      target_sources(blake3 PRIVATE
+      list(APPEND BLAKE3_SOURCES
               blake3_avx2_x86-64_unix.S
               blake3_avx512_x86-64_unix.S
               blake3_sse2_x86-64_unix.S
@@ -114,7 +88,7 @@ elseif((CMAKE_SYSTEM_PROCESSOR IN_LIST BLAKE3_X86_NAMES OR BLAKE3_USE_X86_INTRIN
        AND DEFINED BLAKE3_CFLAGS_AVX512)
   set(BLAKE3_SIMD_X86_INTRINSICS ON)
 
-  target_sources(blake3 PRIVATE
+  list(APPEND BLAKE3_SOURCES
           blake3_avx2.c
           blake3_avx512.c
           blake3_sse2.c
@@ -132,10 +106,10 @@ elseif(CMAKE_SYSTEM_PROCESSOR IN_LIST BLAKE3_ARMv8_NAMES
             OR CMAKE_SIZEOF_VOID_P EQUAL 8)))
   set(BLAKE3_SIMD_NEON_INTRINSICS ON)
 
-  target_sources(blake3 PRIVATE
+  list(APPEND BLAKE3_SOURCES
           blake3_neon.c
   )
-  target_compile_definitions(blake3 PRIVATE
+  target_compile_definitions(${PROJECT_NAME} PRIVATE
     BLAKE3_USE_NEON=1
   )
 
@@ -147,37 +121,5 @@ else()
   BLAKE3_DISABLE_SIMD()
 endif()
 
-# cmake install support
-install(FILES blake3.h DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
-install(TARGETS blake3 EXPORT blake3-targets)
-install(EXPORT blake3-targets
-  NAMESPACE BLAKE3::
-  DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/blake3"
-)
-
-include(CMakePackageConfigHelpers)
-configure_package_config_file(blake3-config.cmake.in
-    "${CMAKE_CURRENT_BINARY_DIR}/blake3-config.cmake"
-
-    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/blake3"
-)
-write_basic_package_version_file(
-    "${CMAKE_CURRENT_BINARY_DIR}/blake3-config-version.cmake"
-    VERSION ${libblake3_VERSION}
-    COMPATIBILITY SameMajorVersion
-)
-install(FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/blake3-config.cmake"
-        "${CMAKE_CURRENT_BINARY_DIR}/blake3-config-version.cmake"
-    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/blake3"
-)
-
-configure_file(libblake3.pc.in libblake3.pc @ONLY)
-install(FILES "${CMAKE_BINARY_DIR}/libblake3.pc"
-  DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
-
-# print feature summary
-add_feature_info("AMD64 assembly" BLAKE3_SIMD_AMD64_ASM "The library uses hand written amd64 SIMD assembly.")
-add_feature_info("x86 SIMD intrinsics" BLAKE3_SIMD_X86_INTRINSICS "The library uses x86 SIMD intrinsics.")
-add_feature_info("NEON SIMD intrinsics" BLAKE3_SIMD_NEON_INTRINSICS "The library uses NEON SIMD intrinsics.")
-feature_summary(WHAT ENABLED_FEATURES)
+list(TRANSFORM BLAKE3_SOURCES PREPEND src/dice/hash/blake/internal/blake3/)
+set(BLAKE3_SOURCES ${BLAKE3_SOURCES} PARENT_SCOPE)

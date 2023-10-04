@@ -66,21 +66,20 @@ endif ()
 
 add_subdirectory(src/dice/hash/blake/internal/blake3)
 
-add_library(${PROJECT_NAME} INTERFACE)
+message(${BLAKE3_SOURCES})
+add_library(${PROJECT_NAME} ${BLAKE3_SOURCES})
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
 target_include_directories(
         ${PROJECT_NAME}
-        INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>)
-
-target_link_libraries(${PROJECT_NAME} INTERFACE blake3)
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>)
 
 if (WITH_SODIUM)
-    target_link_libraries(${PROJECT_NAME} INTERFACE ${sodium_dep})
+    target_link_libraries(${PROJECT_NAME} PUBLIC ${sodium_dep})
 endif ()
 
-include(cmake/install_interface_library.cmake)
-install_interface_library(${PROJECT_NAME} "src")
+include(cmake/install_library.cmake)
+install_cpp_library(${PROJECT_NAME} "src")
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
     include(CTest)
