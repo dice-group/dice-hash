@@ -40,8 +40,10 @@ class DiceHashConan(ConanFile):
         cmake = CMake(self)
         cmake.configure()
         cmake.install()
+
         for dir in ("lib", "res", "share"):
             rmdir(self, os.path.join(self.package_folder, dir))
+
         copy(self, pattern="LICENSE*", dst="licenses", src=self.folders.source_folder)
 
     def package_info(self):
