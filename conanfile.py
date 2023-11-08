@@ -35,9 +35,6 @@ class DiceHashConan(ConanFile):
     def layout(self):
         cmake_layout(self)
 
-    def package_id(self):
-        self.info.header_only()
-
     def package(self):
         cmake = CMake(self)
         cmake.configure()
@@ -45,3 +42,7 @@ class DiceHashConan(ConanFile):
         for dir in ("lib", "res", "share"):
             rmdir(self, os.path.join(self.package_folder, dir))
         copy(self, pattern="LICENSE*", dst="licenses", src=self.folders.source_folder)
+
+    def package_info(self):
+        self.cpp_info.bindirs = []
+        self.cpp_info.libdirs = []
