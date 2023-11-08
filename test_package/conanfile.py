@@ -1,6 +1,7 @@
 import os
 from conan import ConanFile
 from conan.tools.cmake import CMake, cmake_layout
+from conan.tools.build import can_run
 
 required_conan_version = ">=1.59"
 
@@ -21,4 +22,6 @@ class TestPackageConan(ConanFile):
         cmake.build()
 
     def test(self):
-        self.run(os.path.join(self.cpp.build.bindirs[0], "example"), run_environment=True)
+        if can_run(self):
+            cmd = os.path.join(self.cpp.build.bindir, "example")
+            self.run(cmd, env="conanrun")
