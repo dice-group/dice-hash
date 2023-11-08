@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.22)
 
 project(
         dice-hash
@@ -34,13 +34,13 @@ target_include_directories(
 include(cmake/install_interface_library.cmake)
 install_interface_library(${PROJECT_NAME} "include")
 
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
+if(PROJECT_IS_TOP_LEVEL AND BUILD_TESTING)
     include(CTest)
     enable_testing()
     add_subdirectory(tests)
 endif()
 
 option(BUILD_EXAMPLES "Build example programs" OFF)
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_EXAMPLES)
+if(PROJECT_IS_TOP_LEVEL AND BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()

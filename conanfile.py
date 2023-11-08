@@ -33,9 +33,6 @@ class DiceHashConan(ConanFile):
             cmake_file = load(self, os.path.join(self.recipe_folder, "CMakeLists.txt"))
             self.description = re.search(r"project\([^)]*DESCRIPTION\s+\"([^\"]+)\"[^)]*\)", cmake_file).group(1)
 
-    def layout(self):
-        cmake_layout(self)
-
     def package(self):
         cmake = CMake(self)
         cmake.configure()
