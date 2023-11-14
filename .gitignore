@@ -160,3 +160,5 @@ modules.xml
 
 # docu folder
 /docu/
+
+test_package/build

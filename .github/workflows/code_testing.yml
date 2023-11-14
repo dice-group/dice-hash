@@ -7,95 +7,69 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build_test:
-    runs-on: ubuntu-20.04
+  build-and-run-tests-and-examples:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - CC: "clang-10"
-            CXX: "clang++-10"
-          - CC: "gcc-10"
-            CXX: "g++-10"
-    steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
-      # setup
-      - name: install needed packages
-        run: sudo apt-get -qq update && sudo apt-get -qq install -y git make cmake gcc-10 g++-10 clang-10 libstdc++-10-dev
-      # build
-      - name: build tests
-        run: mkdir build && cd build && cmake -DBUILD_TESTING=ON .. && make -j
-        env:
-          CC: ${{ matrix.CC }}
-          CXX: ${{ matrix.CXX }}
-      # execute
-      - name: run tests
-        run: build/tests/tests_dice_hash
+        config:
+          - os: ubuntu-22.04
+            compiler: clang-15
+          - os: ubuntu-22.04
+            compiler: clang-16
 
-  test_conan_packaging:
-    runs-on: ubuntu-20.04
+          - os: ubuntu-22.04
+            compiler: gcc-12
+          - os: ubuntu-22.04
+            compiler: gcc-13
+    runs-on: ${{ matrix.config.os }}
     steps:
-      - name: Install conan
-        run: sudo apt-get update -qq && sudo apt-get -qq install -y python3-pip gcc-10
-      - name: setup conan
+      - name: Add repos for for gcc-13 and clang-16
         run: |
-          sudo pip3 install "conan==1.59"
-          conan profile new --detect default
-          conan profile update settings.compiler.libcxx=libstdc++11 default
-        env:
-          CC: gcc-10
-          CXX: g++-10
-      - uses: actions/checkout@v3
-      - name: build and test the package
-        run: conan create . --build missing
-        env:
-          CC: gcc-10
-          CXX: g++-10
+          # gcc-13
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
 
-  #simply build the dockerfile and execute the produced image.
-  #If you want to upload a docker image, you probably should have a look at https://github.com/docker/build-push-action
-  build_docker:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v3
-      # build
-      - name: build image
-        run: docker build -t dockerimage .
-      # run
-      - name: run image
-        run: docker run dockerimage
+          # clang-16
+          source /etc/os-release
+          echo "deb http://apt.llvm.org/${UBUNTU_CODENAME}/ llvm-toolchain-${UBUNTU_CODENAME}-16 main" | sudo tee /etc/apt/sources.list.d/llvm-16.list
+          curl https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/llvm-16.gpg > /dev/null
 
-  # simply build the examples and execute them.
-  build_examples:
-    runs-on: ubuntu-20.04
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - CC: "clang-10"
-            CXX: "clang++-10"
-          - CC: "gcc-10"
-            CXX: "g++-10"
-    steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+          sudo apt-get update -y
+
+      - name: Install CMake
+        uses: lukka/get-cmake@v3.24.3
+        with:
+          cmakeVersion: 3.16.9
+
+      - name: Install compiler
+        id: install_cc
+        uses: rlalik/setup-cpp-compiler@v1.2
+        with:
+          compiler: ${{ matrix.config.compiler }}
+
+      - name: Install linker
+        uses: rui314/setup-mold@v1
+
       - uses: actions/checkout@v3
-      # setup
-      - name: install needed packages
-        run: sudo apt-get -qq update && sudo apt-get -qq install -y git make cmake gcc-10 g++-10 clang-10 libstdc++-10-dev
-      # build
-      - name: build examples
-        run: mkdir build && cd build && cmake -DBUILD_EXAMPLES=ON .. && make -j
+
+      - name: Configure CMake
+        run: cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=On -DBUILD_EXAMPLES=On -G Ninja -B build .
         env:
-          CC: ${{ matrix.CC }}
-          CXX: ${{ matrix.CXX }}
-      # execute
-      - name: run examples
+          CC: ${{ steps.install_cc.outputs.cc }}
+          CXX: ${{ steps.install_cc.outputs.cxx }}
+          CXXFLAGS: -fsanitize=undefined -fsanitize=address -fno-omit-frame-pointer -fno-optimize-sibling-calls
+
+      - name: Build tests and examples
+        working-directory: build
+        run: cmake --build . -j2
+
+      - name: Run tests
+        working-directory: build
+        run: ctest --verbose -j2
+
+      - name: Run examples
+        working-directory: build
         run: |
-          build/examples/basicUsage
-          build/examples/policyUsage
-          build/examples/customContainer
-          build/examples/customPolicy
-          build/examples/customType
-          build/examples/usageForUnorderedSet
-          build/examples/combineHashes
+          for example in $(find ./examples -maxdepth 1 -type f -executable); do
+            echo "running ${example}"
+            ./${example}
+          done
