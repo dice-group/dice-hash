@@ -1,4 +1,5 @@
-import re, os
+import re
+import os
 
 from conan import ConanFile
 from conan.tools.cmake import CMake, cmake_layout
@@ -32,16 +33,20 @@ class DiceHashConan(ConanFile):
             cmake_file = load(self, os.path.join(self.recipe_folder, "CMakeLists.txt"))
             self.description = re.search(r"project\([^)]*DESCRIPTION\s+\"([^\"]+)\"[^)]*\)", cmake_file).group(1)
 
-    def layout(self):
-        cmake_layout(self)
-
-    def package_id(self):
-        self.info.header_only()
-
     def package(self):
         cmake = CMake(self)
         cmake.configure()
         cmake.install()
+
         for dir in ("lib", "res", "share"):
             rmdir(self, os.path.join(self.package_folder, dir))
+
         copy(self, pattern="LICENSE*", dst="licenses", src=self.folders.source_folder)
+
+    def package_info(self):
+        self.cpp_info.bindirs = []
+        self.cpp_info.libdirs = []
+
+        self.cpp_info.set_property("cmake_find_mode", "both")
+        self.cpp_info.set_property("cmake_target_name", "dice-hash::dice-hash")
+        self.cpp_info.set_property("cmake_file_name", "dice-hash")
