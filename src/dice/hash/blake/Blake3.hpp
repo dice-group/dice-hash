@@ -7,7 +7,7 @@
 #include <limits>
 #include <random>
 
-#include "internal/blake3/blake3.h"
+#include <dice/hash/blake/internal/blake3/blake3.h>
 
 namespace dice::hash::blake3 {
 

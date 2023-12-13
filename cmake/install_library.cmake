@@ -9,7 +9,7 @@ function(install_cpp_library TARGET_NAME INCLUDE_PATH)
   endif ()
 
   target_include_directories(
-          ${TARGET_NAME} PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+          ${TARGET_NAME} INTERFACE $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
   install(TARGETS ${TARGET_NAME} ${ARGN}
           EXPORT ${TARGET_NAME}-targets
