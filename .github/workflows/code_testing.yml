@@ -7,99 +7,70 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build_test:
-    runs-on: ubuntu-20.04
+  build_and_run_tests_and_examples:
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
         include:
-          - CC: "clang-11"
-            CXX: "clang++-11"
-          - CC: "gcc-11"
-            CXX: "g++-11"
+          - CC: "clang-17"
+            CXX: "clang++-17"
+          - CC: "gcc-13"
+            CXX: "g++-13"
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
-      # setup
-      - name: install needed packages
+      - name: Add repo for gcc-13 and clang-17
         run: |
-          sudo apt-get -qq update && sudo apt-get -qq install -y git make cmake gcc-11 g++-11 clang-11 libstdc++-11-dev python3-pip
-          sudo pip3 install "conan==1.59"
+          # gcc-13
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+          
+          # clang-17
+          source /etc/os-release
+          echo "deb http://apt.llvm.org/${UBUNTU_CODENAME}/ llvm-toolchain-${UBUNTU_CODENAME}-17 main" | sudo tee /etc/apt/sources.list.d/llvm-17.list
+          curl https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/llvm.gpg > /dev/null
+
+      - name: Install libstdc++-13
+        run: |
+          sudo apt-get install libstdc++-13-dev -y
+
+      - name: Get minimum cmake version
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: 3.22.5
+
+      - name: Install compiler
+        id: install_cc
+        uses: rlalik/setup-cpp-compiler@v1.2
+        with:
+          compiler: ${{ matrix.config.compiler }}
+
+      - name: install conan packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-pip
+          
+          pip3 install "conan==1.62.0"
           conan profile new --detect default
           conan profile update settings.compiler.libcxx=libstdc++11 default
-      # build
-      - name: build tests
-        run: mkdir build && cd build && cmake -DBUILD_TESTING=ON .. && make -j
+
+      - uses: actions/checkout@v3
+
+      - name: build tests and examples
+        run: |
+          mkdir build
+          cd build 
+          cmake -DBUILD_TESTING=ON -DBUILD_EXAMPLES=ON -DWITH_BLAKE2=ON .. && make -j
         env:
-          CC: ${{ matrix.CC }}
-          CXX: ${{ matrix.CXX }}
-      # execute
+          CC: ${{ steps.install_cc.outputs.cc }}
+          CXX: ${{ steps.install_cc.outputs.cxx }}
+
       - name: run tests
         run: |
-          build/tests/tests_Blake2b
-          build/tests/tests_Blake2Xb
-          build/tests/tests_dice_hash
-          build/tests/tests_LtHash_AVX2
-          build/tests/tests_LtHash_simple
-          build/tests/tests_LtHash_SSE2
+          for test in build/tests/*; do
+            ./$test
+          done
 
-  test_conan_packaging:
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Install conan
-        run: sudo apt-get update -qq && sudo apt-get -qq install -y python3-pip gcc-11 g++-11
-      - name: setup conan
-        run: |
-          sudo pip3 install "conan==1.59"
-          conan profile new --detect default
-          conan profile update settings.compiler.libcxx=libstdc++11 default
-        env:
-          CC: gcc-11
-          CXX: g++-11
-      - uses: actions/checkout@v3
-      - name: build and test the package
-        run: conan create . --build missing
-        env:
-          CC: gcc-11
-          CXX: g++-11
-
-  # simply build the examples and execute them.
-  build_examples:
-    runs-on: ubuntu-20.04
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - CC: "clang-11"
-            CXX: "clang++-11"
-          - CC: "gcc-11"
-            CXX: "g++-11"
-    steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
-      # setup
-      - name: install needed packages
-        run: |
-          sudo apt-get -qq update && sudo apt-get -qq install -y git make cmake gcc-11 g++-11 clang-11 libstdc++-11-dev python3-pip
-          sudo pip3 install "conan==1.59"
-          conan profile new --detect default
-          conan profile update settings.compiler.libcxx=libstdc++11 default
-      # build
-      - name: build examples
-        run: mkdir build && cd build && cmake -DBUILD_EXAMPLES=ON .. && make -j
-        env:
-          CC: ${{ matrix.CC }}
-          CXX: ${{ matrix.CXX }}
-      # execute
       - name: run examples
         run: |
-          build/examples/basicUsage
-          build/examples/blake2b
-          build/examples/blake2xb
-          build/examples/policyUsage
-          build/examples/customContainer
-          build/examples/customPolicy
-          build/examples/customType
-          build/examples/ltHash
-          build/examples/usageForUnorderedSet
-          build/examples/combineHashes
+          for example in build/examples/*; do
+            ./$example
+          done

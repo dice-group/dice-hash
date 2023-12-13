@@ -5,6 +5,8 @@
  * @brief A thin wrapper around libsodium's Blake2b implementation
  */
 
+#if __has_include(<sodium.h>)
+
 #include <sodium.h>
 
 #include <algorithm>
@@ -208,5 +210,9 @@ namespace dice::hash::blake2b {
 	};
 
 } // namespace dice::hash::blake2b
+
+#else
+#error "Cannot include Blake2b.hpp if sodium is not available"
+#endif
 
 #endif//DICE_HASH_BLAKE2B_HPP

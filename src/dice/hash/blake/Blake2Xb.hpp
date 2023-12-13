@@ -6,7 +6,9 @@
  * @note Implementation adapted from https://github.com/facebook/folly/blob/main/folly/experimental/crypto/Blake2Xb.h
  */
 
-#include "dice/hash/blake/Blake2b.hpp"
+#if __has_include(<sodium.h>)
+
+#include <dice/hash/blake/Blake2b.hpp>
 
 #include <algorithm>
 #include <bit>
@@ -322,5 +324,9 @@ namespace dice::hash::blake2xb {
 	};
 
 } // namespace dice::hash::blake2xb
+
+#else
+#error "Cannot include Blake2Xb.hpp if sodium is not available"
+#endif // __has_include(<sodium.h>)
 
 #endif//DICE_HASH_BLAKE2XB_HPP

@@ -73,6 +73,7 @@ namespace dice::tests::hash {
 
 	TEMPLATE_PRODUCT_TEST_CASE("DiceHash with default policy compiles for every type", "[DiceHash]", dice::hash::DiceHash, (AllTypesToTestForDiceHash)) {
 		TestType hasher;
+		(void) hasher;
 	}
 
 	TEMPLATE_TEST_CASE("DiceHash works with different Policies", "[DiceHash]", AllPoliciesToTestForDiceHash) {
