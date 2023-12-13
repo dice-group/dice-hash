@@ -27,7 +27,7 @@ else()
     MESSAGE(WARNING "Could not verify that your compiler (${CMAKE_CXX_COMPILER}) supports all needed features.")
 endif()
 
-OPTION(WITH_BLAKE2 "Enable usage of the external library sodium for Blake2b, Blake2Xb support" OFF)
+OPTION(WITH_SODIUM "Enable usage of the external library sodium for Blake2b, Blake2Xb and LtHash support" OFF)
 
 OPTION(USE_CONAN "If available, use conan to retrieve dependencies." ON)
 if (PROJECT_IS_TOP_LEVEL AND USE_CONAN AND (BUILD_TESTING OR WITH_SODIUM))

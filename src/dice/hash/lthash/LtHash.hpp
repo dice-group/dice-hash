@@ -11,11 +11,15 @@
  * @note Implementation adapted from https://github.com/facebook/folly/blob/main/folly/experimental/crypto/LtHash.h
  */
 
+#if __has_include(<sodium.h>)
+
 #include <array>
 #include <cstring>
 #include <vector>
 #include <utility>
 #include <memory>
+
+#include <sodium.h>
 
 #include "dice/hash/blake/Blake3.hpp"
 #include "dice/hash/lthash/MathEngine.hpp"
@@ -384,5 +388,9 @@ namespace dice::hash::lthash {
 	using LtHash32 = LtHash<32, 1024>;
 
 } // namespace dice::hash::lthash
+
+#else
+#error "Cannot include LtHash.hpp if sodium is not available"
+#endif
 
 #endif//DICE_HASH_LTHASH_HPP

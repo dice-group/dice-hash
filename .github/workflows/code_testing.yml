@@ -59,14 +59,14 @@ jobs:
         run: |
           mkdir build
           cd build 
-          cmake -DBUILD_TESTING=ON -DBUILD_EXAMPLES=ON -DWITH_BLAKE2=ON .. && make -j
+          cmake -DBUILD_TESTING=ON -DBUILD_EXAMPLES=ON -DWITH_SODIUM=ON .. && make -j
         env:
           CC: ${{ steps.install_cc.outputs.cc }}
           CXX: ${{ steps.install_cc.outputs.cxx }}
 
       - name: run tests
         run: |
-          for test in build/tests/*; do
+          for test in build/tests/tests_*; do
             ./$test
           done
 
