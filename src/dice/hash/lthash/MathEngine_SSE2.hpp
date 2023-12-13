@@ -1,6 +1,7 @@
 #ifndef DICE_HASH_MATHENGINE_SSE2_HPP
 #define DICE_HASH_MATHENGINE_SSE2_HPP
 
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 #include <span>

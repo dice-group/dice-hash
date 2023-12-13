@@ -228,6 +228,7 @@ namespace dice::hash::blake2xb {
 															   data.size());
 			// cannot fail, see: https://github.com/jedisct1/libsodium/blob/8d9ab6cd764926d4bf1168b122f4a3ff4ea686a0/src/libsodium/crypto_generichash/blake2b/ref/blake2b-ref.c#L263
 			assert(res == 0);
+			(void) res;
 		}
 
 		/**
@@ -282,6 +283,8 @@ namespace dice::hash::blake2xb {
 				pos += len;
 				remaining -= len;
 			}
+
+			(void) res;
 		}
 
 		/**
