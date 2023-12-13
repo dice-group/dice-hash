@@ -22,6 +22,7 @@ namespace dice::tests::hash {
 	struct ValuelessByException {
 		ValuelessByException() = default;
 		ValuelessByException(const ValuelessByException &) { throw std::domain_error("copy ctor"); }
+		ValuelessByException &operator=(const ValuelessByException &) { throw std::domain_error("copy assignment"); }
 	};
 
 	template<typename Policy, typename T>
