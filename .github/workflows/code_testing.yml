@@ -65,10 +65,8 @@ jobs:
           CXX: ${{ steps.install_cc.outputs.cxx }}
 
       - name: run tests
-        run: |
-          for test in build/tests/tests_*; do
-            ./$test
-          done
+        working-directory: build
+        run: ctest --verbose --parallel 2
 
       - name: run examples
         run: |
