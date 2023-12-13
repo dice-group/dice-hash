@@ -8,15 +8,16 @@ concurrency:
 
 jobs:
   build_and_run_tests_and_examples:
-    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - CC: "clang-17"
-            CXX: "clang++-17"
-          - CC: "gcc-13"
-            CXX: "g++-13"
+        config:
+          - os: ubuntu-22.04
+            compiler: clang-17
+          - os: ubuntu-22.04
+            compiler: gcc-13
+    runs-on: ${{ matrix.config.os }}
+    name: ${{ matrix.config.os }} (${{ matrix.config.compiler }})
     steps:
       - name: Add repo for gcc-13 and clang-17
         run: |
