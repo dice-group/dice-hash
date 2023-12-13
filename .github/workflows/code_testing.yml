@@ -72,6 +72,6 @@ jobs:
 
       - name: run examples
         run: |
-          for example in build/examples/*; do
+          for example in build/examples/example_*; do
             ./$example
           done
