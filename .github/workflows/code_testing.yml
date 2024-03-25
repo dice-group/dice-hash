@@ -7,36 +7,38 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build_and_run_tests_and_examples:
+  build-and-run-tests-and-examples:
     strategy:
       fail-fast: false
       matrix:
         config:
           - os: ubuntu-22.04
-            compiler: clang-17
+            compiler: clang-15
+          - os: ubuntu-22.04
+            compiler: clang-16
+
+          - os: ubuntu-22.04
+            compiler: gcc-12
           - os: ubuntu-22.04
             compiler: gcc-13
     runs-on: ${{ matrix.config.os }}
-    name: ${{ matrix.config.os }} (${{ matrix.config.compiler }})
     steps:
-      - name: Add repo for gcc-13 and clang-17
+      - name: Add repos for for gcc-13 and clang-16
         run: |
           # gcc-13
           sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-          
-          # clang-17
+
+          # clang-16
           source /etc/os-release
-          echo "deb http://apt.llvm.org/${UBUNTU_CODENAME}/ llvm-toolchain-${UBUNTU_CODENAME}-17 main" | sudo tee /etc/apt/sources.list.d/llvm-17.list
-          curl https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/llvm.gpg > /dev/null
+          echo "deb http://apt.llvm.org/${UBUNTU_CODENAME}/ llvm-toolchain-${UBUNTU_CODENAME}-16 main" | sudo tee /etc/apt/sources.list.d/llvm-16.list
+          curl https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/llvm-16.gpg > /dev/null
 
-      - name: Install libstdc++-13
-        run: |
-          sudo apt-get install libstdc++-13-dev -y
+          sudo apt-get update -y
 
-      - name: Get minimum cmake version
-        uses: lukka/get-cmake@latest
+      - name: Install CMake
+        uses: lukka/get-cmake@v3.24.3
         with:
-          cmakeVersion: 3.22.5
+          cmakeVersion: 3.16.9
 
       - name: Install compiler
         id: install_cc
@@ -44,32 +46,30 @@ jobs:
         with:
           compiler: ${{ matrix.config.compiler }}
 
-      - name: install conan packages
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y python3-pip
-          
-          pip3 install "conan==1.62.0"
-          conan profile new --detect default
-          conan profile update settings.compiler.libcxx=libstdc++11 default
+      - name: Install linker
+        uses: rui314/setup-mold@v1
 
       - uses: actions/checkout@v3
 
-      - name: build tests and examples
-        run: |
-          mkdir build
-          cd build 
-          cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DBUILD_EXAMPLES=ON -DWITH_SODIUM=ON -DCMAKE_CXX_FLAGS="-march=native" .. && make -j
+      - name: Configure CMake
+        run: cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=On -DBUILD_EXAMPLES=On -G Ninja -B build .
         env:
           CC: ${{ steps.install_cc.outputs.cc }}
           CXX: ${{ steps.install_cc.outputs.cxx }}
+          CXXFLAGS: -fsanitize=undefined -fsanitize=address -fno-omit-frame-pointer -fno-optimize-sibling-calls
 
-      - name: run tests
+      - name: Build tests and examples
         working-directory: build
-        run: ctest --verbose --parallel 2 --exclude-regex "benchmark_*"
+        run: cmake --build . -j2
 
-      - name: run examples
+      - name: Run tests
+        working-directory: build
+        run: ctest --verbose -j2
+
+      - name: Run examples
+        working-directory: build
         run: |
-          for example in build/examples/example_*; do
-            ./$example
+          for example in $(find ./examples -maxdepth 1 -type f -executable); do
+            echo "running ${example}"
+            ./${example}
           done

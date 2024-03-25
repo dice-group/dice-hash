@@ -1,8 +1,8 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.22)
 
 project(
         dice-hash
-        VERSION 0.4.3
+        VERSION 0.4.4
         DESCRIPTION "dice-hash provides a framework to generate stable hashes. It provides state-of-the-art hash functions, supports STL containers out of the box and helps you to defines stable hashes for your own structs and classes."
         HOMEPAGE_URL "https://dice-group.github.io/dice-hash/")
 
@@ -82,13 +82,13 @@ endif ()
 include(cmake/install_library.cmake)
 install_cpp_library(${PROJECT_NAME} "src")
 
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
+if(PROJECT_IS_TOP_LEVEL AND BUILD_TESTING)
     include(CTest)
     enable_testing()
     add_subdirectory(tests)
 endif()
 
 option(BUILD_EXAMPLES "Build example programs" OFF)
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_EXAMPLES)
+if(PROJECT_IS_TOP_LEVEL AND BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()

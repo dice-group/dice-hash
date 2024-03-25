@@ -1,4 +1,5 @@
-import re, os
+import re
+import os
 
 from conan import ConanFile
 from conan.tools.cmake import CMake, cmake_layout
@@ -54,27 +55,43 @@ class DiceHashConan(ConanFile):
         self._configure_cmake().build()
 
     def package(self):
+        cmake = CMake(self)
+        cmake.configure()
+        cmake.install()
+
+        for dir in ("lib", "res", "share"):
+            rmdir(self, os.path.join(self.package_folder, dir))
+
         self._configure_cmake().install()
         rmdir(self, os.path.join(self.package_folder, "cmake"))
         rmdir(self, os.path.join(self.package_folder, "share"))
         copy(self, pattern="LICENSE*", dst="licenses", src=self.folders.source_folder)
 
     def package_info(self):
-        self.cpp_info.components["global"].set_property("cmake_target_name", f"{self.name}::{self.name}")
-        self.cpp_info.components["global"].names["cmake_find_package_multi"] = f"{self.name}"
-        self.cpp_info.components["global"].names["cmake_find_package"] = f"{self.name}"
-        self.cpp_info.components["global"].includedirs = ["src"]
-        self.cpp_info.components["global"].libs = [f"{self.name}"]
-        self.cpp_info.components["global"].libdirs = ["lib"]
+        self.cpp_info.bindirs = []
+        self.cpp_info.libdirs = []
 
-        self.cpp_info.components["global"].requires = []
+        self.cpp_info.set_property("cmake_find_mode", "both")
+        self.cpp_info.set_property("cmake_target_name", "dice-hash::dice-hash")
+        self.cpp_info.set_property("cmake_file_name", "dice-hash")
+
+    def package_info(self):
+        self.cpp_info.set_property("cmake_find_mode", "both")
+        self.cpp_info.set_property("cmake_target_name", "dice-hash::dice-hash")
+        self.cpp_info.set_property("cmake_file_name", "dice-hash")
+
+        self.cpp_info.includedirs = ["src"]
+        self.cpp_info.libs = [f"{self.name}"]
+        self.cpp_info.libdirs = ["lib"]
+
+        self.cpp_info.requires = []
 
         if self.options.with_sodium:
-            self.cpp_info.components["global"].requires += [
+            self.cpp_info.requires += [
                 "libsodium::libsodium"
             ]
 
         if self.options.with_test_deps:
-            self.cpp_info.components["global"].requires += [
+            self.cpp_info.requires += [
                 "Metall::Metall"
             ]
