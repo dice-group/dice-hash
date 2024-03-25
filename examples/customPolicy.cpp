@@ -11,7 +11,7 @@ struct MyCustomPolicy {
 	static std::size_t hash_fundamental(T x) noexcept {
 		return static_cast<std::size_t>(42 * x);
 	}
-	static std::size_t hash_bytes(void const *ptr, std::size_t len) noexcept {
+	static std::size_t hash_bytes([[maybe_unused]] void const *ptr, std::size_t len) noexcept {
 		return len;
 	}
 	static std::size_t hash_combine(std::initializer_list<std::size_t> hashes) noexcept {
@@ -26,7 +26,7 @@ struct MyCustomPolicy {
 		std::size_t result = 0;
 		//some Hashstates need to know how many elements need to be hashed
 	public:
-		explicit HashState(std::size_t size) noexcept {}
+		explicit HashState([[maybe_unused]] std::size_t size) noexcept {}
 		void add(std::size_t hash) noexcept {
 			result = result xor hash;
 		}
