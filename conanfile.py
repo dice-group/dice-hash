@@ -33,9 +33,27 @@ class DiceHashConan(ConanFile):
             cmake_file = load(self, os.path.join(self.recipe_folder, "CMakeLists.txt"))
             self.description = re.search(r"project\([^)]*DESCRIPTION\s+\"([^\"]+)\"[^)]*\)", cmake_file).group(1)
 
+    def requirements(self):
+        self.test_requires("catch2/2.13.9")
+
+    def layout(self):
+        cmake_layout(self)
+
+    def build(self):
+        if not self.conf.get("tools.build:skip_test", default=False):
+            cmake = CMake(self)
+            cmake.configure()
+            cmake.build()
+
+    def package(self):
+        # This will also copy the "include" folder
+        copy(self, "*.h", self.source_folder, self.package_folder)
+
+    def package_id(self):
+        self.info.clear()
+
     def package(self):
         cmake = CMake(self)
-        cmake.configure()
         cmake.install()
 
         for dir in ("lib", "res", "share"):
