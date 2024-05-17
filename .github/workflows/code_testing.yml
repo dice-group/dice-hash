@@ -58,7 +58,7 @@ jobs:
           
           conan profile detect  # Force creation of conan directory structure, will be overwritten
           
-          echo '{% set compiler, version = detect_api.detect_default_compiler() %}'             > ~/.conan2/profiles/default
+          echo '{% set compiler, version, c_exe = detect_api.detect_default_compiler() %}'      > ~/.conan2/profiles/default
           echo '[settings]'                                                                    >> ~/.conan2/profiles/default
           echo 'os={{ detect_api.detect_os() }}'                                               >> ~/.conan2/profiles/default
           echo 'arch={{ detect_api.detect_arch() }}'                                           >> ~/.conan2/profiles/default
