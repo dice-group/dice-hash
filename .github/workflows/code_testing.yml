@@ -49,6 +49,13 @@ jobs:
       - name: Install linker
         uses: rui314/setup-mold@v1
 
+      - name: Get dependency provider
+        run: |
+          sudo apt-get install -y wget
+          
+          wget https://github.com/conan-io/cmake-conan/raw/develop2/conan_provider.cmake -O conan_provider.cmake
+          
+
       - name: Configure conan
         run: |
           pip3 install conan==2.3.0
