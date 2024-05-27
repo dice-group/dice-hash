@@ -2,7 +2,7 @@ import re
 import os
 
 from conan import ConanFile
-from conan.tools.cmake import CMake, cmake_layout
+from conan.tools.cmake import CMake
 from conan.tools.files import load, rmdir, copy
 
 
@@ -35,9 +35,6 @@ class DiceHashConan(ConanFile):
 
     def requirements(self):
         self.test_requires("catch2/2.13.9")
-
-    def layout(self):
-        cmake_layout(self)
 
     def build(self):
         if not self.conf.get("tools.build:skip_test", default=False):
