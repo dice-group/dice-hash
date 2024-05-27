@@ -45,10 +45,6 @@ class DiceHashConan(ConanFile):
             cmake.configure()
             cmake.build()
 
-    def package(self):
-        # This will also copy the "include" folder
-        copy(self, "*.h", self.source_folder, self.package_folder)
-
     def package_id(self):
         self.info.clear()
 
