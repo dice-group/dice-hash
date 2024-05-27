@@ -23,26 +23,6 @@ A C++20 compatible compiler. Code was only tested on x86_64.
 
 ### CMake
 
-add 
-```cmake
-FetchContent_Declare(
-        dice-hash
-        GIT_REPOSITORY https://github.com/dice-group/dice-hash.git
-        GIT_TAG 0.4.4
-        GIT_SHALLOW TRUE)
-
-FetchContent_MakeAvailable(dice-hash)
-```
-
-to your CMakeLists.txt
-
-You can now add it to your target with:
-```cmake
-target_link_libraries(your_target
-        dice-hash::dice-hash
-        )
-```
-
 ### conan
 To use it with [conan](https://conan.io/) you need to add the repository:
 ```shell
@@ -51,6 +31,13 @@ conan remote add dice-group https://conan.dice-research.org/artifactory/api/cona
 
 To use it add `dice-hash/0.4.4` to the `[requires]` section of your conan file.
 
+You can now add it to your target with:
+```cmake
+target_link_libraries(your_target
+        dice-hash::dice-hash
+        )
+```
+
 ## build and run tests
 
 ```shell
@@ -58,12 +45,15 @@ To use it add `dice-hash/0.4.4` to the `[requires]` section of your conan file.
 git clone https://github.com/dice-group/dice-hash.git
 cd dice-hash
 #build it
+wget https://github.com/conan-io/cmake-conan/raw/develop2/conan_provider.cmake -O conan_provider.cmake
 mkdir build
 cd build
-cmake -DBUILD_TESTING -DCMAKE_BUILD_TYPE=Release ..
+cmake -DBUILD_TESTING -DCMAKE_BUILD_TYPE=Release ..  -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=conan_provider.cmake
 make -j tests_dice_hash
 ./test/tests_dice_hash
 ```
+Note: This example uses conan as dependency provider, other providers are possible.
+See https://cmake.org/cmake/help/latest/guide/using-dependencies/index.html#dependency-providers
 
 ## usage
 You need to include a single header:
