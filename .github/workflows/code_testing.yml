@@ -49,13 +49,6 @@ jobs:
       - name: Install linker
         uses: rui314/setup-mold@v1
 
-      - name: Get dependency provider
-        run: |
-          sudo apt-get install -y wget
-          
-          wget https://github.com/conan-io/cmake-conan/raw/develop2/conan_provider.cmake -O conan_provider.cmake
-          
-
       - name: Configure conan
         run: |
           pip3 install conan==2.3.0
@@ -84,6 +77,12 @@ jobs:
           key: ${{ matrix.config.os }}-${{ matrix.config.compiler }}
 
       - uses: actions/checkout@v3
+
+      - name: Get dependency provider
+        run: |
+          sudo apt-get install -y wget
+          
+          wget https://github.com/conan-io/cmake-conan/raw/develop2/conan_provider.cmake -O conan_provider.cmake
 
       - name: Configure CMake
         run: cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=On -DBUILD_EXAMPLES=On -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=conan_provider.cmake -G Ninja -B build .
