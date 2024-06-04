@@ -1,4 +1,5 @@
 <map id="dice::hash::is_ordered_container&lt; std::map&lt; Key, T, Compare, Allocator &gt; &gt;" name="dice::hash::is_ordered_container&lt; std::map&lt; Key, T, Compare, Allocator &gt; &gt;">
-<area shape="rect" id="node1" title="Specialization for std::map." alt="" coords="5,79,207,133"/>
-<area shape="rect" id="node2" title=" " alt="" coords="57,5,155,31"/>
+<area shape="rect" id="Node000001" title="Specialization for std::map." alt="" coords="5,79,206,135"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="56,5,155,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="108,47,108,78,103,78,103,47"/>
 </map>

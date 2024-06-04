@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['xxh3_0',['xxh3',['../structdice_1_1hash_1_1Policies_1_1xxh3.html',1,'dice::hash::Policies']]]
+  ['requirements_0',['Requirements',['../index.html#autotoc_md1',1,'']]],
+  ['run_20tests_1',['build and run tests',['../index.html#autotoc_md5',1,'']]]
 ];

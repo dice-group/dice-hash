@@ -6,5 +6,5 @@ var searchData=
   ['hash_5ftype_3c_20128_20_3e_3',['hash_type&lt; 128 &gt;',['../structxxh_1_1typedefs_1_1hash__type_3_01128_01_4.html',1,'xxh::typedefs']]],
   ['hash_5ftype_3c_2032_20_3e_4',['hash_type&lt; 32 &gt;',['../structxxh_1_1typedefs_1_1hash__type_3_0132_01_4.html',1,'xxh::typedefs']]],
   ['hash_5ftype_3c_2064_20_3e_5',['hash_type&lt; 64 &gt;',['../structxxh_1_1typedefs_1_1hash__type_3_0164_01_4.html',1,'xxh::typedefs']]],
-  ['hashstate_6',['HashState',['../classdice_1_1hash_1_1martinus_1_1HashState.html',1,'dice::hash::martinus::HashState'],['../classdice_1_1hash_1_1Policies_1_1Martinus_1_1HashState.html',1,'dice::hash::Policies::Martinus::HashState'],['../classdice_1_1hash_1_1Policies_1_1wyhash_1_1HashState.html',1,'dice::hash::Policies::wyhash::HashState'],['../classdice_1_1hash_1_1Policies_1_1xxh3_1_1HashState.html',1,'dice::hash::Policies::xxh3::HashState']]]
+  ['hashstate_6',['hashstate',['../classdice_1_1hash_1_1martinus_1_1HashState.html',1,'dice::hash::martinus::HashState'],['../classdice_1_1hash_1_1Policies_1_1Martinus_1_1HashState.html',1,'dice::hash::Policies::Martinus::HashState'],['../classdice_1_1hash_1_1Policies_1_1wyhash_1_1HashState.html',1,'dice::hash::Policies::wyhash::HashState'],['../classdice_1_1hash_1_1Policies_1_1xxh3_1_1HashState.html',1,'dice::hash::Policies::xxh3::HashState']]]
 ];
