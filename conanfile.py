@@ -17,6 +17,12 @@ class DiceHashConan(ConanFile):
     exports = "LICENSE"
     exports_sources = "include/*", "CMakeLists.txt", "cmake/*", "LICENSE"
     no_copy_source = True
+    options = {
+        "with_test_deps": [True, False],
+    }
+    default_options = {
+        "with_test_deps": False,
+    }
 
     # No settings/options are necessary, this is header only
 
@@ -34,7 +40,8 @@ class DiceHashConan(ConanFile):
             self.description = re.search(r"project\([^)]*DESCRIPTION\s+\"([^\"]+)\"[^)]*\)", cmake_file).group(1)
 
     def requirements(self):
-        self.test_requires("catch2/2.13.9")
+        if self.options.with_test_deps:
+            self.test_requires("catch2/2.13.9")
 
     def layout(self):
         cmake_layout(self)
