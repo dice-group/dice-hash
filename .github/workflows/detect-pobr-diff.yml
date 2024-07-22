@@ -1,0 +1,21 @@
+name: Detect POBR diff
+
+on: [ pull_request ]
+
+concurrency:
+  group: detect-pobr-diff-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detect-pobr-diff:
+    uses: dice-group/cpp-conan-release-reusable-workflow/.github/workflows/abi-diff.yml@main
+    with:
+      os: ubuntu-22.04
+      compiler: clang-16
+      cmake-version: 3.22.6
+      conan-version: 1.62.0
+      base-branch: ${{ github.base_ref }}
+      search-path: >
+        include/dice/hash/internal
+      abi-version-header: include/dice/hash/version.hpp
+      abi-version-const: dice::hash::pobr_version
