@@ -1,3 +1,6 @@
+#ifndef DICE_HASH_VERSION_HPP
+#define DICE_HASH_VERSION_HPP
+
 #include <array>
 
 namespace dice::hash {
@@ -6,3 +9,5 @@ namespace dice::hash {
 	inline constexpr std::array<int, 3> version_tuple = {@PROJECT_VERSION_MAJOR@, @PROJECT_VERSION_MINOR@, @PROJECT_VERSION_PATCH@};
 	inline constexpr int pobr_version = @POBR_VERSION@; ///< persisted object binary representation version
 } // namespace dice::hash
+
+#endif // DICE_HASH_VERSION_HPP
