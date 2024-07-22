@@ -19,3 +19,6 @@ jobs:
         include/dice/hash/internal
       abi-version-header: include/dice/hash/version.hpp
       abi-version-const: dice::hash::pobr_version
+    secrets:
+      CONAN_USER: ""
+      CONAN_PW: ""
