@@ -2,9 +2,10 @@ cmake_minimum_required(VERSION 3.24)
 
 project(
         dice-hash
-        VERSION 0.4.5
+        VERSION 0.4.6
         DESCRIPTION "dice-hash provides a framework to generate stable hashes. It provides state-of-the-art hash functions, supports STL containers out of the box and helps you to defines stable hashes for your own structs and classes."
         HOMEPAGE_URL "https://dice-group.github.io/dice-hash/")
+set(POBR_VERSION 1)  # Persisted Object Binary Representation Version
 
 # set gcc-10 and clang-10 as minimum versions see
 # https://stackoverflow.com/questions/14933172/how-can-i-add-a-minimum-compiler-version-requisite#14934542
@@ -23,6 +24,14 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 else()
     MESSAGE(WARNING "Could not verify that your compiler (${CMAKE_CXX_COMPILER}) supports all needed features.")
 endif()
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.hpp.in ${CMAKE_CURRENT_SOURCE_DIR}/include/dice/hash/version.hpp)
+
+if (PROJECT_IS_TOP_LEVEL)
+    if (BUILD_TESTING)
+        set(CONAN_INSTALL_ARGS "${CONAN_INSTALL_ARGS};-o=&:with_test_deps=True")
+    endif ()
+endif ()
 
 add_library(${PROJECT_NAME} INTERFACE)
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
