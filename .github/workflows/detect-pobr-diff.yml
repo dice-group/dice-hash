@@ -16,8 +16,8 @@ jobs:
       conan-version: 2.3.1
       base-branch: ${{ github.base_ref }}
       search-path: >
-        include/dice/hash/internal
-      abi-version-header: include/dice/hash/version.hpp
+        src/dice/hash/internal
+      abi-version-header: src/dice/hash/version.hpp
       abi-version-const: dice::hash::pobr_version
     secrets:
       CONAN_USER: ""

@@ -15,6 +15,7 @@
 #include <map>
 #include <memory>
 #include <set>
+#include <span>
 #include <string>
 #include <string_view>
 #include <tuple>
@@ -113,6 +114,9 @@ namespace dice::hash {
 			return Policy::hash_combine({dice_hash(std::get<ids>(tuple))...});
 		}
 
+		template<typename T>
+		static constexpr bool is_fundamental = std::is_fundamental_v<T> || std::is_same_v<std::remove_cv_t<T>, std::byte>;
+
 	public:
 		/** Base case for dice_hash.
          * This case is only chosen if no other match is found in this struct.
@@ -132,7 +136,7 @@ namespace dice::hash {
          * @return Hash value.
          */
 		template<typename T>
-		requires std::is_fundamental_v<std::decay_t<T>> static std::size_t dice_hash(T const &fundamental) noexcept {
+		requires is_fundamental<std::decay_t<T>> static std::size_t dice_hash(T const &fundamental) noexcept {
 			return Policy::hash_fundamental(fundamental);
 		}
 
@@ -198,7 +202,7 @@ namespace dice::hash {
         */
 		template<typename T, std::size_t N>
 		static std::size_t dice_hash(std::array<T, N> const &arr) noexcept {
-			if constexpr (std::is_fundamental_v<T>) {
+			if constexpr (is_fundamental<T>) {
 				return Policy::hash_bytes(arr.data(), sizeof(T) * N);
 			} else {
 				return dice_hash_ordered_container(arr);
@@ -213,12 +217,25 @@ namespace dice::hash {
          */
 		template<typename T>
 		static std::size_t dice_hash(std::vector<T> const &vec) noexcept {
-			if constexpr (std::is_fundamental_v<T>) {
+			if constexpr (is_fundamental<T>) {
 				static_assert(!std::is_same_v<std::decay_t<T>, bool>,
-							  "vector of booleans has a special implementation which results into errors!");
+							  "vector of booleans has a special implementation which results in errors!");
 				return Policy::hash_bytes(vec.data(), sizeof(T) * vec.size());
 			} else {
 				return dice_hash_ordered_container(vec);
+			}
+		}
+
+		/** Implementation for byte spans
+		 * @param bytes byte span to hash
+		 * @return Hash value.
+		 */
+		template<typename T, std::size_t Extent>
+		static std::size_t dice_hash(std::span<T, Extent> const &span) noexcept {
+			if constexpr (is_fundamental<T>) {
+				return Policy::hash_bytes(span.data(), span.size_bytes());
+			} else {
+				return dice_hash_ordered_container(span);
 			}
 		}
 
