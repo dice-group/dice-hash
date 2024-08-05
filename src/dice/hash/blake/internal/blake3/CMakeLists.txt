@@ -193,8 +193,8 @@ install(FILES
         DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/blake3"
 )
 
-configure_file(libblake3.pc.in libblake3.pc @ONLY)
-install(FILES "${CMAKE_BINARY_DIR}/libblake3.pc"
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/libblake3.pc.in ${CMAKE_CURRENT_SOURCE_DIR}/libblake3.pc @ONLY)
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/libblake3.pc"
         DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 
 # print feature summary

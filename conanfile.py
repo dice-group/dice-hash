@@ -51,7 +51,7 @@ class DiceHashConan(ConanFile):
     def _configure_cmake(self):
         if self._cmake is None:
             self._cmake = CMake(self)
-            self._cmake.configure(variables={"USE_CONAN": False, "WITH_SODIUM": self.options.with_sodium})
+            self._cmake.configure(variables={"WITH_SODIUM": self.options.with_sodium})
 
         return self._cmake
 
