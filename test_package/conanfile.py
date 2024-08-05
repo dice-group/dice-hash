@@ -9,7 +9,7 @@ required_conan_version = ">=1.59"
 class TestPackageConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
     generators = "CMakeDeps", "CMakeToolchain"
-    default_options = {"dice-hash:with_sodium": True}
+    default_options = {"dice-hash/*:with_sodium": True}
 
     def requirements(self):
         self.requires(self.tested_reference_str)
