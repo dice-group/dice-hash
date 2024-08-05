@@ -163,4 +163,4 @@ modules.xml
 
 test_package/build
 conan_provider.cmake
-include/dice/hash/version.hpp
+/src/dice/hash/version.hpp
