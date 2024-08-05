@@ -24,21 +24,12 @@ jobs:
     runs-on: ${{ matrix.config.os }}
     steps:
       - name: Add repos for for gcc-13 and clang-16
-        run: |
-          # gcc-13
-          sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-
-          # clang-16
-          source /etc/os-release
-          echo "deb http://apt.llvm.org/${UBUNTU_CODENAME}/ llvm-toolchain-${UBUNTU_CODENAME}-16 main" | sudo tee /etc/apt/sources.list.d/llvm-16.list
-          curl https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/llvm-16.gpg > /dev/null
-
-          sudo apt-get update -y
+        uses: dice-group/cpp-conan-release-reusable-workflow/.github/actions/setup_apt@main
 
       - name: Install CMake
-        uses: lukka/get-cmake@v3.24.3
+        uses: lukka/get-cmake@v3.29.3
         with:
-          cmakeVersion: 3.16.9
+          cmakeVersion: 3.24
 
       - name: Install compiler
         id: install_cc
@@ -49,27 +40,29 @@ jobs:
       - name: Install linker
         uses: rui314/setup-mold@v1
 
-      - name: Install conan and fix config
-        shell: bash
-        run: |
-          pip3 install conan==1.62.0
-          conan profile new --detect default
-          conan profile update env.CXX="${CXX}" default
-          conan profile update env.CC="${CC}" default
-          conan profile update settings.compiler.libcxx=libstdc++11 default
-          conan remote add dice-group https://conan.dice-research.org/artifactory/api/conan/tentris
-          conan remote add tentris-private https://conan.dice-research.org/artifactory/api/conan/tentris-private
-          conan user -p "$CONAN_PW" -r tentris-private "$CONAN_USER"
-        env:
-          CONAN_PW: ${{ secrets.CONAN_PW }}
-          CONAN_USER: ${{ secrets.CONAN_USER }}
-          CC: ${{ steps.install_cc.outputs.cc }}
-          CXX: ${{ steps.install_cc.outputs.cxx }}
+      - name: Configure conan
+        uses: dice-group/cpp-conan-release-reusable-workflow/.github/actions/configure_conan@main
+        with:
+          conan-version: 2.3.1
 
-      - uses: actions/checkout@v3
+      - name: add conan user
+        run: |
+          conan remote add -f dice-group https://conan.dice-research.org/artifactory/api/conan/tentris
+
+      - name: Cache conan data
+        id: cache-conan
+        uses: actions/cache@v4.0.2
+        with:
+          path: ~/.conan2/p
+          key: ${{ matrix.config.os }}-${{ matrix.config.compiler }}
+
+      - uses: actions/checkout@v4.1.6
+
+      - name: Get dependency provider
+        uses: dice-group/cpp-conan-release-reusable-workflow/.github/actions/add_conan_provider@main
 
       - name: Configure CMake
-        run: cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=On -DBUILD_EXAMPLES=On -G Ninja -B build .
+        run: cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=On -DBUILD_EXAMPLES=On -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=conan_provider.cmake -G Ninja -B build .
         env:
           CC: ${{ steps.install_cc.outputs.cc }}
           CXX: ${{ steps.install_cc.outputs.cxx }}

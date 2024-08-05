@@ -162,3 +162,5 @@ modules.xml
 /docu/
 
 test_package/build
+conan_provider.cmake
+include/dice/hash/version.hpp

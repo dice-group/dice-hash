@@ -1,10 +1,11 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.24)
 
 project(
         dice-hash
-        VERSION 0.4.4
+        VERSION 0.4.6
         DESCRIPTION "dice-hash provides a framework to generate stable hashes. It provides state-of-the-art hash functions, supports STL containers out of the box and helps you to defines stable hashes for your own structs and classes."
         HOMEPAGE_URL "https://dice-group.github.io/dice-hash/")
+set(POBR_VERSION 1)  # Persisted Object Binary Representation Version
 
 include(cmake/boilerplate_init.cmake)
 boilerplate_init()
@@ -27,25 +28,17 @@ else()
     MESSAGE(WARNING "Could not verify that your compiler (${CMAKE_CXX_COMPILER}) supports all needed features.")
 endif()
 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.hpp.in ${CMAKE_CURRENT_SOURCE_DIR}/include/dice/hash/version.hpp)
+
 OPTION(WITH_SODIUM "Enable usage of the external library sodium for Blake2b, Blake2Xb and LtHash support" OFF)
 
-OPTION(USE_CONAN "If available, use conan to retrieve dependencies." ON)
-if (PROJECT_IS_TOP_LEVEL AND USE_CONAN AND (BUILD_TESTING OR WITH_SODIUM))
-    include(cmake/conan_cmake.cmake)
+if (PROJECT_IS_TOP_LEVEL)
     if (BUILD_TESTING)
-        set(CONAN_DICE_HASH_WITH_TEST_DEPS "True")
-    else()
-        set(CONAN_DICE_HASH_WITH_TEST_DEPS "False")
-    endif()
-
+        set(CONAN_INSTALL_ARGS "${CONAN_INSTALL_ARGS};-o=&:with_test_deps=True")
+    endif ()
     if (WITH_SODIUM)
-        set(CONAN_DICE_HASH_WITH_SODIUM "True")
-    else()
-        set(CONAN_DICE_HASH_WITH_SODIUM "False")
-    endif()
-
-    set(CONAN_OPTIONS "with_test_deps=${CONAN_DICE_HASH_WITH_TEST_DEPS};with_sodium=${CONAN_DICE_HASH_WITH_SODIUM};boost:header_only=True")
-    install_packages_via_conan("${CMAKE_SOURCE_DIR}/conanfile.py" "${CONAN_OPTIONS}")
+        set(CONAN_INSTALL_ARGS "${CONAN_INSTALL_ARGS};-o=&:with_sodium=True")
+    endif ()
 endif ()
 
 if (WITH_SODIUM)

@@ -26,8 +26,9 @@ class DiceHashConan(ConanFile):
             self.requires("libsodium/cci.20220430")
 
         if self.options.with_test_deps:
-            self.requires("metall/0.21")
-            self.requires("boost/1.81.0")  # override for metall because older boost versions don't build with clang-16+
+            self.test_requires("catch2/2.13.9")
+            self.test_requires("metall/0.21")
+            self.test_requires("boost/1.81.0")  # override for metall because older boost versions don't build with clang-16+
 
     def set_name(self):
         if not hasattr(self, 'name') or self.version is None:
@@ -42,6 +43,9 @@ class DiceHashConan(ConanFile):
             cmake_file = load(self, os.path.join(self.recipe_folder, "CMakeLists.txt"))
             self.description = re.search(r"project\([^)]*DESCRIPTION\s+\"([^\"]+)\"[^)]*\)", cmake_file).group(1)
 
+    def layout(self):
+        cmake_layout(self)
+
     _cmake = None
 
     def _configure_cmake(self):
@@ -55,25 +59,14 @@ class DiceHashConan(ConanFile):
         self._configure_cmake().build()
 
     def package(self):
-        cmake = CMake(self)
-        cmake.configure()
-        cmake.install()
+        self._configure_cmake().install()
 
         for dir in ("lib", "res", "share"):
             rmdir(self, os.path.join(self.package_folder, dir))
 
-        self._configure_cmake().install()
         rmdir(self, os.path.join(self.package_folder, "cmake"))
         rmdir(self, os.path.join(self.package_folder, "share"))
         copy(self, pattern="LICENSE*", dst="licenses", src=self.folders.source_folder)
-
-    def package_info(self):
-        self.cpp_info.bindirs = []
-        self.cpp_info.libdirs = []
-
-        self.cpp_info.set_property("cmake_find_mode", "both")
-        self.cpp_info.set_property("cmake_target_name", "dice-hash::dice-hash")
-        self.cpp_info.set_property("cmake_file_name", "dice-hash")
 
     def package_info(self):
         self.cpp_info.set_property("cmake_find_mode", "both")
