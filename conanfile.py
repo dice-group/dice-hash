@@ -47,10 +47,9 @@ class DiceHashConan(ConanFile):
         cmake_layout(self)
 
     def build(self):
-        if not self.conf.get("tools.build:skip_test", default=False):
-            cmake = CMake(self)
-            cmake.configure()
-            cmake.build()
+        cmake = CMake(self)
+        cmake.configure()
+        cmake.build()
 
     def package_id(self):
         self.info.clear()
