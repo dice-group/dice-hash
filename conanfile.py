@@ -24,6 +24,7 @@ class DiceHashConan(ConanFile):
     def requirements(self):
         if self.options.with_sodium:
             self.requires("libsodium/cci.20220430")
+            self.requires("highway/1.2.0")
 
         if self.options.with_test_deps:
             self.test_requires("catch2/3.3.2")

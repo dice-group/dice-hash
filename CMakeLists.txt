@@ -9,6 +9,7 @@ set(POBR_VERSION 1)  # Persisted Object Binary Representation Version
 
 include(cmake/boilerplate_init.cmake)
 boilerplate_init()
+set(CMAKE_CXX_STANDARD 20)
 
 # set gcc-10 and clang-10 as minimum versions see
 # https://stackoverflow.com/questions/14933172/how-can-i-add-a-minimum-compiler-version-requisite#14934542
@@ -57,16 +58,23 @@ if (WITH_SODIUM)
     endif ()
 endif ()
 
+find_package(highway REQUIRED)
+
 add_subdirectory(src/dice/hash/blake/internal/blake3)
 
-add_library(${PROJECT_NAME} INTERFACE)
+add_library(${PROJECT_NAME}
+        src/dice/hash/lthash/MathEngine_Hwy.cpp
+)
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
-target_link_libraries(${PROJECT_NAME} INTERFACE blake3)
+target_link_libraries(${PROJECT_NAME}
+        INTERFACE blake3
+        PRIVATE highway::highway
+)
 
 target_include_directories(
         ${PROJECT_NAME}
-        INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>)
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>)
 
 if (WITH_SODIUM)
     target_link_libraries(${PROJECT_NAME} INTERFACE ${sodium_dep})
