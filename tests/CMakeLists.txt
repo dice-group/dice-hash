@@ -41,21 +41,14 @@ if (WITH_SODIUM)
     set_target_properties(tests_LtHash_simple PROPERTIES CXX_STANDARD 20)
     catch_discover_tests(tests_LtHash_simple)
 
-    add_executable(tests_LtHash_SSE2 TestLtHash_SSE2.cpp)
-    target_link_libraries(tests_LtHash_SSE2 PRIVATE
+    add_executable(tests_LtHash_Hwy TestLtHash_Hwy.cpp)
+    target_link_libraries(tests_LtHash_Hwy PRIVATE
             Catch2::Catch2WithMain
             dice-hash::dice-hash
+            highway::highway
             )
-    set_target_properties(tests_LtHash_SSE2 PROPERTIES CXX_STANDARD 20)
-    catch_discover_tests(tests_LtHash_SSE2)
-
-    add_executable(tests_LtHash_AVX2 TestLtHash_AVX2.cpp)
-    target_link_libraries(tests_LtHash_AVX2 PRIVATE
-            Catch2::Catch2WithMain
-            dice-hash::dice-hash
-            )
-    set_target_properties(tests_LtHash_AVX2 PROPERTIES CXX_STANDARD 20)
-    catch_discover_tests(tests_LtHash_AVX2)
+    set_target_properties(tests_LtHash_Hwy PROPERTIES CXX_STANDARD 20)
+    catch_discover_tests(tests_LtHash_Hwy)
 
     add_executable(benchmark_Blake2xb BenchmarkBlake2xb.cpp)
     target_link_libraries(benchmark_Blake2xb PRIVATE
@@ -73,21 +66,13 @@ if (WITH_SODIUM)
     set_target_properties(benchmark_LtHash_simple PROPERTIES CXX_STANDARD 20)
     catch_discover_tests(benchmark_LtHash_simple)
 
-    add_executable(benchmark_LtHash_SSE2 BenchmarkLtHash_SSE2.cpp)
-    target_link_libraries(benchmark_LtHash_SSE2 PRIVATE
+    add_executable(benchmark_LtHash_Hwy BenchmarkLtHash_Hwy.cpp)
+    target_link_libraries(benchmark_LtHash_Hwy PRIVATE
             Catch2::Catch2WithMain
             dice-hash::dice-hash
             )
-    set_target_properties(benchmark_LtHash_SSE2 PROPERTIES CXX_STANDARD 20)
-    catch_discover_tests(benchmark_LtHash_SSE2)
-
-    add_executable(benchmark_LtHash_AVX2 BenchmarkLtHash_AVX2.cpp)
-    target_link_libraries(benchmark_LtHash_AVX2 PRIVATE
-            Catch2::Catch2WithMain
-            dice-hash::dice-hash
-            )
-    set_target_properties(benchmark_LtHash_AVX2 PROPERTIES CXX_STANDARD 20)
-    catch_discover_tests(benchmark_LtHash_AVX2)
+    set_target_properties(benchmark_LtHash_Hwy PROPERTIES CXX_STANDARD 20)
+    catch_discover_tests(benchmark_LtHash_Hwy)
 
     find_package(Metall REQUIRED)
 

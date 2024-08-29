@@ -1,5 +1,5 @@
-#ifndef DICE_HASH_MATHENGINE_SIMPLE_HPP
-#define DICE_HASH_MATHENGINE_SIMPLE_HPP
+#ifndef DICE_HASH_MATHENGINE_HWY_HPP
+#define DICE_HASH_MATHENGINE_HWY_HPP
 
 #include <algorithm>
 #include <bit>
@@ -14,21 +14,8 @@ namespace dice::hash::lthash {
 		void add_no_padding(std::span<uint64_t> dst, std::span<uint64_t const> src, uint64_t mask_group1, uint64_t mask_group2);
 		void sub_with_padding(std::span<uint64_t> dst, std::span<uint64_t const> src, uint64_t data_mask);
 		void sub_no_padding(std::span<uint64_t> dst, std::span<uint64_t const> src, uint64_t mask_group1, uint64_t mask_group2);
-	}
-
-	// todo deduplicate with other definitions
-	template<typename T>
-	inline T little_endian(T const &value) noexcept {
-		if constexpr (std::endian::native == std::endian::little) {
-			return value;
-		} else {
-			auto const *input_beg = byte_iter(value);
-			auto const *input_end = input_beg + sizeof(T);
-			T output;
-
-			std::reverse_copy(input_beg, input_end, byte_iter_mut(output));
-			return output;
-		}
+		bool check_padding_bits(std::span<uint64_t const> data, uint64_t data_mask);
+		void clear_padding_bits(std::span<uint64_t> data, uint64_t data_mask);
 	}
 
 	template<typename Bits>
@@ -86,33 +73,26 @@ namespace dice::hash::lthash {
 		}
 
 		template<size_t Extent>
-		static bool check_padding_bits(std::span<std::byte const, Extent> data) noexcept requires (Bits::needs_padding) {
+			requires(Bits::needs_padding)
+		static bool check_padding_bits(std::span<std::byte const, Extent> data) noexcept {
 			assert(data.size() % sizeof(uint64_t) == 0);
 			assert(reinterpret_cast<uintptr_t>(data.data()) % alignof(uint64_t) == 0);
 
 			std::span<uint64_t const> data64{reinterpret_cast<uint64_t const *>(data.data()), data.size() / sizeof(uint64_t)};
-			for (auto const val : data64) {
-				if ((little_endian(val) & ~Bits::data_mask) != 0) {
-					return false;
-				}
-			}
-			return true;
+			return detail::check_padding_bits(data64, Bits::data_mask);
 		}
 
 		template<size_t Extent>
-		static void clear_padding_bits(std::span<std::byte, Extent> data) noexcept requires (Bits::needs_padding) {
+			requires(Bits::needs_padding)
+		static void clear_padding_bits(std::span<std::byte, Extent> data) noexcept {
 			assert(data.size() % sizeof(uint64_t) == 0);
 			assert(reinterpret_cast<uintptr_t>(data.data()) % alignof(uint64_t) == 0);
 
-			if constexpr (Bits::needs_padding) {
-				std::span<uint64_t> data64{reinterpret_cast<uint64_t *>(data.data()), data.size() / sizeof(uint64_t)};
-				for (auto &val : data64) {
-					val = little_endian(little_endian(val) & Bits::data_mask);
-				}
-			}
+			std::span<uint64_t> data64{reinterpret_cast<uint64_t *>(data.data()), data.size() / sizeof(uint64_t)};
+			detail::clear_padding_bits(data64, Bits::data_mask);
 		}
 	};
 
 } // namespace dice::hash::lthash
 
-#endif//DICE_HASH_MATHENGINE_SIMPLE_HPP
+#endif//DICE_HASH_MATHENGINE_HWY_HPP

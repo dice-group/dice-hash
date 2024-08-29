@@ -2,6 +2,10 @@
 #include <dice/hash/blake/Blake2Xb.hpp>
 #include <iostream>
 
+#ifdef DICE_HASH_BENCHMARK_LTHASH_HIGHWAY_TARGRETS
+#include <hwy/highway.h>
+#endif
+
 // integer value -> hexadecimal ascii representation (e.g 0 => '0', 10 => 'a')
 static constexpr std::array<char, 16> encode_lut{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
 												 'a', 'b', 'c', 'd', 'e', 'f'};
@@ -83,6 +87,13 @@ struct LtHashTest {
  * @note tests are adapted from: https://github.com/facebook/folly/blob/main/folly/experimental/crypto/test/LtHashTest.cpp
  */
 TEMPLATE_TEST_CASE("Test LtHash using " DICE_HASH_TEST_LTHASH_INSTRUCTION_SET, "[DiceHash]", DICE_HASH_TEST_LTHASH_CONFIGS) {
+#ifdef DICE_HASH_BENCHMARK_LTHASH_HIGHWAY_TARGRETS
+	auto target = GENERATE(from_range(hwy::SupportedAndGeneratedTargets()));
+	hwy::SetSupportedTargetsForTest(target);
+	INFO(hwy::TargetName(target));
+#endif
+
+
 	using H = TestType;
 	using T = LtHashTest<H>;
 
@@ -689,4 +700,8 @@ TEMPLATE_TEST_CASE("Test LtHash using " DICE_HASH_TEST_LTHASH_INSTRUCTION_SET, "
 
 		CHECK(h1 != h3);
 	}
+
+#ifdef DICE_HASH_BENCHMARK_LTHASH_HIGHWAY_TARGRETS
+	hwy::SetSupportedTargetsForTest(0);
+#endif
 }
