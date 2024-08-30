@@ -16,7 +16,6 @@ class DiceHashConan(ConanFile):
     generators = ("CMakeDeps", "CMakeToolchain")
     exports = "LICENSE"
     exports_sources = "include/*", "CMakeLists.txt", "cmake/*", "LICENSE"
-    no_copy_source = True
     options = {
         "with_test_deps": [True, False],
     }
