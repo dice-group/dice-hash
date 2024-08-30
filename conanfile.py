@@ -16,15 +16,12 @@ class DiceHashConan(ConanFile):
     generators = ("CMakeDeps", "CMakeToolchain")
     exports = "LICENSE"
     exports_sources = "include/*", "CMakeLists.txt", "cmake/*", "LICENSE"
-    no_copy_source = True
     options = {
         "with_test_deps": [True, False],
     }
     default_options = {
         "with_test_deps": False,
     }
-
-    # No settings/options are necessary, this is header only
 
     def set_name(self):
         if not hasattr(self, 'name') or self.version is None:
