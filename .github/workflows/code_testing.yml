@@ -74,7 +74,7 @@ jobs:
 
       - name: Run tests
         working-directory: build
-        run: ctest --verbose -j2 -E ".*benchmark.*
+        run: ctest --verbose -j2 -E ".*Benchmark.*"
 
       - name: Run examples
         working-directory: build
