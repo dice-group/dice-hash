@@ -74,11 +74,7 @@ class DiceHashConan(ConanFile):
         self.cpp_info.set_property("cmake_target_name", "dice-hash::dice-hash")
         self.cpp_info.set_property("cmake_file_name", "dice-hash")
 
-        self.cpp_info.includedirs = ["src"]
-        self.cpp_info.libs = [f"{self.name}"]
-        self.cpp_info.libdirs = ["lib"]
-
-        self.cpp_info.requires = []
+        self.cpp_info.requires = ["highway::highway"]
 
         if self.options.with_sodium:
             self.cpp_info.requires += [
