@@ -14,17 +14,17 @@ class DiceHashConan(ConanFile):
     topics = ("hash", "wyhash", "xxh3", "robin-hood-hash", "Blake2b", "Blake2Xb", "LtHash", "C++", "C++20")
 
     settings = "os", "compiler", "build_type", "arch"
-    options = {"with_test_deps": [True, False], "with_sodium": [True, False]}
-    default_options = {"with_test_deps": False, "with_sodium": False}
+    options = {"with_test_deps": [True, False], "with_blake": [True, False]}
+    default_options = {"with_test_deps": False, "with_blake": False}
     exports = "LICENSE"
     exports_sources = "src/*", "CMakeLists.txt", "cmake/*", "LICENSE"
 
     generators = ("CMakeDeps", "CMakeToolchain")
 
     def requirements(self):
-        if self.options.with_sodium:
+        if self.options.with_blake:
             self.requires("libsodium/cci.20220430")
-        self.requires("highway/1.2.0")
+            self.requires("highway/1.2.0")
 
         if self.options.with_test_deps:
             self.test_requires("catch2/3.3.2")
@@ -52,7 +52,7 @@ class DiceHashConan(ConanFile):
     def _configure_cmake(self):
         if self._cmake is None:
             self._cmake = CMake(self)
-            self._cmake.configure(variables={"WITH_SODIUM": self.options.with_sodium})
+            self._cmake.configure(variables={"WITH_BLAKE": self.options.with_blake})
 
         return self._cmake
 
@@ -74,11 +74,12 @@ class DiceHashConan(ConanFile):
         self.cpp_info.set_property("cmake_target_name", "dice-hash::dice-hash")
         self.cpp_info.set_property("cmake_file_name", "dice-hash")
 
-        self.cpp_info.requires = ["highway::highway"]
+        self.cpp_info.requires = []
 
-        if self.options.with_sodium:
+        if self.options.with_blake:
             self.cpp_info.requires += [
                 "libsodium::libsodium"
+                "highway::highway"
             ]
 
         if self.options.with_test_deps:

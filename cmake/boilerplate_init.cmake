@@ -2,6 +2,7 @@ macro(boilerplate_init)
     ## enforce standard compliance
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
     set(CMAKE_CXX_EXTENSIONS OFF)
+    set(CMAKE_CXX_STANDARD 20)
 
     ## C++ compiler flags
     if (MSVC)
