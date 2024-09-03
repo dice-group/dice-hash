@@ -111,7 +111,7 @@ If you want to use `DiceHash` in a different structure (like `std::unordered_map
 ## Usage for general data hashing
 **The hash functions mentioned in this section are enabled/disabled using the feature flag `WITH_SODIUM=ON/OFF`.**
 **Enabling this flag (default behaviour) results in [libsodium](https://doc.libsodium.org/) being required as a dependency.**
-**If `USE_CONAN=ON`, [libsodium](https://doc.libsodium.org/) will be fetched using conan, otherwise dice-hash will look for a local system installation.**
+**If using conan, [libsodium](https://doc.libsodium.org/) will be fetched using conan, otherwise dice-hash will look for a local system installation.**
 
 The hashes mentioned here are not meant to be used in C++ containers as they do _not_ return `size_t`.
 They are instead meant as general hashing functions for arbitrary data.
@@ -145,5 +145,6 @@ Small non-code example that shows the basic principle:
 To use it you need to include
 ```c++
 #include <dice/hash/lthash/LtHash.hpp>
+// automatically includes <dice/hash/blake/Blake3.hpp>
 ```
 For a usage example see [examples/ltHash.cpp](examples/ltHash.cpp).

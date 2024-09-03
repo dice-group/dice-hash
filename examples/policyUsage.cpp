@@ -1,7 +1,7 @@
 #include <dice/hash.hpp>
 #include <iostream>
 // not needed. It is included into DiceHash.hpp
-//#src <dice/hash/DiceHashPolicies.hpp>
+//#include <dice/hash/DiceHashPolicies.hpp>
 
 
 int main() {
