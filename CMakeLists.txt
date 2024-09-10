@@ -61,25 +61,35 @@ endif ()
 
 add_subdirectory(src/dice/hash/blake/internal/blake3)
 
-add_library(${PROJECT_NAME}
-        src/dice/hash/lthash/MathEngine_Hwy.cpp
-)
+if (WITH_BLAKE)
+    add_library(${PROJECT_NAME}
+            src/dice/hash/lthash/MathEngine_Hwy.cpp
+    )
+else()
+    add_library(${PROJECT_NAME} INTERFACE)
+endif()
+
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
 target_link_libraries(${PROJECT_NAME}
         INTERFACE blake3
 )
 
-target_include_directories(
-        ${PROJECT_NAME}
-        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>)
-
 if (WITH_BLAKE)
+    target_include_directories(
+            ${PROJECT_NAME}
+            PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+    )
     target_link_libraries(${PROJECT_NAME}
             INTERFACE ${sodium_dep}
             PRIVATE highway::highway
     )
-endif ()
+else()
+    target_include_directories(
+            ${PROJECT_NAME}
+            INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+    )
+endif()
 
 include(cmake/install_library.cmake)
 install_cpp_library(${PROJECT_NAME} "src")
