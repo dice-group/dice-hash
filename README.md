@@ -134,6 +134,15 @@ To use it you need to include
 ```
 For a usage examples see: [examples/blake2xb.cpp](examples/blake2xb.cpp).
 
+### [Blake3](https://github.com/BLAKE3-team/BLAKE3-specs/blob/master/blake3.pdf) - one function, fast everywhere
+Blake3 is an evolution of Blake2.
+
+To use it you need to include
+```c++
+#include <dice/hash/blake2/Blake3.hpp>
+```
+For a usage examples see: [examples/blake3.cpp](examples/blake2xb.cpp).
+
 ### [LtHash](https://engineering.fb.com/2019/03/01/security/homomorphic-hashing/) - homomorphic/multiset hashing
 LtHash is a multiset/homomorphic hash function, meaning, instead of working on streams of data, it digests
 individual "objects". This means you can add and remove "objects" to/from an `LtHash` (object by object)
@@ -145,6 +154,5 @@ Small non-code example that shows the basic principle:
 To use it you need to include
 ```c++
 #include <dice/hash/lthash/LtHash.hpp>
-// automatically includes <dice/hash/blake/Blake3.hpp>
 ```
 For a usage example see [examples/ltHash.cpp](examples/ltHash.cpp).
