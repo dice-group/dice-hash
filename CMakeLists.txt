@@ -59,6 +59,40 @@ if (WITH_BLAKE)
     find_package(highway REQUIRED)
 endif ()
 
+set(blake3_rev 95e42b84fc4709974c7b23c7ae885989ab36c31e)
+set(blake3_files
+        blake3.c
+        blake3.h
+        blake3-config.cmake.in
+        blake3_avx2.c
+        blake3_avx2_x86-64_unix.S
+        blake3_avx2_x86-64_windows_gnu.S
+        blake3_avx2_x86-64_windows_msvc.asm
+        blake3_avx512.c
+        blake3_avx512_x86-64_unix.S
+        blake3_avx512_x86-64_windows_gnu.S
+        blake3_avx512_x86-64_windows_msvc.asm
+        blake3_dispatch.c
+        blake3_impl.h
+        blake3_neon.c
+        blake3_portable.c
+        blake3_sse2.c
+        blake3_sse2_x86-64_unix.S
+        blake3_sse2_x86-64_windows_gnu.S
+        blake3_sse2_x86-64_windows_msvc.asm
+        blake3_sse41.c
+        blake3_sse41_x86-64_unix.S
+        blake3_sse41_x86-64_windows_gnu.S
+        blake3_sse41_x86-64_windows_msvc.asm
+        libblake3.pc.in
+        LICENSE
+)
+
+foreach(file ${blake3_files})
+    file(DOWNLOAD "https://raw.githubusercontent.com/BLAKE3-team/BLAKE3/${blake3_rev}/${file}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/src/dice/hash/blake/internal/blake3/${file}"
+            TLS_VERIFY ON)
+endforeach()
 add_subdirectory(src/dice/hash/blake/internal/blake3)
 
 if (WITH_BLAKE)
