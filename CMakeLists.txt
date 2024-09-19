@@ -85,14 +85,16 @@ set(blake3_files
         blake3_sse41_x86-64_windows_gnu.S
         blake3_sse41_x86-64_windows_msvc.asm
         libblake3.pc.in
-        LICENSE
 )
 
 foreach(file ${blake3_files})
-    file(DOWNLOAD "https://raw.githubusercontent.com/BLAKE3-team/BLAKE3/${blake3_rev}/${file}"
+    file(DOWNLOAD "https://raw.githubusercontent.com/BLAKE3-team/BLAKE3/${blake3_rev}/c/${file}"
             "${CMAKE_CURRENT_SOURCE_DIR}/src/dice/hash/blake/internal/blake3/${file}"
             TLS_VERIFY ON)
 endforeach()
+file(DOWNLOAD "https://raw.githubusercontent.com/BLAKE3-team/BLAKE3/${blake3_rev}/LICENSE_A2"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/dice/hash/blake/internal/blake3/LICENSE"
+        TLS_VERIFY ON)
 add_subdirectory(src/dice/hash/blake/internal/blake3)
 
 if (WITH_BLAKE)
