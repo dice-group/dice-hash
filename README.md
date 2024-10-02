@@ -141,7 +141,7 @@ To use it you need to include
 ```c++
 #include <dice/hash/blake2/Blake3.hpp>
 ```
-For a usage examples see: [examples/blake3.cpp](examples/blake2xb.cpp).
+For a usage examples see: [examples/blake3.cpp](examples/blake3.cpp).
 
 ### [LtHash](https://engineering.fb.com/2019/03/01/security/homomorphic-hashing/) - homomorphic/multiset hashing
 LtHash is a multiset/homomorphic hash function, meaning, instead of working on streams of data, it digests

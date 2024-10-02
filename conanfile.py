@@ -73,16 +73,3 @@ class DiceHashConan(ConanFile):
         self.cpp_info.set_property("cmake_find_mode", "both")
         self.cpp_info.set_property("cmake_target_name", "dice-hash::dice-hash")
         self.cpp_info.set_property("cmake_file_name", "dice-hash")
-
-        self.cpp_info.requires = []
-
-        if self.options.with_blake:
-            self.cpp_info.requires += [
-                "libsodium::libsodium"
-                "highway::highway"
-            ]
-
-        if self.options.with_test_deps:
-            self.cpp_info.requires += [
-                "Metall::Metall"
-            ]
