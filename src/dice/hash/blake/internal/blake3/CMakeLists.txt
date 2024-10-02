@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.9 FATAL_ERROR)
 
+# the official Blake3 implementation does not contain a usable CMakeLists.txt
+# (only one for running test cases)
+
 # respect C_EXTENSIONS OFF without explicitly setting C_STANDARD
 if (POLICY CMP0128)
   cmake_policy(SET CMP0128 NEW)
