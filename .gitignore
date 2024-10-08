@@ -163,5 +163,4 @@ modules.xml
 
 test_package/build
 conan_provider.cmake
-/src/dice/hash/version.hpp
-/src/dice/hash/blake/internal/blake3/libblake3.pc
+include/dice/hash/version.hpp
