@@ -13,7 +13,7 @@ public:
 
 	// With this, the DiceHash can work on private data
 	template<dice::hash::Policies::HashPolicy, typename>
-	friend class dice::hash::dice_hash_overload;
+	friend struct dice::hash::dice_hash_overload;
 };
 
 namespace dice::hash {
