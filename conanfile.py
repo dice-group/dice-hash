@@ -17,7 +17,7 @@ class DiceHashConan(ConanFile):
     options = {"with_test_deps": [True, False], "with_blake": [True, False]}
     default_options = {"with_test_deps": False, "with_blake": False}
     exports = "LICENSE"
-    exports_sources = "src/*", "CMakeLists.txt", "cmake/*", "LICENSE"
+    exports_sources = "include/*", "CMakeLists.txt", "cmake/*", "LICENSE"
 
     generators = ("CMakeDeps", "CMakeToolchain")
 
@@ -28,8 +28,7 @@ class DiceHashConan(ConanFile):
 
         if self.options.with_test_deps:
             self.test_requires("catch2/3.3.2")
-            self.test_requires("metall/0.21")
-            self.test_requires("boost/1.81.0")  # override for metall because older boost versions don't build with clang-16+
+            self.test_requires("metall/0.23.1")
 
     def set_name(self):
         if not hasattr(self, 'name') or self.version is None:

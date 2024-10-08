@@ -28,7 +28,7 @@ else()
     MESSAGE(WARNING "Could not verify that your compiler (${CMAKE_CXX_COMPILER}) supports all needed features.")
 endif()
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.hpp.in ${CMAKE_CURRENT_SOURCE_DIR}/src/dice/hash/version.hpp)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.hpp.in ${CMAKE_CURRENT_SOURCE_DIR}/include/dice/hash/version.hpp)
 
 OPTION(WITH_BLAKE "Enable usage of the external library sodium for Blake2b, Blake2Xb and LtHash support" OFF)
 
@@ -59,11 +59,11 @@ if (WITH_BLAKE)
     find_package(highway REQUIRED)
 endif ()
 
-add_subdirectory(src/dice/hash/blake/internal/blake3)
+add_subdirectory(include/dice/hash/blake/internal/blake3)
 
 if (WITH_BLAKE)
     add_library(${PROJECT_NAME}
-            src/dice/hash/lthash/MathEngine_Hwy.cpp
+            include/dice/hash/lthash/MathEngine_Hwy.cpp
     )
 else()
     add_library(${PROJECT_NAME} INTERFACE)
@@ -78,7 +78,7 @@ target_link_libraries(${PROJECT_NAME}
 if (WITH_BLAKE)
     target_include_directories(
             ${PROJECT_NAME}
-            PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+            PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     )
     target_link_libraries(${PROJECT_NAME}
             INTERFACE ${sodium_dep}
@@ -87,12 +87,12 @@ if (WITH_BLAKE)
 else()
     target_include_directories(
             ${PROJECT_NAME}
-            INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+            INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     )
 endif()
 
 include(cmake/install_library.cmake)
-install_cpp_library(${PROJECT_NAME} "src")
+install_cpp_library(${PROJECT_NAME} "include")
 
 if(PROJECT_IS_TOP_LEVEL AND BUILD_TESTING)
     include(CTest)
