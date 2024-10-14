@@ -1,5 +1,6 @@
 #include <dice/hash.hpp>
 #include <dice/hash/blake/Blake3.hpp>
+#include <dice/hash/lthash/LtHash.hpp>
 #include <iostream>
 
 void print_bytes(std::span<std::byte const> bytes) noexcept {
@@ -21,6 +22,17 @@ int main() {
 		dice::hash::blake3::Blake3<>::hash_single(data, output);
 
 		print_bytes(output);
+	}
+	std::cout << std::endl;
+	std::cout << "lthash(42): ";
+	{
+		using namespace dice::hash::lthash;
+		LtHash16 lthash;
+
+		std::array<std::byte, 1> data{static_cast<std::byte>(42)};
+		lthash.add(data);
+		std::vector<std::byte> const checksum1{lthash.checksum().begin(), lthash.checksum().end()};
+		print_bytes(checksum1);
 	}
 	std::cout << std::endl;
 }

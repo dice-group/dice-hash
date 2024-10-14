@@ -68,6 +68,7 @@ class DiceHashConan(ConanFile):
         rmdir(self, os.path.join(self.package_folder, "share"))
         copy(self, pattern="LICENSE*", dst="licenses", src=self.folders.source_folder)
         copy(self, pattern="*.a", src=os.path.join(self.build_folder, "include/dice/hash/blake/internal/blake3"), dst=os.path.join(self.package_folder, "lib"), keep_path=False)
+        copy(self, pattern="*.a", src=self.build_folder, dst=os.path.join(self.package_folder, "lib"), keep_path=False)
 
     def package_info(self):
         self.cpp_info.set_property("cmake_find_mode", "both")
@@ -75,4 +76,4 @@ class DiceHashConan(ConanFile):
         self.cpp_info.set_property("cmake_file_name", "dice-hash")
 
         if self.options.with_blake:
-            self.cpp_info.libs += ["blake3"]
+            self.cpp_info.libs += ["dice-hash", "blake3"]
