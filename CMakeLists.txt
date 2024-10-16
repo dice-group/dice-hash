@@ -42,20 +42,19 @@ if (PROJECT_IS_TOP_LEVEL)
 endif ()
 
 if (WITH_BLAKE)
-    find_package(libsodium REQUIRED) # try canonical name first
-
-    #set(sodium_dep "sodium")
-    #if (NOT sodium_FOUND)
-    #    find_package(libsodium QUIET) #  next try the name used by conan
-    #    set(sodium_dep "libsodium::libsodium")
-    #    if (NOT libsodium_FOUND)
-    #        include(cmake/FindSodium.cmake) # finally try the FindSodium.cmake provided with this repo
-    #        set(sodium_dep "sodium")
-    #        if (NOT Sodium_FOUND)
-    #            message(FATAL_ERROR "Sodium was not found.")
-    #        endif ()
-    #    endif ()
-    #endif ()
+    find_package(sodium QUIET) # try canonical name first
+    set(sodium_dep "sodium")
+    if (NOT sodium_FOUND)
+        find_package(libsodium QUIET) #  next try the name used by conan
+        set(sodium_dep "libsodium::libsodium")
+        if (NOT libsodium_FOUND)
+            include(cmake/FindSodium.cmake) # finally try the FindSodium.cmake provided with this repo
+            set(sodium_dep "sodium")
+            if (NOT Sodium_FOUND)
+                message(FATAL_ERROR "Sodium was not found.")
+            endif ()
+        endif ()
+    endif ()
 
     find_package(highway REQUIRED)
 endif ()
@@ -72,24 +71,23 @@ endif()
 
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
-if (WITH_BLAKE)
-    target_include_directories(${PROJECT_NAME}
-            PUBLIC
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    )
+target_link_libraries(${PROJECT_NAME}
+        INTERFACE blake3
+)
 
-    message(AAAAA)
+if (WITH_BLAKE)
+    target_include_directories(
+            ${PROJECT_NAME}
+            PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    )
     target_link_libraries(${PROJECT_NAME}
-            PUBLIC
-            libsodium::libsodium
-            blake3
-            PRIVATE
-            highway::highway
+            INTERFACE ${sodium_dep}
+            PRIVATE highway::highway
     )
 else()
-    target_include_directories(${PROJECT_NAME}
-            INTERFACE
-            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    target_include_directories(
+            ${PROJECT_NAME}
+            INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     )
 endif()
 
