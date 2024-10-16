@@ -14,6 +14,9 @@ class TestPackageConan(ConanFile):
     def requirements(self):
         self.requires(self.tested_reference_str)
 
+    def configure(self):
+        self.options[self.tested_reference_str].with_blake = True
+
     def layout(self):
         cmake_layout(self)
 
