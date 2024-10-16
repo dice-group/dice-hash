@@ -30,66 +30,56 @@ endif()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.hpp.in ${CMAKE_CURRENT_SOURCE_DIR}/include/dice/hash/version.hpp)
 
-OPTION(WITH_BLAKE "Enable usage of the external library sodium for Blake2b, Blake2Xb and LtHash support" OFF)
+OPTION(WITH_SODIUM "Enable usage of the external library sodium for Blake2b, Blake2Xb and LtHash support" OFF)
 
 if (PROJECT_IS_TOP_LEVEL)
     if (BUILD_TESTING)
         set(CONAN_INSTALL_ARGS "${CONAN_INSTALL_ARGS};-o=&:with_test_deps=True")
     endif ()
-    if (WITH_BLAKE)
-        set(CONAN_INSTALL_ARGS "${CONAN_INSTALL_ARGS};-o=&:with_blake=True")
+    if (WITH_SODIUM)
+        set(CONAN_INSTALL_ARGS "${CONAN_INSTALL_ARGS};-o=&:with_sodium=True")
     endif ()
 endif ()
 
-if (WITH_BLAKE)
-    find_package(sodium QUIET) # try canonical name first
-    set(sodium_dep "sodium")
-    if (NOT sodium_FOUND)
-        find_package(libsodium QUIET) #  next try the name used by conan
-        set(sodium_dep "libsodium::libsodium")
-        if (NOT libsodium_FOUND)
-            include(cmake/FindSodium.cmake) # finally try the FindSodium.cmake provided with this repo
-            set(sodium_dep "sodium")
-            if (NOT Sodium_FOUND)
-                message(FATAL_ERROR "Sodium was not found.")
-            endif ()
-        endif ()
-    endif ()
-
+if (WITH_SODIUM)
+    find_package(libsodium REQUIRED)
     find_package(highway REQUIRED)
 endif ()
 
 add_subdirectory(include/dice/hash/blake/internal/blake3)
 
-if (WITH_BLAKE)
+if (WITH_SODIUM)
     add_library(${PROJECT_NAME}
             include/dice/hash/lthash/MathEngine_Hwy.cpp
     )
+
+    target_include_directories(
+            ${PROJECT_NAME}
+            PUBLIC
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    )
+    target_link_libraries(${PROJECT_NAME}
+            PUBLIC
+            libsodium::libsodium
+            blake3
+            PRIVATE
+            highway::highway
+    )
 else()
     add_library(${PROJECT_NAME} INTERFACE)
+
+    target_include_directories(
+            ${PROJECT_NAME}
+            INTERFACE
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    )
+    target_link_libraries(${PROJECT_NAME}
+            INTERFACE
+            blake3
+    )
 endif()
 
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
-
-target_link_libraries(${PROJECT_NAME}
-        INTERFACE blake3
-)
-
-if (WITH_BLAKE)
-    target_include_directories(
-            ${PROJECT_NAME}
-            PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    )
-    target_link_libraries(${PROJECT_NAME}
-            INTERFACE ${sodium_dep}
-            PRIVATE highway::highway
-    )
-else()
-    target_include_directories(
-            ${PROJECT_NAME}
-            INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    )
-endif()
 
 include(cmake/install_library.cmake)
 install_cpp_library(${PROJECT_NAME} "include")

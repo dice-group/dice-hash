@@ -16,7 +16,7 @@ target_link_libraries(tests_dice_hash PRIVATE
 set_target_properties(tests_dice_hash PROPERTIES CXX_STANDARD 20)
 catch_discover_tests(tests_dice_hash)
 
-if (WITH_BLAKE)
+if (WITH_SODIUM)
     add_executable(tests_Blake2b TestBlake2b.cpp)
     target_link_libraries(tests_Blake2b PRIVATE
             Catch2::Catch2WithMain

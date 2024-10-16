@@ -18,13 +18,13 @@ class DiceHashConan(ConanFile):
         "shared": [True, False],
         "fPIC": [True, False],
         "with_test_deps": [True, False],
-        "with_blake": [True, False]
+        "with_sodium": [True, False]
     }
     default_options = {
         "shared": False,
-        "fPIC": True,
+        "fPIC": False,
         "with_test_deps": False,
-        "with_blake": False
+        "with_sodium": False
     }
     exports = "LICENSE"
     exports_sources = "include/*", "CMakeLists.txt", "cmake/*", "LICENSE"
@@ -32,7 +32,7 @@ class DiceHashConan(ConanFile):
     generators = ("CMakeDeps", "CMakeToolchain")
 
     def requirements(self):
-        if self.options.with_blake:
+        if self.options.with_sodium:
             self.requires("libsodium/cci.20220430", transitive_headers=True)
             self.requires("highway/1.2.0")
 
@@ -61,7 +61,7 @@ class DiceHashConan(ConanFile):
     def _configure_cmake(self):
         if self._cmake is None:
             self._cmake = CMake(self)
-            self._cmake.configure(variables={"WITH_BLAKE": self.options.with_blake})
+            self._cmake.configure(variables={"WITH_SODIUM": self.options.with_sodium})
 
         return self._cmake
 
@@ -85,5 +85,5 @@ class DiceHashConan(ConanFile):
         self.cpp_info.set_property("cmake_target_name", "dice-hash::dice-hash")
         self.cpp_info.set_property("cmake_file_name", "dice-hash")
 
-        if self.options.with_blake:
+        if self.options.with_sodium:
             self.cpp_info.libs += ["dice-hash", "blake3"]
