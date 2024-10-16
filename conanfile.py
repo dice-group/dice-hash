@@ -14,8 +14,18 @@ class DiceHashConan(ConanFile):
     topics = ("hash", "wyhash", "xxh3", "robin-hood-hash", "Blake2b", "Blake2Xb", "LtHash", "C++", "C++20")
 
     settings = "os", "compiler", "build_type", "arch"
-    options = {"with_test_deps": [True, False], "with_blake": [True, False]}
-    default_options = {"with_test_deps": False, "with_blake": False}
+    options = {
+        "shared": [True, False],
+        "fPIC": [True, False],
+        "with_test_deps": [True, False],
+        "with_blake": [True, False]
+    }
+    default_options = {
+        "shared": False,
+        "fPIC": False,
+        "with_test_deps": False,
+        "with_blake": False
+    }
     exports = "LICENSE"
     exports_sources = "include/*", "CMakeLists.txt", "cmake/*", "LICENSE"
 
