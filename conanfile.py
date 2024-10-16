@@ -22,7 +22,7 @@ class DiceHashConan(ConanFile):
     }
     default_options = {
         "shared": False,
-        "fPIC": False,
+        "fPIC": True,
         "with_test_deps": False,
         "with_blake": False
     }
@@ -33,7 +33,7 @@ class DiceHashConan(ConanFile):
 
     def requirements(self):
         if self.options.with_blake:
-            self.requires("libsodium/cci.20220430")
+            self.requires("libsodium/cci.20220430", transitive_headers=True)
             self.requires("highway/1.2.0")
 
         if self.options.with_test_deps:
