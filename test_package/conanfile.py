@@ -13,6 +13,9 @@ class TestPackageConan(ConanFile):
     def requirements(self):
         self.requires(self.tested_reference_str)
 
+    def configure(self):
+        self.options["dice-hash"].with_sodium = True
+
     def layout(self):
         cmake_layout(self)
 
