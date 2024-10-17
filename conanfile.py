@@ -87,4 +87,4 @@ class DiceHashConan(ConanFile):
 
         if self.options.with_sodium:
             self.cpp_info.libs += ["dice-hash", "blake3"]
-            self.cpp_info.requires += ["libsodium::libsodium"]
+            self.cpp_info.requires += ["libsodium::libsodium", "highway::highway"]
