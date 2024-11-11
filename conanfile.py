@@ -58,7 +58,7 @@ class DiceHashConan(ConanFile):
         for dir in ("lib", "res", "share"):
             rmdir(self, os.path.join(self.package_folder, dir))
 
-        copy(self, pattern="LICENSE*", dst="licenses", src=self.folders.source_folder)
+        copy(self, pattern="LICENSE*", dst=os.path.join(self.package_folder, "licenses"), src=self.folders.source_folder)
 
     def package_info(self):
         self.cpp_info.bindirs = []
