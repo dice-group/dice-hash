@@ -17,6 +17,8 @@ jobs:
       base-branch: ${{ github.base_ref }}
       search-path: >
         include/dice/hash/internal
+        include/dice/hash/blake
+        include/dice/hash/lthash
       abi-version-header: include/dice/hash/version.hpp
       abi-version-const: dice::hash::pobr_version
     secrets:
