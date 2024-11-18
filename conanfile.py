@@ -26,8 +26,8 @@ class DiceHashConan(ConanFile):
         "with_test_deps": False,
         "with_sodium": False
     }
-    exports = "LICENSE"
-    exports_sources = "include/*", "CMakeLists.txt", "cmake/*", "LICENSE"
+
+    exports_sources = "include/*", "CMakeLists.txt", "cmake/*", "LICENSE-MIT", "LICENSE-APACHE"
 
     generators = ("CMakeDeps", "CMakeToolchain")
 
@@ -76,7 +76,7 @@ class DiceHashConan(ConanFile):
 
         rmdir(self, os.path.join(self.package_folder, "cmake"))
         rmdir(self, os.path.join(self.package_folder, "share"))
-        copy(self, pattern="LICENSE*", dst="licenses", src=self.folders.source_folder)
+        copy(self, pattern="LICENSE*", dst=os.path.join(self.package_folder, "licenses"), src=self.folders.source_folder)
         copy(self, pattern="*.a", src=os.path.join(self.build_folder, "include/dice/hash/blake/internal/blake3"), dst=os.path.join(self.package_folder, "lib"), keep_path=False)
         copy(self, pattern="*.a", src=self.build_folder, dst=os.path.join(self.package_folder, "lib"), keep_path=False)
 
