@@ -1,0 +1,3 @@
+#define DICE_HASH_BENCHMARK_LTHASH_MATH_ENGINE MathEngine_Hwy
+#define DICE_HASH_BENCHMARK_LTHASH_INSTRUCTION_SET "Hwy"
+#include "BenchmarkLtHash_template.hpp"
