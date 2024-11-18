@@ -1,7 +1,4 @@
 var searchData=
 [
-  ['canonical_5ft_0',['canonical_t',['../structxxh_1_1canonical__t.html',1,'xxh']]],
-  ['cmake_1',['CMake',['../index.html#autotoc_md3',1,'']]],
-  ['conan_2',['conan',['../index.html#autotoc_md4',1,'']]],
-  ['container_5ftrait_2ehpp_3',['Container_trait.hpp',['../Container__trait_8hpp.html',1,'']]]
+  ['2019_2003_2001_20security_20homomorphic_20hashing_20lthash_20a_20homomorphic_20multiset_20hashing_0',['&lt;a href=&quot;https://engineering.fb.com/2019/03/01/security/homomorphic-hashing/&quot; &gt;LtHash&lt;/a&gt; - homomorphic/multiset hashing',['../index.html#autotoc_md11',1,'']]]
 ];

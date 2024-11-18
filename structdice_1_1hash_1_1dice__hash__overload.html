@@ -95,12 +95,12 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:ae96fa8cb1155f84e724eb24a9c307807" id="r_ae96fa8cb1155f84e724eb24a9c307807"><td class="memItemLeft" align="right" valign="top"><a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">static</a> std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdice_1_1hash_1_1dice__hash__overload.html#ae96fa8cb1155f84e724eb24a9c307807">dice_hash</a> (<a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">T</a> <a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">const</a> &amp;) <a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">noexcept</a></td></tr>
+<tr class="memitem:ae96fa8cb1155f84e724eb24a9c307807" id="r_ae96fa8cb1155f84e724eb24a9c307807"><td class="memItemLeft" align="right" valign="top">static std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdice_1_1hash_1_1dice__hash__overload.html#ae96fa8cb1155f84e724eb24a9c307807">dice_hash</a> (T const &amp;) noexcept</td></tr>
 <tr class="memdesc:ae96fa8cb1155f84e724eb24a9c307807"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default implementation of the dice_hash function.  <br /></td></tr>
 <tr class="separator:ae96fa8cb1155f84e724eb24a9c307807"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><div class="compoundTemplParams">template&lt;Policies::HashPolicy Policy, <a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">typename</a> <a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">T</a>&gt;<br />
+<div class="textblock"><div class="compoundTemplParams">template&lt;Policies::HashPolicy Policy, typename T&gt;<br />
 struct dice::hash::dice_hash_overload&lt; Policy, T &gt;</div><p>Helper struct for defining the hash for custom structs. </p>
 <p>Because of partial specialization problems with functions, this struct must be specialized to define the hash for a custom type. </p><dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
@@ -116,15 +116,15 @@ struct dice::hash::dice_hash_overload&lt; Policy, T &gt;</div><p>Helper struct f
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;Policies::HashPolicy Policy, <a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">typename</a> <a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">T</a> &gt; </div>
+template&lt;Policies::HashPolicy Policy, typename T &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">static</a> std::size_t <a class="el" href="structdice_1_1hash_1_1dice__hash__overload.html">dice::hash::dice_hash_overload</a>&lt; <a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">Policy</a>, <a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">T</a> &gt;::dice_hash </td>
+          <td class="memname">static std::size_t <a class="el" href="structdice_1_1hash_1_1dice__hash__overload.html">dice::hash::dice_hash_overload</a>&lt; Policy, T &gt;::dice_hash </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">T</a> <a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">const</a> &amp;&#160;</td>
+          <td class="paramtype">T const &amp;&#160;</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
         </tr>

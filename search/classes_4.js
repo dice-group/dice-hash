@@ -1,9 +1,10 @@
 var searchData=
 [
-  ['is_5fordered_5fcontainer_0',['is_ordered_container',['../structdice_1_1hash_1_1is__ordered__container.html',1,'dice::hash']]],
-  ['is_5fordered_5fcontainer_3c_20std_3a_3amap_3c_20key_2c_20t_2c_20compare_2c_20allocator_20_3e_20_3e_1',['is_ordered_container&lt; std::map&lt; Key, T, Compare, Allocator &gt; &gt;',['../structdice_1_1hash_1_1is__ordered__container_3_01std_1_1map_3_01Key_00_01T_00_01Compare_00_01Allocator_01_4_01_4.html',1,'dice::hash']]],
-  ['is_5fordered_5fcontainer_3c_20std_3a_3aset_3c_20key_2c_20compare_2c_20allocator_20_3e_20_3e_2',['is_ordered_container&lt; std::set&lt; Key, Compare, Allocator &gt; &gt;',['../structdice_1_1hash_1_1is__ordered__container_3_01std_1_1set_3_01Key_00_01Compare_00_01Allocator_01_4_01_4.html',1,'dice::hash']]],
-  ['is_5funordered_5fcontainer_3',['is_unordered_container',['../structdice_1_1hash_1_1is__unordered__container.html',1,'dice::hash']]],
-  ['is_5funordered_5fcontainer_3c_20std_3a_3aunordered_5fmap_3c_20key_2c_20t_2c_20hash_2c_20keyequal_2c_20allocator_20_3e_20_3e_4',['is_unordered_container&lt; std::unordered_map&lt; Key, T, Hash, KeyEqual, Allocator &gt; &gt;',['../structdice_1_1hash_1_1is__unordered__container_3_01std_1_1unordered__map_3_01Key_00_01T_00_01Has63660c1708e8d12c50c9ac66682a1aea.html',1,'dice::hash']]],
-  ['is_5funordered_5fcontainer_3c_20std_3a_3aunordered_5fset_3c_20key_2c_20hash_2c_20keyequal_2c_20allocator_20_3e_20_3e_5',['is_unordered_container&lt; std::unordered_set&lt; Key, Hash, KeyEqual, Allocator &gt; &gt;',['../structdice_1_1hash_1_1is__unordered__container_3_01std_1_1unordered__set_3_01Key_00_01Hash_00_01a7482544652e85d30b873b0024c0edc1.html',1,'dice::hash']]]
+  ['hash3_5fstate_5ft_0',['hash3_state_t',['../classxxh_1_1hash3__state__t.html',1,'xxh']]],
+  ['hash_5fstate_5ft_1',['hash_state_t',['../classxxh_1_1hash__state__t.html',1,'xxh']]],
+  ['hash_5ftype_2',['hash_type',['../structxxh_1_1typedefs_1_1hash__type.html',1,'xxh::typedefs']]],
+  ['hash_5ftype_3c_20128_20_3e_3',['hash_type&lt; 128 &gt;',['../structxxh_1_1typedefs_1_1hash__type_3_01128_01_4.html',1,'xxh::typedefs']]],
+  ['hash_5ftype_3c_2032_20_3e_4',['hash_type&lt; 32 &gt;',['../structxxh_1_1typedefs_1_1hash__type_3_0132_01_4.html',1,'xxh::typedefs']]],
+  ['hash_5ftype_3c_2064_20_3e_5',['hash_type&lt; 64 &gt;',['../structxxh_1_1typedefs_1_1hash__type_3_0164_01_4.html',1,'xxh::typedefs']]],
+  ['hashstate_6',['hashstate',['../classdice_1_1hash_1_1martinus_1_1HashState.html',1,'dice::hash::martinus::HashState'],['../classdice_1_1hash_1_1Policies_1_1Martinus_1_1HashState.html',1,'dice::hash::Policies::Martinus::HashState'],['../classdice_1_1hash_1_1Policies_1_1wyhash_1_1HashState.html',1,'dice::hash::Policies::wyhash::HashState'],['../classdice_1_1hash_1_1Policies_1_1xxh3_1_1HashState.html',1,'dice::hash::Policies::xxh3::HashState']]]
 ];

@@ -79,11 +79,19 @@ $(function() {
 <li><a href="https://github.com/wangyi-fudan/wyhash">wyhash</a></li>
 <li>"martinus", the internal hash function from <a href="https://github.com/martinus/robin-hood-hashing">robin-hood-hashing</a></li>
 </ul>
+<p>These three, additional, general purpose hash functions are also (optionally) provided</p><ul>
+<li><a href="https://www.blake2.net">Blake2b</a></li>
+<li><a href="https://www.blake2.net/blake2x.pdf">Blake2Xb</a></li>
+<li><a href="https://engineering.fb.com/2019/03/01/security/homomorphic-hashing">LtHash</a></li>
+</ul>
 <p><b>📦 STL out of the box:</b> dice-hash supports many common STL types already: arithmetic types like <code>bool</code>, <code>int</code>, <code>double</code>, ... etc.; collections like <code>std::unordered_map/set</code>, <code>std::map/set</code>, <code>std::vector</code>, <code>std::tuple</code>, <code>std::pair</code>, <code>std::optional</code>, <code>std::variant</code>, <code>std::array</code> and; all combinations of them.</p>
 <p><b>🔩 extensible:</b> dice-hash supports you with helper functions to define hashes for your own classes. Checkout usage.</p>
 <h1><a class="anchor" id="autotoc_md1"></a>
 Requirements</h1>
-<p>A C++20 compatible compiler. Code was only tested on x86_64.</p>
+<ul>
+<li>A C++20 compatible compiler. Code was only tested on x86_64.</li>
+<li>If you want to use <a href="https://www.blake2.net">Blake2b</a>, <a href="https://www.blake2.net/blake2x.pdf">Blake2Xb</a> or <a href="https://engineering.fb.com/2019/03/01/security/homomorphic-hashing">LtHash</a>: <a href="https://doc.libsodium.org/">libsodium</a> (either using conan or a local system installation) (for more details scroll down to "Usage for general data hashing")</li>
+</ul>
 <h1><a class="anchor" id="autotoc_md2"></a>
 Include it into your projects</h1>
 <h2><a class="anchor" id="autotoc_md3"></a>
@@ -91,7 +99,7 @@ CMake</h2>
 <h2><a class="anchor" id="autotoc_md4"></a>
 conan</h2>
 <p>To use it with <a href="https://conan.io/">conan</a> you need to add the repository: </p><div class="fragment"><div class="line">conan remote add dice-group https://conan.dice-research.org/artifactory/api/conan/tentris</div>
-</div><!-- fragment --><p>To use it add <code>dice-hash/0.4.8</code> to the <code>[requires]</code> section of your conan file.</p>
+</div><!-- fragment --><p>To use it add <code>dice-hash/0.4.9</code> to the <code>[requires]</code> section of your conan file.</p>
 <p>You can now add it to your target with: </p><div class="fragment"><div class="line">target_link_libraries(your_target</div>
 <div class="line">        dice-hash::dice-hash</div>
 <div class="line">        )</div>
@@ -109,37 +117,67 @@ build and run tests</h1>
 <div class="line">./test/tests_dice_hash</div>
 </div><!-- fragment --><p> Note: This example uses conan as dependency provider, other providers are possible. See <a href="https://cmake.org/cmake/help/latest/guide/using-dependencies/index.html#dependency-providers">https://cmake.org/cmake/help/latest/guide/using-dependencies/index.html#dependency-providers</a></p>
 <h1><a class="anchor" id="autotoc_md6"></a>
-usage</h1>
+Usage for C++ container hashing</h1>
 <p>You need to include a single header: </p><div class="fragment"><div class="line"> ++</div>
 <div class="line"><span class="preprocessor">#include &lt;dice/hash.hpp&gt;</span></div>
-</div><!-- fragment --><p>The hash is already defined for a lot of common types. In that case you can use the <code>DiceHash</code> just like <code>std::hash</code>. </p><div class="fragment"><div class="line"> ++</div>
+</div><!-- fragment --><p>The hash is already defined for a lot of common types. In that case you can use the <code>DiceHash</code> just like <code>std::hash</code>. This means these hashes return <code>size_t</code>, if you need larger hashes skip to the section below. </p><div class="fragment"><div class="line"> ++</div>
 <div class="line"><a class="code hl_struct" href="structdice_1_1hash_1_1DiceHash.html">dice::hash::DiceHash&lt;int&gt;</a> hash;</div>
 <div class="line">hash(42);</div>
-<div class="ttc" id="astructdice_1_1hash_1_1DiceHash_html"><div class="ttname"><a href="structdice_1_1hash_1_1DiceHash.html">dice::hash::DiceHash</a></div><div class="ttdoc">Wrapper class for the dice::hash::dice_hash function.</div><div class="ttdef"><b>Definition</b> DiceHash.hpp:306</div></div>
+<div class="ttc" id="astructdice_1_1hash_1_1DiceHash_html"><div class="ttname"><a href="structdice_1_1hash_1_1DiceHash.html">dice::hash::DiceHash</a></div><div class="ttdoc">Wrapper class for the dice::hash::dice_hash function.</div><div class="ttdef"><b>Definition</b> DiceHash.hpp:323</div></div>
 </div><!-- fragment --><p> <a href="examples/basicUsage.cpp">basicUsage</a> is a run able example for this use-case.</p>
 <p>If you need <code>DiceHash</code> to be able to work on your own types, you can specialize the <code><a class="el" href="structdice_1_1hash_1_1dice__hash__overload.html" title="Helper struct for defining the hash for custom structs.">dice::hash::dice_hash_overload</a></code> template: </p><div class="fragment"><div class="line"> ++</div>
 <div class="line"><span class="keyword">struct </span>YourType{};</div>
 <div class="line"><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacedice_1_1hash.html">dice::hash</a> {</div>
 <div class="line">    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> Policy&gt;</div>
-<div class="line">    <span class="keyword">struct </span>dice_hash_overload&lt;<a class="code hl_variable" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">Policy</a>, <a class="code hl_variable" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">YourType</a>&gt; {</div>
-<div class="line">        <span class="keyword">static</span> std::size_t <a class="code hl_function" href="structdice_1_1hash_1_1dice__hash__overload.html#ae96fa8cb1155f84e724eb24a9c307807">dice_hash</a>(<a class="code hl_variable" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">YourType</a> <span class="keyword">const</span>&amp; <a class="code hl_variable" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">x</a>) <span class="keyword">noexcept</span> {</div>
+<div class="line">    <span class="keyword">struct </span>dice_hash_overload&lt;Policy, YourType&gt; {</div>
+<div class="line">        <span class="keyword">static</span> std::size_t <a class="code hl_function" href="structdice_1_1hash_1_1dice__hash__overload.html#ae96fa8cb1155f84e724eb24a9c307807">dice_hash</a>(YourType <span class="keyword">const</span>&amp; x) <span class="keyword">noexcept</span> {</div>
 <div class="line">            <span class="keywordflow">return</span> 42;</div>
 <div class="line">        }</div>
 <div class="line">    };</div>
 <div class="line">}</div>
-<div class="ttc" id="anamespacedice_1_1hash_html"><div class="ttname"><a href="namespacedice_1_1hash.html">dice::hash</a></div><div class="ttdoc">Home of the DiceHash.</div><div class="ttdef"><b>Definition</b> DiceHash.hpp:30</div></div>
-<div class="ttc" id="anamespacedice_1_1hash_html_abacb6b481588f924f98cf4b4566385e4"><div class="ttname"><a href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">dice::hash::is_ordered_container_v</a></div><div class="ttdeci">constexpr bool is_ordered_container_v</div><div class="ttdoc">Helper definition.</div><div class="ttdef"><b>Definition</b> Container_trait.hpp:87</div></div>
-<div class="ttc" id="astructdice_1_1hash_1_1dice__hash__overload_html_ae96fa8cb1155f84e724eb24a9c307807"><div class="ttname"><a href="structdice_1_1hash_1_1dice__hash__overload.html#ae96fa8cb1155f84e724eb24a9c307807">dice::hash::dice_hash_overload::dice_hash</a></div><div class="ttdeci">static std::size_t dice_hash(T const &amp;) noexcept</div><div class="ttdoc">Default implementation of the dice_hash function.</div><div class="ttdef"><b>Definition</b> DiceHash.hpp:53</div></div>
+<div class="ttc" id="anamespacedice_1_1hash_html"><div class="ttname"><a href="namespacedice_1_1hash.html">dice::hash</a></div><div class="ttdoc">Home of the DiceHash.</div><div class="ttdef"><b>Definition</b> Blake3.hpp:12</div></div>
+<div class="ttc" id="astructdice_1_1hash_1_1dice__hash__overload_html_ae96fa8cb1155f84e724eb24a9c307807"><div class="ttname"><a href="structdice_1_1hash_1_1dice__hash__overload.html#ae96fa8cb1155f84e724eb24a9c307807">dice::hash::dice_hash_overload::dice_hash</a></div><div class="ttdeci">static std::size_t dice_hash(T const &amp;) noexcept</div><div class="ttdoc">Default implementation of the dice_hash function.</div><div class="ttdef"><b>Definition</b> DiceHash.hpp:54</div></div>
 </div><!-- fragment --><p> <a href="examples/customType.cpp">Here</a> is an compilable example.</p>
 <p>If you want to combine the hash of two or more objects you can use the <code>hash_combine</code> or <code>hash_invertible_combine</code> function. These are part of the Policy, however they can be called via the DiceHash object. An example can be seen <a href="examples/combineHashes.cpp">here</a>.</p>
 <p>If your own type is a container type, there is an easier and faster way to define the hash for you. There are the two typetraits <code>is_ordered_container</code> and <code>is_unordered_container</code>. You just need to set these typetraits for your own type, and the hash will automatically loop over the entries and hash them. </p><div class="fragment"><div class="line"> ++</div>
 <div class="line"><span class="keyword">struct </span>YourOwnOrderedContainer{...};</div>
 <div class="line"><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacedice_1_1hash.html">dice::hash</a> {</div>
-<div class="line">    <span class="keyword">template</span>&lt;&gt; <span class="keyword">struct </span>is_ordered_container&lt;<a class="code hl_variable" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">YourOwnOrderedContainer</a>&gt; : std::true_type {};</div>
+<div class="line">    <span class="keyword">template</span>&lt;&gt; <span class="keyword">struct </span>is_ordered_container&lt;YourOwnOrderedContainer&gt; : std::true_type {};</div>
 <div class="line">}</div>
 </div><!-- fragment --><p> Now you can use <code>DiceHash</code> with your container.</p>
 <p><b>However</b>: Your container <b>needs</b> to have <code>begin</code>, <code>end</code> and <code>size</code> functions. One simple example can be found <a href="examples/customContainer.cpp">here</a>.</p>
-<p>If you want to use <code>DiceHash</code> in a different structure (like <code>std::unordered_map</code>), you will need to set <code>DiceHash</code> as the correct template parameter. <a href="examples/usageForUnorderedSet.cpp">This</a> is one example. </p>
+<p>If you want to use <code>DiceHash</code> in a different structure (like <code>std::unordered_map</code>), you will need to set <code>DiceHash</code> as the correct template parameter. <a href="examples/usageForUnorderedSet.cpp">This</a> is one example.</p>
+<h1><a class="anchor" id="autotoc_md7"></a>
+Usage for general data hashing</h1>
+<p><b>The hash functions mentioned in this section are enabled/disabled using the feature flag <code>WITH_SODIUM=ON/OFF</code>.</b> <b>Enabling this flag (default behaviour) results in <a href="https://doc.libsodium.org/">libsodium</a> being required as a dependency.</b> <b>If using conan, <a href="https://doc.libsodium.org/">libsodium</a> will be fetched using conan, otherwise dice-hash will look for a local system installation.</b></p>
+<p>The hashes mentioned here are not meant to be used in C++ containers as they do <em>not</em> return <code>size_t</code>. They are instead meant as general hashing functions for arbitrary data.</p>
+<h2><a class="anchor" id="autotoc_md8"></a>
+&lt;a href="https://www.blake2.net/" &gt;Blake2b&lt;/a&gt; - &lt;a href="https://www.blake2.net/" &gt;\"fast secure hashing\"&lt;/a&gt; (with output sizes from 16 bytes up to 64 bytes)</h2>
+<p><a href="https://www.blake2.net/">"BLAKE2 is a cryptographic hash function faster than MD5, SHA-1, SHA-2, and SHA-3, yet is at least as secure as the latest standard SHA-3."</a></p>
+<p>To use it you need to include </p><div class="fragment"><div class="line"> ++</div>
+<div class="line"><span class="preprocessor">#include &lt;dice/hash/blake2/Blake2b.hpp&gt;</span></div>
+</div><!-- fragment --><p> For a usage examples see: <a href="examples/blake2b.cpp">examples/blake2b.cpp</a>.</p>
+<h2><a class="anchor" id="autotoc_md9"></a>
+&lt;a href="https://www.blake2.net/blake2x.pdf" &gt;Blake2Xb&lt;/a&gt; - arbitrary length hashing based on &lt;a href="https://www.blake2.net/" &gt;Blake2b&lt;/a&gt;</h2>
+<p>Blake2Xb is a hash function that produces hashes of arbitrary length.</p>
+<p>To use it you need to include </p><div class="fragment"><div class="line"> ++</div>
+<div class="line"><span class="preprocessor">#include &lt;dice/hash/blake2/Blake2xb.hpp&gt;</span></div>
+</div><!-- fragment --><p> For a usage examples see: <a href="examples/blake2xb.cpp">examples/blake2xb.cpp</a>.</p>
+<h2><a class="anchor" id="autotoc_md10"></a>
+&lt;a href="https://github.com/BLAKE3-team/BLAKE3-specs/blob/master/blake3.pdf" &gt;Blake3&lt;/a&gt; - one function, fast everywhere</h2>
+<p>Blake3 is an evolution of Blake2.</p>
+<p>To use it you need to include </p><div class="fragment"><div class="line"> ++</div>
+<div class="line"><span class="preprocessor">#include &lt;dice/hash/blake2/Blake3.hpp&gt;</span></div>
+</div><!-- fragment --><p> For a usage examples see: <a href="examples/blake3.cpp">examples/blake3.cpp</a>.</p>
+<h2><a class="anchor" id="autotoc_md11"></a>
+&lt;a href="https://engineering.fb.com/2019/03/01/security/homomorphic-hashing/" &gt;LtHash&lt;/a&gt; - homomorphic/multiset hashing</h2>
+<p>LtHash is a multiset/homomorphic hash function, meaning, instead of working on streams of data, it digests individual "objects". This means you can add and remove "objects" to/from an <code>LtHash</code> (object by object) as if it were a multiset and then read the hash that would result from hashing that multiset.</p>
+<p>Small non-code example that shows the basic principle: </p><blockquote class="doxtable">
+<p>&zwj;LtHash({apple}) + LtHash({banana}) - LtHash({peach}) + LtHash({banana}) = LtHash({apple<sup>1</sup>, banana<sup>2</sup>, peach<sup>-1</sup>}) </p>
+</blockquote>
+<p>To use it you need to include </p><div class="fragment"><div class="line"> ++</div>
+<div class="line"><span class="preprocessor">#include &lt;dice/hash/lthash/LtHash.hpp&gt;</span></div>
+</div><!-- fragment --><p> For a usage example see <a href="examples/ltHash.cpp">examples/ltHash.cpp</a>. </p>
 </div></div><!-- PageDoc -->
 </div><!-- contents -->
 <!-- start footer part -->

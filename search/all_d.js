@@ -1,7 +1,5 @@
 var searchData=
 [
-  ['vec_5ftype_0',['vec_type',['../structxxh_1_1typedefs_1_1vec__type.html',1,'xxh::typedefs']]],
-  ['vec_5ftype_3c_20128_20_3e_1',['vec_type&lt; 128 &gt;',['../structxxh_1_1typedefs_1_1vec__type_3_01128_01_4.html',1,'xxh::typedefs']]],
-  ['vec_5ftype_3c_20256_20_3e_2',['vec_type&lt; 256 &gt;',['../structxxh_1_1typedefs_1_1vec__type_3_01256_01_4.html',1,'xxh::typedefs']]],
-  ['vec_5ftype_3c_2064_20_3e_3',['vec_type&lt; 64 &gt;',['../structxxh_1_1typedefs_1_1vec__type_3_0164_01_4.html',1,'xxh::typedefs']]]
+  ['length_20hashing_20based_20on_20a_20href_20https_3a_20www_20blake2_20net_20blake2b_20a_0',['&lt;a href=&quot;https://www.blake2.net/blake2x.pdf&quot; &gt;Blake2Xb&lt;/a&gt; - arbitrary length hashing based on &lt;a href=&quot;https://www.blake2.net/&quot; &gt;Blake2b&lt;/a&gt;',['../index.html#autotoc_md9',1,'']]],
+  ['lthash_20a_20homomorphic_20multiset_20hashing_1',['&lt;a href=&quot;https://engineering.fb.com/2019/03/01/security/homomorphic-hashing/&quot; &gt;LtHash&lt;/a&gt; - homomorphic/multiset hashing',['../index.html#autotoc_md11',1,'']]]
 ];

@@ -101,23 +101,23 @@ Classes</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a9006cca6a5a8b2b449762e9d9cf809d5" id="r_a9006cca6a5a8b2b449762e9d9cf809d5"><td class="memTemplParams" colspan="2"><a id="a9006cca6a5a8b2b449762e9d9cf809d5" name="a9006cca6a5a8b2b449762e9d9cf809d5"></a>
-template&lt;<a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">typename</a> <a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">T</a> &gt; </td></tr>
-<tr class="memitem:a9006cca6a5a8b2b449762e9d9cf809d5"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">static</a> std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><b>hash_fundamental</b> (<a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">T</a> <a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">x</a>) <a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">noexcept</a></td></tr>
+template&lt;typename T &gt; </td></tr>
+<tr class="memitem:a9006cca6a5a8b2b449762e9d9cf809d5"><td class="memTemplItemLeft" align="right" valign="top">static std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><b>hash_fundamental</b> (T x) noexcept</td></tr>
 <tr class="separator:a9006cca6a5a8b2b449762e9d9cf809d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0be632a922aa28dc205c414cc0c6c1fa" id="r_a0be632a922aa28dc205c414cc0c6c1fa"><td class="memItemLeft" align="right" valign="top"><a id="a0be632a922aa28dc205c414cc0c6c1fa" name="a0be632a922aa28dc205c414cc0c6c1fa"></a>
-<a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">static</a> std::size_t&#160;</td><td class="memItemRight" valign="bottom"><b>hash_bytes</b> (<a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">void</a> <a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">const</a> *<a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">ptr</a>, std::size_t <a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">len</a>) <a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">noexcept</a></td></tr>
+static std::size_t&#160;</td><td class="memItemRight" valign="bottom"><b>hash_bytes</b> (void const *ptr, std::size_t len) noexcept</td></tr>
 <tr class="separator:a0be632a922aa28dc205c414cc0c6c1fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a46c0dcfa61d33e707026f261089b6521" id="r_a46c0dcfa61d33e707026f261089b6521"><td class="memItemLeft" align="right" valign="top"><a id="a46c0dcfa61d33e707026f261089b6521" name="a46c0dcfa61d33e707026f261089b6521"></a>
-<a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">static</a> std::size_t&#160;</td><td class="memItemRight" valign="bottom"><b>hash_combine</b> (std::initializer_list&lt; <a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">size_t</a> &gt; <a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">hashes</a>) <a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">noexcept</a></td></tr>
+static std::size_t&#160;</td><td class="memItemRight" valign="bottom"><b>hash_combine</b> (std::initializer_list&lt; size_t &gt; hashes) noexcept</td></tr>
 <tr class="separator:a46c0dcfa61d33e707026f261089b6521"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aba6a69529799506653e15d361d7e9138" id="r_aba6a69529799506653e15d361d7e9138"><td class="memItemLeft" align="right" valign="top"><a id="aba6a69529799506653e15d361d7e9138" name="aba6a69529799506653e15d361d7e9138"></a>
-<a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">static</a> std::size_t&#160;</td><td class="memItemRight" valign="bottom"><b>hash_invertible_combine</b> (std::initializer_list&lt; <a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">size_t</a> &gt; <a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">hashes</a>) <a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">noexcept</a></td></tr>
+static std::size_t&#160;</td><td class="memItemRight" valign="bottom"><b>hash_invertible_combine</b> (std::initializer_list&lt; size_t &gt; hashes) noexcept</td></tr>
 <tr class="separator:aba6a69529799506653e15d361d7e9138"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
 <tr class="memitem:aea1d4a0544f31cce643a8cfdd8d49f13" id="r_aea1d4a0544f31cce643a8cfdd8d49f13"><td class="memItemLeft" align="right" valign="top"><a id="aea1d4a0544f31cce643a8cfdd8d49f13" name="aea1d4a0544f31cce643a8cfdd8d49f13"></a>
-<a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">static</a> <a class="el" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">constexpr</a> std::size_t&#160;</td><td class="memItemRight" valign="bottom"><b>ErrorValue</b> = dice::hash::martinus::seed</td></tr>
+static constexpr std::size_t&#160;</td><td class="memItemRight" valign="bottom"><b>ErrorValue</b> = dice::hash::martinus::seed</td></tr>
 <tr class="separator:aea1d4a0544f31cce643a8cfdd8d49f13"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this struct was generated from the following file:<ul>

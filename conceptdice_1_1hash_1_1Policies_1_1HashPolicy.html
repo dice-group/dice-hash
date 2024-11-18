@@ -81,9 +81,9 @@ $(function() {
 <div class="fragment"><div class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</div>
 <div class="line"><span class="keyword">concept </span><a class="code hl_concept" href="conceptdice_1_1hash_1_1Policies_1_1HashPolicy.html">dice::hash::Policies::HashPolicy</a> = </div>
 <div class="line">    std::is_convertible_v&lt;<span class="keyword">decltype</span>(T::ErrorValue), std::size_t&gt;</div>
-<div class="line">    &amp;&amp;std::is_nothrow_invocable_r_v&lt;std::size_t, <span class="keyword">decltype</span>(T::template <a class="code hl_variable" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">hash_fundamental&lt;int&gt;</a>), <span class="keywordtype">int</span>&gt;</div>
-<div class="line">    &amp;&amp;std::is_nothrow_invocable_r_v&lt;std::size_t, <span class="keyword">decltype</span>(T::template <a class="code hl_variable" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">hash_fundamental&lt;long&gt;</a>), <span class="keywordtype">long</span>&gt;</div>
-<div class="line">    &amp;&amp;std::is_nothrow_invocable_r_v&lt;std::size_t, <span class="keyword">decltype</span>(T::template <a class="code hl_variable" href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">hash_fundamental&lt;std::size_t&gt;</a>), std::size_t&gt;</div>
+<div class="line">    &amp;&amp;std::is_nothrow_invocable_r_v&lt;std::size_t, <span class="keyword">decltype</span>(T::template hash_fundamental&lt;int&gt;), <span class="keywordtype">int</span>&gt;</div>
+<div class="line">    &amp;&amp;std::is_nothrow_invocable_r_v&lt;std::size_t, <span class="keyword">decltype</span>(T::template hash_fundamental&lt;long&gt;), <span class="keywordtype">long</span>&gt;</div>
+<div class="line">    &amp;&amp;std::is_nothrow_invocable_r_v&lt;std::size_t, <span class="keyword">decltype</span>(T::template hash_fundamental&lt;std::size_t&gt;), std::size_t&gt;</div>
 <div class="line">    &amp;&amp;std::is_nothrow_invocable_r_v&lt;std::size_t, <span class="keyword">decltype</span>(T::hash_bytes), <span class="keywordtype">void</span> <span class="keyword">const</span> *, std::size_t&gt;</div>
 <div class="line">    &amp;&amp;std::is_nothrow_invocable_r_v&lt;std::size_t, <span class="keyword">decltype</span>(T::hash_combine), std::initializer_list&lt;std::size_t&gt;&gt;</div>
 <div class="line">    &amp;&amp;std::is_nothrow_invocable_r_v&lt;std::size_t, <span class="keyword">decltype</span>(T::hash_invertible_combine), std::initializer_list&lt;std::size_t&gt;&gt;</div>
@@ -91,7 +91,6 @@ $(function() {
 <div class="line">    &amp;&amp;std::is_nothrow_invocable_r_v&lt;<span class="keywordtype">void</span>, <span class="keyword">decltype</span>(&amp;T::HashState::add), <span class="keyword">typename</span> T::HashState &amp;, std::size_t&gt;</div>
 <div class="line">    &amp;&amp;std::is_nothrow_invocable_r_v&lt;std::size_t, <span class="keyword">decltype</span>(&amp;T::HashState::digest), <span class="keyword">typename</span> T::HashState &amp;&gt;</div>
 <div class="ttc" id="aconceptdice_1_1hash_1_1Policies_1_1HashPolicy_html"><div class="ttname"><a href="conceptdice_1_1hash_1_1Policies_1_1HashPolicy.html">dice::hash::Policies::HashPolicy</a></div><div class="ttdef"><b>Definition</b> DiceHashPolicies.hpp:11</div></div>
-<div class="ttc" id="anamespacedice_1_1hash_html_abacb6b481588f924f98cf4b4566385e4"><div class="ttname"><a href="namespacedice_1_1hash.html#abacb6b481588f924f98cf4b4566385e4">dice::hash::is_ordered_container_v</a></div><div class="ttdeci">constexpr bool is_ordered_container_v</div><div class="ttdoc">Helper definition.</div><div class="ttdef"><b>Definition</b> Container_trait.hpp:87</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

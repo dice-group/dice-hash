@@ -1,3 +1,9 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$classxxh_1_1hash3__state__t.html" title=" " alt="" coords="5,5,134,46"/>
+<area shape="rect" id="Node000000" title=" " alt="" coords="5,92,110,118"/>
+<area shape="rect" id="Node000001" href="$structdice_1_1hash_1_1dice__hash__overload_1_1AlwaysFalse.html" title="Helper type." alt="" coords="158,5,348,61"/>
+<area shape="poly" id="edge2_Node000000_Node000001" title=" " alt="" coords="108,84,175,59,177,64,110,89"/>
+<area shape="rect" id="Node000002" href="$structdice_1_1hash_1_1is__ordered__container.html" title="Typetrait for checking if a type T is an ordered container." alt="" coords="180,85,326,126"/>
+<area shape="poly" id="edge3_Node000000_Node000002" title=" " alt="" coords="125,103,180,103,180,108,125,108"/>
+<area shape="rect" id="Node000003" href="$structdice_1_1hash_1_1is__unordered__container.html" title="Typetrait for checking if a type T is an unordered container." alt="" coords="173,150,333,191"/>
+<area shape="poly" id="edge4_Node000000_Node000003" title=" " alt="" coords="113,121,191,147,189,152,112,126"/>
 </map>

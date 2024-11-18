@@ -1,3 +1,11 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$classxxh_1_1hash__state__t.html" title=" " alt="" coords="5,5,135,46"/>
+<area shape="rect" id="Node000000" title=" " alt="" coords="5,144,104,170"/>
+<area shape="rect" id="Node000001" href="$structdice_1_1hash_1_1is__ordered__container_3_01std_1_1map_3_01Key_00_01T_00_01Compare_00_01Allocator_01_4_01_4.html" title="Specialization for std::map." alt="" coords="154,5,354,61"/>
+<area shape="poly" id="edge5_Node000000_Node000001" title=" " alt="" coords="77,131,110,101,150,71,172,59,174,64,153,75,113,105,80,135"/>
+<area shape="rect" id="Node000002" href="$structdice_1_1hash_1_1is__ordered__container_3_01std_1_1set_3_01Key_00_01Compare_00_01Allocator_01_4_01_4.html" title="Specialization for std::set." alt="" coords="161,85,347,141"/>
+<area shape="poly" id="edge6_Node000000_Node000002" title=" " alt="" coords="118,141,160,131,161,136,119,146"/>
+<area shape="rect" id="Node000003" href="$structdice_1_1hash_1_1is__unordered__container_3_01std_1_1unordered__map_3_01Key_00_01T_00_01Has63660c1708e8d12c50c9ac66682a1aea.html" title="Specialization for std::unordered_map." alt="" coords="152,165,356,235"/>
+<area shape="poly" id="edge7_Node000000_Node000003" title=" " alt="" coords="119,168,152,175,151,180,118,173"/>
+<area shape="rect" id="Node000004" href="$structdice_1_1hash_1_1is__unordered__container_3_01std_1_1unordered__set_3_01Key_00_01Hash_00_01a7482544652e85d30b873b0024c0edc1.html" title="Specialization for std::unordered_set." alt="" coords="163,259,345,330"/>
+<area shape="poly" id="edge8_Node000000_Node000004" title=" " alt="" coords="80,180,113,212,153,244,173,256,170,261,150,249,110,216,76,183"/>
 </map>

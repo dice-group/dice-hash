@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['canonical_5ft_0',['canonical_t',['../structxxh_1_1canonical__t.html',1,'xxh']]]
+  ['blake3_0',['Blake3',['../structdice_1_1hash_1_1blake3_1_1Blake3.html',1,'dice::hash::blake3']]]
 ];

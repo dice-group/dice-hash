@@ -1,7 +1,8 @@
 var searchData=
 [
-  ['vec_5ftype_0',['vec_type',['../structxxh_1_1typedefs_1_1vec__type.html',1,'xxh::typedefs']]],
-  ['vec_5ftype_3c_20128_20_3e_1',['vec_type&lt; 128 &gt;',['../structxxh_1_1typedefs_1_1vec__type_3_01128_01_4.html',1,'xxh::typedefs']]],
-  ['vec_5ftype_3c_20256_20_3e_2',['vec_type&lt; 256 &gt;',['../structxxh_1_1typedefs_1_1vec__type_3_01256_01_4.html',1,'xxh::typedefs']]],
-  ['vec_5ftype_3c_2064_20_3e_3',['vec_type&lt; 64 &gt;',['../structxxh_1_1typedefs_1_1vec__type_3_0164_01_4.html',1,'xxh::typedefs']]]
+  ['uint128_5ft_0',['uint128_t',['../structxxh_1_1typedefs_1_1uint128__t.html',1,'xxh::typedefs']]],
+  ['uint_5ftype_1',['uint_type',['../structxxh_1_1typedefs_1_1uint__type.html',1,'xxh::typedefs']]],
+  ['uint_5ftype_3c_20128_20_3e_2',['uint_type&lt; 128 &gt;',['../structxxh_1_1typedefs_1_1uint__type_3_01128_01_4.html',1,'xxh::typedefs']]],
+  ['uint_5ftype_3c_2032_20_3e_3',['uint_type&lt; 32 &gt;',['../structxxh_1_1typedefs_1_1uint__type_3_0132_01_4.html',1,'xxh::typedefs']]],
+  ['uint_5ftype_3c_2064_20_3e_4',['uint_type&lt; 64 &gt;',['../structxxh_1_1typedefs_1_1uint__type_3_0164_01_4.html',1,'xxh::typedefs']]]
 ];
