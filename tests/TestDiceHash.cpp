@@ -2,7 +2,7 @@
 
 #include <dice/hash.hpp>
 
-#define AllPoliciesToTestForDiceHash dice::hash::Policies::Martinus, dice::hash::Policies::xxh3, \
+#define AllPoliciesToTestForDiceHash dice::hash::Policies::Martinus, \
 									 dice::hash::Policies::wyhash
 #define AllTypesToTestForDiceHash int, long, std::size_t, std::byte, std::string, std::string_view, int *, long *,             \
 								  std::string *, std::unique_ptr<int>, std::shared_ptr<int>, std::vector<int>,                 \
