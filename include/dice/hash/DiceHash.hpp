@@ -356,8 +356,8 @@ namespace dice::hash {
 
     template <typename T>
     using DiceHashMartinus = DiceHash<T, Policies::Martinus>;
-    template <typename T>
-    using DiceHashxxh3 = DiceHash<T, Policies::xxh3>;
+    //template <typename T>
+    //using DiceHashxxh3 = DiceHash<T, Policies::xxh3>;
     template <typename T>
     using DiceHashwyhash = DiceHash<T, Policies::wyhash>;
 }// namespace dice::hash
