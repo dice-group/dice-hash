@@ -7,7 +7,7 @@ from conan.tools.files import load, rmdir, copy
 
 
 class DiceHashConan(ConanFile):
-    license = "AGPL"
+    license = "MIT", "Apache-2.0"
     author = "DICE Group <info@dice-research.org>"
     homepage = "https://github.com/dice-group/dice-hash"
     url = homepage
