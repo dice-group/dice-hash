@@ -31,7 +31,7 @@ To use it with [conan](https://conan.io/) you need to add the repository:
 conan remote add dice-group https://conan.dice-research.org/artifactory/api/conan/tentris
 ```
 
-To use it add `dice-hash/0.4.9` to the `[requires]` section of your conan file.
+To use it add `dice-hash/0.4.10` to the `[requires]` section of your conan file.
 
 You can now add it to your target with:
 ```cmake
