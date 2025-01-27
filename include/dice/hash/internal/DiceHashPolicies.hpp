@@ -3,7 +3,9 @@
 
 #include "martinus_robinhood_hash.hpp"
 #include "wyhash.h"
-//#include "xxhash.hpp"
+#ifdef __x86_64__
+#include "xxhash.hpp"
+#endif
 #include <type_traits>
 
 namespace dice::hash::Policies {
@@ -72,7 +74,7 @@ namespace dice::hash::Policies {
 		};
 	};
 
-#if 0
+#ifdef __x86_64__
 	struct xxh3 {
 		inline static constexpr std::size_t size_t_bits = 8 * sizeof(std::size_t);
 		inline static constexpr std::size_t seed = std::size_t(0xA24BAED4963EE407UL);

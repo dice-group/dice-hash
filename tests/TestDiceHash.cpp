@@ -2,8 +2,13 @@
 
 #include <dice/hash.hpp>
 
+#ifdef __x86_64__
+#define AllPoliciesToTestForDiceHash dice::hash::Policies::Martinus, dice::hash::Policies::xxh3, \
+									 dice::hash::Policies::wyhash
+#else
 #define AllPoliciesToTestForDiceHash dice::hash::Policies::Martinus, \
 									 dice::hash::Policies::wyhash
+#endif
 #define AllTypesToTestForDiceHash int, long, std::size_t, std::byte, std::string, std::string_view, int *, long *,             \
 								  std::string *, std::unique_ptr<int>, std::shared_ptr<int>, std::vector<int>,                 \
 								  std::set<int>, std::unordered_set<int>, (std::array<int, 10>), (std::tuple<int, int, long>), \
