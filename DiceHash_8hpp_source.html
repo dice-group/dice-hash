@@ -306,12 +306,14 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00356" name="l00356"></a><span class="lineno">  356</span> </div>
 <div class="line"><a id="l00357" name="l00357"></a><span class="lineno">  357</span>    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
 <div class="line"><a id="l00358" name="l00358"></a><span class="lineno">  358</span>    <span class="keyword">using </span>DiceHashMartinus = DiceHash&lt;T, Policies::Martinus&gt;;</div>
-<div class="line"><a id="l00359" name="l00359"></a><span class="lineno">  359</span>    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="line"><a id="l00360" name="l00360"></a><span class="lineno">  360</span>    <span class="keyword">using </span>DiceHashxxh3 = DiceHash&lt;T, Policies::xxh3&gt;;</div>
-<div class="line"><a id="l00361" name="l00361"></a><span class="lineno">  361</span>    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="line"><a id="l00362" name="l00362"></a><span class="lineno">  362</span>    <span class="keyword">using </span>DiceHashwyhash = DiceHash&lt;T, Policies::wyhash&gt;;</div>
-<div class="line"><a id="l00363" name="l00363"></a><span class="lineno">  363</span>}<span class="comment">// namespace dice::hash</span></div>
-<div class="line"><a id="l00364" name="l00364"></a><span class="lineno">  364</span><span class="preprocessor">#endif</span><span class="comment">//DICE_HASH_DICEHASH_HPP</span></div>
+<div class="line"><a id="l00359" name="l00359"></a><span class="lineno">  359</span><span class="preprocessor">#ifdef __x86_64__</span></div>
+<div class="line"><a id="l00360" name="l00360"></a><span class="lineno">  360</span>    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
+<div class="line"><a id="l00361" name="l00361"></a><span class="lineno">  361</span>    <span class="keyword">using </span>DiceHashxxh3 = DiceHash&lt;T, Policies::xxh3&gt;;</div>
+<div class="line"><a id="l00362" name="l00362"></a><span class="lineno">  362</span><span class="preprocessor">#endif</span></div>
+<div class="line"><a id="l00363" name="l00363"></a><span class="lineno">  363</span>    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
+<div class="line"><a id="l00364" name="l00364"></a><span class="lineno">  364</span>    <span class="keyword">using </span>DiceHashwyhash = DiceHash&lt;T, Policies::wyhash&gt;;</div>
+<div class="line"><a id="l00365" name="l00365"></a><span class="lineno">  365</span>}<span class="comment">// namespace dice::hash</span></div>
+<div class="line"><a id="l00366" name="l00366"></a><span class="lineno">  366</span><span class="preprocessor">#endif</span><span class="comment">//DICE_HASH_DICEHASH_HPP</span></div>
 <div class="ttc" id="aContainer__trait_8hpp_html"><div class="ttname"><a href="Container__trait_8hpp.html">Container_trait.hpp</a></div><div class="ttdoc">Home of custom type traits for the diceHash.</div></div>
 <div class="ttc" id="aclassdice_1_1hash_1_1dice__hash__templates_html"><div class="ttname"><a href="classdice_1_1hash_1_1dice__hash__templates.html">dice::hash::dice_hash_templates</a></div><div class="ttdoc">Class which contains all dice_hash functions.</div><div class="ttdef"><b>Definition</b> DiceHash.hpp:65</div></div>
 <div class="ttc" id="aclassdice_1_1hash_1_1dice__hash__templates_html_a040eadb2b118b4a3a36ba14244109544"><div class="ttname"><a href="classdice_1_1hash_1_1dice__hash__templates.html#a040eadb2b118b4a3a36ba14244109544">dice::hash::dice_hash_templates::dice_hash</a></div><div class="ttdeci">static std::size_t dice_hash(T *ptr) noexcept</div><div class="ttdoc">Implementation for raw pointers.</div><div class="ttdef"><b>Definition</b> DiceHash.hpp:170</div></div>
