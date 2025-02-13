@@ -13,9 +13,9 @@ jobs:
       matrix:
         config:
           - os: ubuntu-22.04
-            compiler: clang-15
+            compiler: clang-17
           - os: ubuntu-22.04
-            compiler: clang-16
+            compiler: clang-19
 
           - os: ubuntu-22.04
             compiler: gcc-12
@@ -23,7 +23,7 @@ jobs:
             compiler: gcc-13
     runs-on: ${{ matrix.config.os }}
     steps:
-      - name: Add repos for for gcc-13 and clang-16
+      - name: Add repos for for gcc-13 and clang-19
         uses: dice-group/cpp-conan-release-reusable-workflow/.github/actions/setup_apt@main
 
       - name: Install CMake
