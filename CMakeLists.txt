@@ -45,6 +45,7 @@ if (WITH_SODIUM)
     find_package(libsodium REQUIRED)
     find_package(highway REQUIRED)
 endif ()
+find_package(rapidhash)
 
 add_subdirectory(include/dice/hash/blake/internal/blake3)
 
@@ -62,6 +63,7 @@ if (WITH_SODIUM)
             PUBLIC
             libsodium::libsodium
             blake3
+            rapidhash::rapidhash
             PRIVATE
             highway::highway
     )
@@ -76,6 +78,7 @@ else()
     target_link_libraries(${PROJECT_NAME}
             INTERFACE
             blake3
+            rapidhash::rapidhash
     )
 endif()
 
