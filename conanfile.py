@@ -32,7 +32,7 @@ class DiceHashConan(ConanFile):
     generators = ("CMakeDeps", "CMakeToolchain")
 
     def requirements(self):
-        self.requires("rapidhash/1.0")
+        self.requires("rapidhash/1.0", transitive_headers=True)
         if self.options.with_sodium:
             self.requires("libsodium/cci.20220430", transitive_headers=True)
             self.requires("highway/1.2.0")
