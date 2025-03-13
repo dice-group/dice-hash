@@ -32,6 +32,7 @@ class DiceHashConan(ConanFile):
     generators = ("CMakeDeps", "CMakeToolchain")
 
     def requirements(self):
+        self.requires("rapidhash/1.0", transitive_headers=True)
         if self.options.with_sodium:
             self.requires("libsodium/cci.20220430", transitive_headers=True)
             self.requires("highway/1.2.0")
@@ -85,6 +86,7 @@ class DiceHashConan(ConanFile):
         self.cpp_info.set_property("cmake_target_name", "dice-hash::dice-hash")
         self.cpp_info.set_property("cmake_file_name", "dice-hash")
 
+        self.cpp_info.requires += ["rapidhash::rapidhash"]
         if self.options.with_sodium:
             self.cpp_info.libs += ["dice-hash", "blake3"]
             self.cpp_info.requires += ["libsodium::libsodium", "highway::highway"]

@@ -362,5 +362,7 @@ namespace dice::hash {
 #endif
     template <typename T>
     using DiceHashwyhash = DiceHash<T, Policies::wyhash>;
+	template <typename T>
+	using DiceHashrapidhash = DiceHash<T, Policies::rapidhash>;
 }// namespace dice::hash
 #endif//DICE_HASH_DICEHASH_HPP
