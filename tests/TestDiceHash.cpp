@@ -193,26 +193,16 @@ namespace dice::tests::hash {
 		SECTION("Raw pointer hash themself, not the value pointed to") {
 			int i = 42;
 			auto raw = &i;
-			auto firstHash = getHash<CurrentPolicy>(raw);
+			auto firstHash = getHash<CurrentPolicy>(static_cast<void const *>(raw));
 			i = 43;
-			auto secondHash = getHash<CurrentPolicy>(raw);
+			auto secondHash = getHash<CurrentPolicy>(static_cast<void const *>(raw));
 			REQUIRE(firstHash == secondHash);
-		}
-
-		SECTION("Unique pointer hash the managed pointer, not the value pointed to") {
-			auto smartPtr = std::make_unique<int>(42);
-			REQUIRE(getHash<CurrentPolicy>(smartPtr) == getHash<CurrentPolicy>(smartPtr.get()));
-		}
-
-		SECTION("Shared pointer hash the managed pointer, not the value pointed to") {
-			auto smartPtr = std::make_shared<int>(42);
-			REQUIRE(getHash<CurrentPolicy>(smartPtr) == getHash<CurrentPolicy>(smartPtr.get()));
 		}
 
 		SECTION("Complicated types can be hashed (fix for the definition/declaration order bug)") {
 			int i = 42;
-			int *first = &i;
-			int *second = &i;
+			void *first = &i;
+			void *second = &i;
 			getHash<CurrentPolicy>(std::make_tuple(first, second));
 		}
 

@@ -160,37 +160,36 @@ namespace dice::hash {
 			return Policy::hash_bytes(sv.data(), sizeof(CharT) * sv.size());
 		}
 
-		/** Implementation for raw pointers.
-         * CAUTION: hashes the POINTER, not the OBJECT POINTED TO!
-         * @tparam T A pointer type.
-         * @param ptr The pointer to hash.
+		/** Implementation for c-strings.
+         * @param str The string to hash.
          * @return Hash value.
          */
-		template<typename T>
-		static std::size_t dice_hash(T *ptr) noexcept {
+		static std::size_t dice_hash(char const *str) noexcept {
+			return dice_hash(std::string_view{str});
+		}
+
+		/** Implementation for c-strings.
+		 * @param str The string to hash.
+		 * @return Hash value.
+		 */
+		static std::size_t dice_hash(char *str) noexcept {
+			return dice_hash(std::string_view{str});
+		}
+
+		/** Implementation for void pointers (addresses)
+		 * @param ptr The pointer to hash.
+		 * @return Hash value.
+		 */
+		static std::size_t dice_hash(void const *ptr) noexcept {
 			return Policy::hash_fundamental(ptr);
 		}
 
-		/** Implementation for unique pointers.
-         * CAUTION: hashes the POINTER, not the OBJECT POINTED TO!
-         * @tparam T A unique pointer type.
-         * @param ptr The pointer to hash.
-         * @return Hash value.
-         */
-		template<typename T>
-		static std::size_t dice_hash(std::unique_ptr<T> const &ptr) noexcept {
-			return dice_hash(ptr.get());
-		}
-
-		/** implementation for shared pointers.
-         * CAUTION: hashes the POINTER, not the OBJECT POINTED TO!
-         * @tparam T A shared pointer type.
-         * @param ptr The pointer to hash.
-         * @return Hash value.
-         */
-		template<typename T>
-		static std::size_t dice_hash(std::shared_ptr<T> const &ptr) noexcept {
-			return dice_hash(ptr.get());
+		/** Implementation for void pointers (addresses)
+		 * @param ptr The pointer to hash.
+		 * @return Hash value.
+		 */
+		static std::size_t dice_hash(void *ptr) noexcept {
+			return Policy::hash_fundamental(ptr);
 		}
 
 		/** Implementation for std arrays.
