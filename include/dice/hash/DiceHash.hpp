@@ -114,8 +114,16 @@ namespace dice::hash {
 			return Policy::hash_combine({dice_hash(std::get<ids>(tuple))...});
 		}
 
+#ifdef __SIZEOF_INT128__
 		template<typename T>
-		static constexpr bool is_fundamental = std::is_fundamental_v<T> || std::is_same_v<std::remove_cv_t<T>, std::byte>;
+		static constexpr bool is_int128 = std::is_same_v<std::remove_cv_t<T>, __int128> || std::is_same_v<std::remove_cv_t<T>, unsigned __int128>;
+#else
+		template<typename T>
+		static constexpr bool is_int128 = false;
+#endif // __SIZEOF_INT128__
+
+		template<typename T>
+		static constexpr bool is_fundamental = std::is_fundamental_v<T> || std::is_same_v<std::remove_cv_t<T>, std::byte> || is_int128<T>;
 
 	public:
 		/** Base case for dice_hash.
@@ -135,8 +143,8 @@ namespace dice::hash {
          * @param fundamental Value to hash.
          * @return Hash value.
          */
-		template<typename T>
-		requires is_fundamental<std::decay_t<T>> static std::size_t dice_hash(T const &fundamental) noexcept {
+		template<typename T> requires is_fundamental<std::decay_t<T>>
+		static std::size_t dice_hash(T const &fundamental) noexcept {
 			return Policy::hash_fundamental(fundamental);
 		}
 
@@ -362,5 +370,7 @@ namespace dice::hash {
 #endif
     template <typename T>
     using DiceHashwyhash = DiceHash<T, Policies::wyhash>;
+	template <typename T>
+	using DiceHashrapidhash = DiceHash<T, Policies::rapidhash>;
 }// namespace dice::hash
 #endif//DICE_HASH_DICEHASH_HPP

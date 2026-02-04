@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.24)
 
 project(
         dice-hash
-        VERSION 0.4.11
+        VERSION 0.4.12
         DESCRIPTION "dice-hash provides a framework to generate stable hashes. It provides state-of-the-art hash functions, supports STL containers out of the box and helps you to defines stable hashes for your own structs and classes."
         HOMEPAGE_URL "https://dice-group.github.io/dice-hash/")
 set(POBR_VERSION 1)  # Persisted Object Binary Representation Version
@@ -45,6 +45,7 @@ if (WITH_SODIUM)
     find_package(libsodium REQUIRED)
     find_package(highway REQUIRED)
 endif ()
+find_package(rapidhash)
 
 add_subdirectory(include/dice/hash/blake/internal/blake3)
 
@@ -62,6 +63,7 @@ if (WITH_SODIUM)
             PUBLIC
             libsodium::libsodium
             blake3
+            rapidhash::rapidhash
             PRIVATE
             highway::highway
     )
@@ -76,6 +78,7 @@ else()
     target_link_libraries(${PROJECT_NAME}
             INTERFACE
             blake3
+            rapidhash::rapidhash
     )
 endif()
 

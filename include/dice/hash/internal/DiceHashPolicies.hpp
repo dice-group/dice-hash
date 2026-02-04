@@ -7,6 +7,7 @@
 #include "xxhash.hpp"
 #endif
 #include <type_traits>
+#include "rapidhash.h"
 
 namespace dice::hash::Policies {
     template<typename T>
@@ -150,6 +151,49 @@ namespace dice::hash::Policies {
 			}
 			[[nodiscard]] std::size_t digest() noexcept {
 				return state.digest();
+			}
+		};
+	};
+
+	struct rapidhash {
+		inline static constexpr uint64_t kSeed = RAPID_SEED;
+		inline static constexpr std::size_t ErrorValue = kSeed;
+
+		template<typename T>
+		static std::size_t hash_fundamental(T x) noexcept {
+			return static_cast<std::size_t>(rapidhash_withSeed(&x, sizeof(T), kSeed));
+		}
+
+		static std::size_t hash_bytes(void const *ptr, std::size_t len) noexcept {
+			return static_cast<std::size_t>(rapidhash_withSeed(ptr, len, kSeed));
+		}
+
+		static std::size_t hash_combine(std::initializer_list<size_t> hashes) noexcept {
+			uint64_t state = kSeed;
+			for (auto hash : hashes) {
+				state = rapid_mix(state, hash);
+			}
+			return static_cast<std::size_t>(state);
+		}
+
+		static std::size_t hash_invertible_combine(std::initializer_list<size_t> hashes) noexcept {
+			std::size_t result = 0;
+			for (auto hash : hashes) {
+				result = result ^ hash;
+			}
+			return result;
+		}
+
+		class HashState {
+		private:
+			uint64_t state = kSeed;
+		public:
+			explicit HashState(std::size_t) noexcept {}
+			void add (std::size_t hash) noexcept {
+				state = rapid_mix(state, static_cast<uint64_t>(hash));
+			}
+			[[nodiscard]] std::size_t digest() noexcept {
+				return static_cast<std::size_t>(state);
 			}
 		};
 	};
