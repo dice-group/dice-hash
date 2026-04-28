@@ -59,9 +59,7 @@ namespace dice::hash::martinus {
 		return (x >> k) | (x << (8U * sizeof(T) - k));
 	}
 
-	inline std::size_t hash_bytes(void const *ptr, std::size_t len) noexcept {
-
-
+	inline std::size_t hash_bytes(void const *ptr, std::size_t len, std::size_t seed) noexcept {
 		static constexpr unsigned int r = 47;
 
 		auto const *const data64 = static_cast<uint64_t const *>(ptr);
@@ -113,7 +111,7 @@ namespace dice::hash::martinus {
 		return static_cast<size_t>(h);
 	}
 
-	inline std::size_t hash_combine(std::initializer_list<size_t> hashes) {
+	inline std::size_t hash_combine(std::initializer_list<size_t> hashes, std::size_t seed) {
 
 
 		uint64_t h = seed ^ (hashes.size() * m);
@@ -138,7 +136,7 @@ namespace dice::hash::martinus {
 		size_t h;
 
 	public:
-		explicit HashState(uint64_t size) : h(seed ^ (size * m)) {}
+		explicit HashState(uint64_t size, uint64_t seed) : h(seed ^ (size * m)) {}
 
 		void add(std::size_t hash) noexcept {
 			hash *= m;
