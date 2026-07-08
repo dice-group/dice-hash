@@ -12,8 +12,8 @@ jobs:
     with:
       os: ubuntu-24.04
       setup_tools: true
-      cc: clang-20
-      cxx: clang++-20
+      cc: clang-17
+      cxx: clang++-17
       cmake-version: 3.24.0
       conan-version: 2.21.0
       base-branch: ${{ github.base_ref }}
