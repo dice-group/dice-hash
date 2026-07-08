@@ -13,7 +13,7 @@ jobs:
   generate_doxygen_docu:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
       # https://github.com/marketplace/actions/doxygen-action
       - name: generate docu
         uses: mattnotmitt/doxygen-action@v1.9.8
