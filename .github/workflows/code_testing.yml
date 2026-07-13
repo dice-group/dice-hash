@@ -27,7 +27,7 @@ jobs:
         uses: dice-group/cpp-conan-release-reusable-workflow/.github/actions/setup_apt@v1.0.4
 
       - name: Install CMake
-        uses: lukka/get-cmake@v3.31.6
+        uses: lukka/get-cmake@v4.3.4
         with:
           cmakeVersion: 3.24
 
