@@ -133,6 +133,36 @@ namespace dice::tests::hash {
 			REQUIRE(test_pair_tuple<CurrentPolicy>('a', std::string("abc")));
 		}
 
+		SECTION("Null option and monostate generate the same hash") {
+			std::optional<std::string> example{std::nullopt};
+			std::monostate target{};
+			REQUIRE(getHash<CurrentPolicy>(target) == getHash<CurrentPolicy>(example));
+		}
+
+		SECTION("Some option and target generate the same hash") {
+			std::optional<std::string> example{"dog"};
+			std::string target{"dog"};
+			REQUIRE(getHash<CurrentPolicy>(target) == getHash<CurrentPolicy>(example));
+		}
+
+		SECTION("set of optionals compiles") {
+			std::set<std::optional<std::string>> exampleSet;
+			exampleSet.insert("cat");
+			exampleSet.insert(std::nullopt);
+			exampleSet.insert("horse");
+			getHash<CurrentPolicy>(exampleSet);
+		}
+
+		SECTION("arr of optionals compiles") {
+			std::array<std::optional<std::string>, 5> exampleArray{"dog", std::nullopt, "cat", std::nullopt, "horse"};
+			getHash<CurrentPolicy>(exampleArray);
+		}
+
+		SECTION("vec of optionals compiles") {
+			std::vector<std::optional<std::string>> exampleVec{"dog", std::nullopt, "cat", std::nullopt, "horse"};
+			getHash<CurrentPolicy>(exampleVec);
+		}
+
 		SECTION("set of strings compiles") {
 			std::set<std::string> exampleSet;
 			exampleSet.insert("cat");
