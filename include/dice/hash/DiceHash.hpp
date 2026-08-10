@@ -14,6 +14,7 @@
 #include <cstring>
 #include <map>
 #include <memory>
+#include <optional>
 #include <set>
 #include <span>
 #include <string>
@@ -277,6 +278,22 @@ namespace dice::hash {
          */
 		static std::size_t dice_hash(std::monostate const &) noexcept {
 			return Policy::ErrorValue;
+		}
+
+		/**
+		 * Overload for std::optional
+		 *
+		 * @tparam T Type of the optional
+		 * @param opt The optional itself
+		 * @return Hash value
+		 */
+		template<typename T>
+		static std::size_t dice_hash(std::optional<T> const &opt) noexcept {
+			std::variant<T, std::monostate> value =
+					opt.has_value()
+							? std::variant<T, std::monostate>{opt.value()}
+							: std::variant<T, std::monostate>{std::monostate{}};
+			return dice_hash(value);
 		}
 
 		/** Implementation for variant.
