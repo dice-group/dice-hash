@@ -105,7 +105,15 @@ jobs:
       # The Benchmark test cases measure the runner, not the change under
       # review. They are built, but not run.
       - name: Test
-        run: ctest --test-dir build -j$(nproc) --output-on-failure -E ".*Benchmark.*"
+        run: |
+          EXCLUDE=".*Benchmark.*"
+          if [ "${{ matrix.san-name }}" = "tsan" ]; then
+            # metall reserves an 8 TiB virtual address region. tsan maps its
+            # shadow memory across the address space, so that reservation fails
+            # and the segment cannot be created.
+            EXCLUDE="$EXCLUDE|LtHash metall"
+          fi
+          ctest --test-dir build -j$(nproc) --output-on-failure -E "$EXCLUDE"
 
       - name: Run examples
         run: |
