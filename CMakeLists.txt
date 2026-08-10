@@ -35,6 +35,9 @@ OPTION(WITH_SODIUM "Enable usage of the external library sodium for Blake2b, Bla
 if (PROJECT_IS_TOP_LEVEL)
     if (BUILD_TESTING)
         set(CONAN_INSTALL_ARGS "${CONAN_INSTALL_ARGS};-o=&:with_test_deps=True")
+        # metall consumes boost headers only. Compiling boost is slow, and its b2
+        # build fails with clang on aarch64.
+        set(CONAN_INSTALL_ARGS "${CONAN_INSTALL_ARGS};-o=boost/*:header_only=True")
     endif ()
     if (WITH_SODIUM)
         set(CONAN_INSTALL_ARGS "${CONAN_INSTALL_ARGS};-o=&:with_sodium=True")
