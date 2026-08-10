@@ -1,0 +1,174 @@
+name: tests
+
+on:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-26.04
+            cc: gcc-15
+            cxx: g++-15
+            sanitizer: "address,undefined"
+            san-name: asan-ubsan
+            experimental: false
+          - os: ubuntu-26.04
+            cc: clang-21
+            cxx: clang++-21
+            sanitizer: "address,undefined"
+            san-name: asan-ubsan
+            experimental: false
+          - os: ubuntu-26.04
+            cc: clang-21
+            cxx: clang++-21
+            sanitizer: "thread"
+            san-name: tsan
+            experimental: false
+          - os: ubuntu-26.04-arm
+            cc: gcc-15
+            cxx: g++-15
+            sanitizer: ""
+            san-name: plain
+            experimental: false
+          - os: ubuntu-26.04-arm
+            cc: clang-21
+            cxx: clang++-21
+            sanitizer: ""
+            san-name: plain
+            experimental: false
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental }}
+    timeout-minutes: 45
+    env:
+      CC: ${{ matrix.cc }}
+      CXX: ${{ matrix.cxx }}
+      ASAN_OPTIONS: halt_on_error=1
+      UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+      TSAN_OPTIONS: halt_on_error=1
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ matrix.os }}-${{ matrix.cc }}-${{ matrix.san-name }}
+
+      - name: Install conan
+        uses: dice-group/cpp-conan-release-reusable-workflow/.github/actions/configure_conan@v2.0.5
+        with:
+          conan-version: 2.31.1
+
+      - name: Add dice-group conan remote
+        run: conan remote add -f dice-group https://conan.dice-research.org/artifactory/api/conan/tentris
+
+      - name: Detect conan profile
+        run: conan profile detect --force
+
+      - name: Cache conan packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.conan2/p
+          key: ${{ matrix.os }}-${{ matrix.cc }}-conan2-${{ hashFiles('conanfile.py') }}
+
+      - name: Get conan provider
+        uses: dice-group/cpp-conan-release-reusable-workflow/.github/actions/add_conan_provider@v2.0.5
+
+      - name: Configure
+        run: |
+          SAN_FLAGS=""
+          if [ -n "${{ matrix.sanitizer }}" ]; then
+            SAN_FLAGS="-fsanitize=${{ matrix.sanitizer }} -fno-omit-frame-pointer"
+          fi
+          cmake -G Ninja -B build \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DBUILD_TESTING=ON \
+            -DBUILD_EXAMPLES=ON \
+            -DWITH_SODIUM=ON \
+            -DCMAKE_COMPILE_WARNING_AS_ERROR=ON \
+            -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=conan_provider.cmake \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_FLAGS="$SAN_FLAGS" \
+            -DCMAKE_EXE_LINKER_FLAGS="$SAN_FLAGS"
+
+      - name: Build
+        run: cmake --build build -j$(nproc)
+
+      # The Benchmark test cases measure the runner, not the change under
+      # review. They are built, but not run.
+      - name: Test
+        run: ctest --test-dir build -j$(nproc) --output-on-failure -E ".*Benchmark.*"
+
+      - name: Run examples
+        run: |
+          for example in build/examples/example_*; do
+            echo "running ${example}"
+            "${example}"
+          done
+
+  macos:
+    runs-on: macos-15
+    timeout-minutes: 45
+    env:
+      CC: gcc-15
+      CXX: g++-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        run: brew install gcc@15 ninja
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: macos-15-gcc-15
+
+      - name: Install conan
+        uses: dice-group/cpp-conan-release-reusable-workflow/.github/actions/configure_conan@v2.0.5
+        with:
+          conan-version: 2.31.1
+
+      - name: Add dice-group conan remote
+        run: conan remote add -f dice-group https://conan.dice-research.org/artifactory/api/conan/tentris
+
+      - name: Detect conan profile
+        run: conan profile detect --force
+
+      - name: Cache conan packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.conan2/p
+          key: macos-15-gcc-15-conan2-${{ hashFiles('conanfile.py') }}
+
+      - name: Get conan provider
+        uses: dice-group/cpp-conan-release-reusable-workflow/.github/actions/add_conan_provider@v2.0.5
+
+      - name: Configure
+        run: |
+          cmake -G Ninja -B build \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DBUILD_TESTING=ON \
+            -DBUILD_EXAMPLES=ON \
+            -DWITH_SODIUM=ON \
+            -DCMAKE_COMPILE_WARNING_AS_ERROR=ON \
+            -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=conan_provider.cmake \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+
+      - name: Build
+        run: cmake --build build -j$(sysctl -n hw.ncpu)
+
+      - name: Test
+        run: ctest --test-dir build -j$(sysctl -n hw.ncpu) --output-on-failure -E ".*Benchmark.*"
+
+      - name: Run examples
+        run: |
+          for example in build/examples/example_*; do
+            echo "running ${example}"
+            "${example}"
+          done
