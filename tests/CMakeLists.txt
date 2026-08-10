@@ -99,4 +99,13 @@ if (WITH_SODIUM)
             )
     set_target_properties(tests_LtHash_metall PROPERTIES CXX_STANDARD 20)
     catch_discover_tests(tests_LtHash_metall)
+
+    # gcc reports -Wmaybe-uninitialized inside the metall and boost headers when
+    # they are inlined at -O2. The reports point into the dependencies, not into
+    # this code.
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        foreach (metall_target TestLtHash_metall_phase1 TestLtHash_metall_phase2 tests_LtHash_metall)
+            target_compile_options(${metall_target} PRIVATE -Wno-maybe-uninitialized)
+        endforeach ()
+    endif ()
 endif ()
