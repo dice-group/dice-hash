@@ -7,7 +7,8 @@
 #define AllTypesToTestForDiceHash int, long, std::size_t, std::byte, __int128, unsigned __int128, std::string, std::string_view, int *, long *,             \
 								  std::string *, std::unique_ptr<int>, std::shared_ptr<int>, std::vector<int>,                 \
 								  std::set<int>, std::unordered_set<int>, (std::array<int, 10>), (std::tuple<int, int, long>), \
-								  (std::pair<int, int>), (std::variant<std::monostate>), (std::variant<int, float, std::string>)
+								  (std::pair<int, int>), (std::variant<std::monostate>), (std::variant<int, float, std::string>) \
+								  (std::optional<std::string>), (std::optional<int>), std::nullopt_t
 
 
 namespace dice::tests::hash {
@@ -133,7 +134,7 @@ namespace dice::tests::hash {
 			REQUIRE(test_pair_tuple<CurrentPolicy>('a', std::string("abc")));
 		}
 
-		SECTION("Null option and monostate generate the same hash") {
+		SECTION("nullopt and monostate generate the same hash") {
 			std::optional<std::string> example{std::nullopt};
 			std::monostate target{};
 			REQUIRE(getHash<CurrentPolicy>(target) == getHash<CurrentPolicy>(example));
@@ -142,6 +143,12 @@ namespace dice::tests::hash {
 		SECTION("Some option and target generate the same hash") {
 			std::optional<std::string> example{"dog"};
 			std::string target{"dog"};
+			REQUIRE(getHash<CurrentPolicy>(target) == getHash<CurrentPolicy>(example));
+		}
+
+		SECTION("nullopt_t and monostate generate the same hash") {
+			std::nullopt_t example{std::nullopt};
+			std::monostate target{};
 			REQUIRE(getHash<CurrentPolicy>(target) == getHash<CurrentPolicy>(example));
 		}
 
