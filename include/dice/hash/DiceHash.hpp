@@ -297,11 +297,10 @@ namespace dice::hash {
 		 */
 		template<typename T>
 		static std::size_t dice_hash(std::optional<T> const &opt) noexcept {
-			std::variant<T, std::monostate> value =
-					opt.has_value()
-							? std::variant<T, std::monostate>{*opt}
-							: std::variant<T, std::monostate>{std::monostate{}};
-			return dice_hash(value);
+			if (opt.has_value()) {
+				return dice_hash(*opt);
+			}
+			return dice_hash(std::monostate{});
 		}
 
 		/** Implementation for variant.
