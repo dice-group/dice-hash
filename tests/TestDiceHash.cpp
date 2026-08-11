@@ -134,22 +134,49 @@ namespace dice::tests::hash {
 			REQUIRE(test_pair_tuple<CurrentPolicy>('a', std::string("abc")));
 		}
 
-		SECTION("nullopt and monostate generate the same hash") {
-			std::optional<std::string> example{std::nullopt};
+		SECTION("unoccupied optional and monostate don't generate the same hash") {
+			std::optional<std::string> example;
 			std::monostate target{};
-			REQUIRE(getHash<CurrentPolicy>(target) == getHash<CurrentPolicy>(example));
+			REQUIRE(getHash<CurrentPolicy>(target) != getHash<CurrentPolicy>(example));
 		}
 
-		SECTION("Some option and target generate the same hash") {
+		SECTION("unoccupied optional and nullopt_t don't generate the same hash") {
+			std::optional<std::string> example;
+			std::nullopt_t target{std::nullopt};
+			REQUIRE(getHash<CurrentPolicy>(target) != getHash<CurrentPolicy>(example));
+		}
+
+		SECTION("Some option and target don't generate the same hash") {
 			std::optional<std::string> example{"dog"};
 			std::string target{"dog"};
-			REQUIRE(getHash<CurrentPolicy>(target) == getHash<CurrentPolicy>(example));
+			REQUIRE(getHash<CurrentPolicy>(target) != getHash<CurrentPolicy>(example));
 		}
 
-		SECTION("Some option(monostate) and monostate generate the same hash") {
+		SECTION("Some option(monostate) and monostate don't generate the same hash") {
 			std::optional example{std::monostate{}};
 			std::monostate target{};
-			REQUIRE(getHash<CurrentPolicy>(target) == getHash<CurrentPolicy>(example));
+			REQUIRE(getHash<CurrentPolicy>(target) != getHash<CurrentPolicy>(example));
+		}
+
+		SECTION("unoccupied optional(monostate) and occupied optional(monostate) don't generate the same hash") {
+			std::optional<std::monostate> example;
+			std::optional target{std::monostate{}};
+
+			REQUIRE(getHash<CurrentPolicy>(target) != getHash<CurrentPolicy>(example));
+		}
+
+		SECTION("(index based(1), Some option) and target generate the same hash") {
+			std::optional<std::string> example{"dog"};
+			std::string target{"dog"};
+
+			REQUIRE(getHash<CurrentPolicy>(std::make_tuple(1, target)) == getHash<CurrentPolicy>(example));
+		}
+
+		SECTION("(index based(0), unoccupied optional) and target generate the same hash") {
+			std::optional<std::string> example;
+			std::monostate target{};
+
+			REQUIRE(getHash<CurrentPolicy>(std::make_tuple(0, target)) == getHash<CurrentPolicy>(example));
 		}
 
 		SECTION("nullopt_t and monostate generate the same hash") {
