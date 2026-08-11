@@ -288,9 +288,9 @@ namespace dice::hash {
 			return Policy::ErrorValue;
 		}
 
-		/**
-		 * Overload for std::optional
-		 *
+		/** Implementation for optionals
+		 * The hash of the optional is equal to the hash of the type in the optional
+		 * If the optional is the nullopt the hash will be the same as monostate
 		 * @tparam T Type of the optional
 		 * @param opt The optional itself
 		 * @return Hash value
@@ -299,7 +299,7 @@ namespace dice::hash {
 		static std::size_t dice_hash(std::optional<T> const &opt) noexcept {
 			std::variant<T, std::monostate> value =
 					opt.has_value()
-							? std::variant<T, std::monostate>{opt.value()}
+							? std::variant<T, std::monostate>{*opt}
 							: std::variant<T, std::monostate>{std::monostate{}};
 			return dice_hash(value);
 		}
