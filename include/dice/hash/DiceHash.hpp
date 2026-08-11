@@ -280,6 +280,14 @@ namespace dice::hash {
 			return Policy::ErrorValue;
 		}
 
+		/** Overload for std::nullopt_t.
+		 * Will simply return the seed.
+		 * @return The seed of the hash function.
+		 */
+		static std::size_t dice_hash([[maybe_unused]] std::nullopt_t const &) noexcept {
+			return Policy::ErrorValue;
+		}
+
 		/**
 		 * Overload for std::optional
 		 *
