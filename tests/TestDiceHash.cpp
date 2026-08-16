@@ -7,7 +7,7 @@
 #define AllTypesToTestForDiceHash int, long, std::size_t, std::byte, __int128, unsigned __int128, std::string, std::string_view, int *, long *,             \
 								  std::string *, std::unique_ptr<int>, std::shared_ptr<int>, std::vector<int>,                 \
 								  std::set<int>, std::unordered_set<int>, (std::array<int, 10>), (std::tuple<int, int, long>), \
-								  (std::pair<int, int>), (std::variant<std::monostate>), (std::variant<int, float, std::string>) \
+								  (std::pair<int, int>), (std::variant<std::monostate>), (std::variant<int, float, std::string>),           \
 								  (std::optional<std::string>), (std::optional<int>), (std::optional<std::monostate>), std::nullopt_t
 
 
