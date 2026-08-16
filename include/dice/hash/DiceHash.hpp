@@ -59,6 +59,27 @@ namespace dice::hash {
 		}
 	};
 
+	/** Type traits used by dice_hash_templates.
+	 * They sit outside of the class because gcc 15 crashes with an internal compiler error
+	 * when the requires clause of a member function template uses a variable template of the
+	 * same class and that function is called with a non-dependent argument.
+	 */
+	namespace internal {
+#ifdef __SIZEOF_INT128__
+		template<typename T>
+		inline constexpr bool is_int128 = std::is_same_v<std::remove_cv_t<T>, __int128> || std::is_same_v<std::remove_cv_t<T>, unsigned __int128>;
+#else
+		template<typename T>
+		inline constexpr bool is_int128 = false;
+#endif // __SIZEOF_INT128__
+
+		/** Types which are hashed by their value, not by their content.
+		 * @tparam T The type to check.
+		 */
+		template<typename T>
+		inline constexpr bool is_fundamental = std::is_fundamental_v<T> || std::is_same_v<std::remove_cv_t<T>, std::byte> || is_int128<T>;
+	}// namespace internal
+
 	/** Class which contains all dice_hash functions.
 	 * @tparam Policy The Policy the hash is based on.
 	 */
@@ -115,17 +136,6 @@ namespace dice::hash {
 			return Policy::hash_combine({dice_hash(std::get<ids>(tuple))...});
 		}
 
-#ifdef __SIZEOF_INT128__
-		template<typename T>
-		static constexpr bool is_int128 = std::is_same_v<std::remove_cv_t<T>, __int128> || std::is_same_v<std::remove_cv_t<T>, unsigned __int128>;
-#else
-		template<typename T>
-		static constexpr bool is_int128 = false;
-#endif // __SIZEOF_INT128__
-
-		template<typename T>
-		static constexpr bool is_fundamental = std::is_fundamental_v<T> || std::is_same_v<std::remove_cv_t<T>, std::byte> || is_int128<T>;
-
 	public:
 		/** Base case for dice_hash.
          * This case is only chosen if no other match is found in this struct.
@@ -144,7 +154,7 @@ namespace dice::hash {
          * @param fundamental Value to hash.
          * @return Hash value.
          */
-		template<typename T> requires is_fundamental<std::decay_t<T>>
+		template<typename T> requires internal::is_fundamental<std::decay_t<T>>
 		static std::size_t dice_hash(T const &fundamental) noexcept {
 			return Policy::hash_fundamental(fundamental);
 		}
@@ -211,7 +221,7 @@ namespace dice::hash {
         */
 		template<typename T, std::size_t N>
 		static std::size_t dice_hash(std::array<T, N> const &arr) noexcept {
-			if constexpr (is_fundamental<T>) {
+			if constexpr (internal::is_fundamental<T>) {
 				return Policy::hash_bytes(arr.data(), sizeof(T) * N);
 			} else {
 				return dice_hash_ordered_container(arr);
@@ -226,7 +236,7 @@ namespace dice::hash {
          */
 		template<typename T>
 		static std::size_t dice_hash(std::vector<T> const &vec) noexcept {
-			if constexpr (is_fundamental<T>) {
+			if constexpr (internal::is_fundamental<T>) {
 				static_assert(!std::is_same_v<std::decay_t<T>, bool>,
 							  "vector of booleans has a special implementation which results in errors!");
 				return Policy::hash_bytes(vec.data(), sizeof(T) * vec.size());
@@ -241,7 +251,7 @@ namespace dice::hash {
 		 */
 		template<typename T, std::size_t Extent>
 		static std::size_t dice_hash(std::span<T, Extent> const &span) noexcept {
-			if constexpr (is_fundamental<T>) {
+			if constexpr (internal::is_fundamental<T>) {
 				return Policy::hash_bytes(span.data(), span.size_bytes());
 			} else {
 				return dice_hash_ordered_container(span);
