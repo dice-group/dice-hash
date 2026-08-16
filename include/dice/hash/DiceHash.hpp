@@ -79,12 +79,13 @@ namespace dice::hash {
 		template<typename T>
 		inline constexpr bool is_fundamental = std::is_fundamental_v<T> || std::is_same_v<std::remove_cv_t<T>, std::byte> || is_int128<T>;
 
-		/** Tags for the types which hold no value.
-		 * They are hashed with the policy, so every policy gets its own value for them.
-		 * Such a type is a regular value and must not hash to the error value of the policy.
+		/** Hashes of the types which hold no value.
+		 * A type which holds no value has nothing to hash, so it gets a fixed constant. The two
+		 * constants only have to be different from each other and from the error value of the
+		 * policy, which dice_hash_templates checks. They are the same for every policy.
 		 */
-		inline constexpr std::string_view monostate_tag = "dice::hash std::monostate";
-		inline constexpr std::string_view nullopt_tag = "dice::hash std::nullopt";
+		inline constexpr std::size_t monostate_hash = static_cast<std::size_t>(0x734085ee0280dfa9ull);
+		inline constexpr std::size_t nullopt_hash = static_cast<std::size_t>(0x5003c53fd5e09c85ull);
 	}// namespace internal
 
 	/** Class which contains all dice_hash functions.
@@ -92,6 +93,11 @@ namespace dice::hash {
 	 */
 	template<Policies::HashPolicy Policy>
 	class dice_hash_templates {
+		static_assert(internal::monostate_hash != Policy::ErrorValue,
+					  "the error value of the policy collides with the hash of std::monostate");
+		static_assert(internal::nullopt_hash != Policy::ErrorValue,
+					  "the error value of the policy collides with the hash of std::nullopt");
+
 	private:
 		/** Calculates the hash over an ordered container.
          * An example would be a vector, a map, an array or a list.
@@ -290,17 +296,17 @@ namespace dice::hash {
 
 		/** Overload for std::monostate.
          * It is needed so its usage in std::variant is possible.
-         * @return Hash of the monostate tag.
+         * @return The constant which stands for a value that holds nothing.
          */
 		static std::size_t dice_hash(std::monostate const &) noexcept {
-			return Policy::hash_bytes(internal::monostate_tag.data(), internal::monostate_tag.size());
+			return internal::monostate_hash;
 		}
 
 		/** Overload for std::nullopt_t.
-         * @return Hash of the nullopt tag.
+         * @return The constant which stands for a value that holds nothing.
          */
 		static std::size_t dice_hash(std::nullopt_t const &) noexcept {
-			return Policy::hash_bytes(internal::nullopt_tag.data(), internal::nullopt_tag.size());
+			return internal::nullopt_hash;
 		}
 
 		/** Implementation for optionals.
