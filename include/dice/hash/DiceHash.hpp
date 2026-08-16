@@ -59,10 +59,10 @@ namespace dice::hash {
 		}
 	};
 
-	/** Type traits used by dice_hash_templates.
-	 * They sit outside of the class because gcc 15 crashes with an internal compiler error
-	 * when the requires clause of a member function template uses a variable template of the
-	 * same class and that function is called with a non-dependent argument.
+	/** Type traits and constants used by dice_hash_templates.
+	 * The traits sit outside of the class because gcc 15 crashes with an internal compiler
+	 * error when the requires clause of a member function template uses a variable template
+	 * of the same class and that function is called with a non-dependent argument.
 	 */
 	namespace internal {
 #ifdef __SIZEOF_INT128__
