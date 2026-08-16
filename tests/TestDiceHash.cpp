@@ -20,6 +20,14 @@ namespace dice::tests::hash {
 		}
 	};
 
+	/** Second struct with the same content as UserDefinedStruct.
+	 * Both hash to the same value, so a variant of them can only be told apart by its index.
+	 */
+	struct OtherUserDefinedStruct {
+		int a;
+		OtherUserDefinedStruct(int a) : a(a) {}
+	};
+
 	struct ValuelessByException {
 		ValuelessByException() = default;
 		ValuelessByException(const ValuelessByException &) { throw std::domain_error("copy ctor"); }
@@ -169,20 +177,27 @@ namespace dice::tests::hash {
 			std::optional<std::string> example{"dog"};
 			std::string target{"dog"};
 
-			REQUIRE(getHash<CurrentPolicy>(std::make_tuple(size_t{1}, target)) == getHash<CurrentPolicy>(example));
+			REQUIRE(getHash<CurrentPolicy>(std::make_tuple(std::size_t{1}, target)) == getHash<CurrentPolicy>(example));
 		}
 
 		SECTION("(index based(0), unoccupied optional) and target generate the same hash") {
 			std::optional<std::string> example;
-			std::monostate target{};
+			std::nullopt_t target{std::nullopt};
 
-			REQUIRE(getHash<CurrentPolicy>(std::make_tuple(size_t{0}, target)) == getHash<CurrentPolicy>(example));
+			REQUIRE(getHash<CurrentPolicy>(std::make_tuple(std::size_t{0}, target)) == getHash<CurrentPolicy>(example));
 		}
 
-		SECTION("nullopt_t and monostate generate the same hash") {
+		SECTION("An unoccupied optional and a variant holding monostate don't generate the same hash") {
+			std::optional<int> example;
+			std::variant<std::monostate, int> target;
+
+			REQUIRE(getHash<CurrentPolicy>(target) != getHash<CurrentPolicy>(example));
+		}
+
+		SECTION("nullopt_t and monostate don't generate the same hash") {
 			std::nullopt_t example{std::nullopt};
 			std::monostate target{};
-			REQUIRE(getHash<CurrentPolicy>(target) == getHash<CurrentPolicy>(example));
+			REQUIRE(getHash<CurrentPolicy>(target) != getHash<CurrentPolicy>(example));
 		}
 
 		SECTION("set of optionals compiles") {
@@ -292,11 +307,35 @@ namespace dice::tests::hash {
 			std::string third = "42";
 			std::variant<int, char, std::string> test;
 			test = first;
-			REQUIRE(getHash<CurrentPolicy>(test) == getHash<CurrentPolicy>(first));
+			REQUIRE(getHash<CurrentPolicy>(test) == getHash<CurrentPolicy>(std::make_tuple(std::size_t{0}, first)));
 			test = second;
-			REQUIRE(getHash<CurrentPolicy>(test) == getHash<CurrentPolicy>(second));
+			REQUIRE(getHash<CurrentPolicy>(test) == getHash<CurrentPolicy>(std::make_tuple(std::size_t{1}, second)));
 			test = third;
-			REQUIRE(getHash<CurrentPolicy>(test) == getHash<CurrentPolicy>(third));
+			REQUIRE(getHash<CurrentPolicy>(test) == getHash<CurrentPolicy>(std::make_tuple(std::size_t{2}, third)));
+		}
+
+		SECTION("Variant and the value it holds don't generate the same hash") {
+			std::variant<int, char, std::string> test{42};
+			REQUIRE(getHash<CurrentPolicy>(test) != getHash<CurrentPolicy>(42));
+		}
+
+		SECTION("Alternatives of the same type with equal content don't generate the same hash") {
+			std::variant<long, long> first{std::in_place_index<0>, 1};
+			std::variant<long, long> second{std::in_place_index<1>, 1};
+			REQUIRE(getHash<CurrentPolicy>(first) != getHash<CurrentPolicy>(second));
+		}
+
+		SECTION("Alternatives of different types with equal content don't generate the same hash") {
+			std::variant<UserDefinedStruct, OtherUserDefinedStruct> first{UserDefinedStruct{1}};
+			std::variant<UserDefinedStruct, OtherUserDefinedStruct> second{OtherUserDefinedStruct{1}};
+			REQUIRE(getHash<CurrentPolicy>(UserDefinedStruct{1}) == getHash<CurrentPolicy>(OtherUserDefinedStruct{1}));
+			REQUIRE(getHash<CurrentPolicy>(first) != getHash<CurrentPolicy>(second));
+		}
+
+		SECTION("An unoccupied optional and a monostate in a variant don't generate the same hash") {
+			std::variant<std::optional<int>, std::monostate> first{std::in_place_index<0>, std::nullopt};
+			std::variant<std::optional<int>, std::monostate> second{std::in_place_index<1>};
+			REQUIRE(getHash<CurrentPolicy>(first) != getHash<CurrentPolicy>(second));
 		}
 
         SECTION("is_faulty returns true if ErrorValue is tested") {
@@ -307,13 +346,27 @@ namespace dice::tests::hash {
             REQUIRE(dice::hash::DiceHash<int, CurrentPolicy>::is_faulty(CurrentPolicy::ErrorValue+1) == false);
         }
 
-		SECTION("Variant monostate returns ErrorValue") {
+		SECTION("Variant monostate is not an error") {
 			std::variant<std::monostate, int, char> test;
 			auto hashed = getHash<CurrentPolicy>(test);
-            REQUIRE(dice::hash::DiceHash<decltype(test), CurrentPolicy>::is_faulty(hashed));
+            REQUIRE_FALSE(dice::hash::DiceHash<decltype(test), CurrentPolicy>::is_faulty(hashed));
 		}
 
-		SECTION("Hash of ill-formed variant is the seed") {
+		SECTION("Values which hold nothing are not errors") {
+			REQUIRE_FALSE(dice::hash::DiceHash<std::monostate, CurrentPolicy>::is_faulty(getHash<CurrentPolicy>(std::monostate{})));
+			REQUIRE_FALSE(dice::hash::DiceHash<std::nullopt_t, CurrentPolicy>::is_faulty(getHash<CurrentPolicy>(std::nullopt)));
+			REQUIRE_FALSE(dice::hash::DiceHash<std::optional<int>, CurrentPolicy>::is_faulty(getHash<CurrentPolicy>(std::optional<int>{})));
+		}
+
+		SECTION("Empty containers are not errors") {
+			REQUIRE_FALSE(dice::hash::DiceHash<std::tuple<>, CurrentPolicy>::is_faulty(getHash<CurrentPolicy>(std::tuple<>{})));
+			REQUIRE_FALSE(dice::hash::DiceHash<std::string, CurrentPolicy>::is_faulty(getHash<CurrentPolicy>(std::string{})));
+			REQUIRE_FALSE(dice::hash::DiceHash<std::vector<int>, CurrentPolicy>::is_faulty(getHash<CurrentPolicy>(std::vector<int>{})));
+			REQUIRE_FALSE(dice::hash::DiceHash<std::set<int>, CurrentPolicy>::is_faulty(getHash<CurrentPolicy>(std::set<int>{})));
+			REQUIRE_FALSE(dice::hash::DiceHash<std::map<int, int>, CurrentPolicy>::is_faulty(getHash<CurrentPolicy>(std::map<int, int>{})));
+		}
+
+		SECTION("Hash of ill-formed variant is the error value") {
 			std::variant<int, ValuelessByException> test;
 			try {
 				test = ValuelessByException();
@@ -359,12 +412,19 @@ namespace dice::tests::hash {
 * Define hash for test structures.
 */
 namespace dice::hash {
+	using dice::tests::hash::OtherUserDefinedStruct;
 	using dice::tests::hash::UserDefinedStruct;
 	using dice::tests::hash::ValuelessByException;
 
 	template<typename Policy>
 	struct dice_hash_overload<Policy, UserDefinedStruct> {
 		static std::size_t dice_hash(UserDefinedStruct const &s) noexcept {
+			return dice_hash_templates<Policy>::dice_hash(s.a);
+		}
+	};
+	template<typename Policy>
+	struct dice_hash_overload<Policy, OtherUserDefinedStruct> {
+		static std::size_t dice_hash(OtherUserDefinedStruct const &s) noexcept {
 			return dice_hash_templates<Policy>::dice_hash(s.a);
 		}
 	};
