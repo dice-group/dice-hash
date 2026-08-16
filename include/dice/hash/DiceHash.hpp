@@ -298,19 +298,23 @@ namespace dice::hash {
 			return Policy::ErrorValue;
 		}
 
-		/** Implementation for optionals
-		 * The hash of the optional is equal to the hash of the type in the optional
-		 * If the optional is the nullopt the hash will be the same as monostate
-		 * @tparam T Type of the optional
-		 * @param opt The optional itself
-		 * @return Hash value
-		 */
+		/** Implementation for optionals.
+         * Hashes an index together with the contained value.
+         * The index is 0 if the optional is empty and 1 if it holds a value.
+         * An empty optional uses std::monostate as its value.
+         * @tparam T Type of the optional.
+         * @param opt The optional itself.
+         * @return Hash value.
+         */
 		template<typename T>
 		static std::size_t dice_hash(std::optional<T> const &opt) noexcept {
 			if (!opt.has_value()) {
-				return dice_hash(std::make_tuple(0, std::monostate{}));
+				static constexpr int index = 0;
+				static constexpr std::monostate empty{};
+				return dice_hash(std::tie(index, empty));
 			}
-			return dice_hash(std::make_tuple(1, *opt));
+			static constexpr int index = 1;
+			return dice_hash(std::tie(index, *opt));
 		}
 
 		/** Implementation for variant.
