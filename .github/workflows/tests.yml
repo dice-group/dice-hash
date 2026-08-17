@@ -74,7 +74,7 @@ jobs:
         run: conan profile detect --force
 
       - name: Cache conan packages
-        uses: actions/cache@v4
+        uses: actions/cache@v6.1.0
         with:
           path: ~/.conan2/p
           key: ${{ matrix.os }}-${{ matrix.cc }}-conan2-${{ hashFiles('conanfile.py') }}
@@ -153,7 +153,7 @@ jobs:
         run: conan profile detect --force
 
       - name: Cache conan packages
-        uses: actions/cache@v4
+        uses: actions/cache@v6.1.0
         with:
           path: ~/.conan2/p
           key: macos-15-gcc-15-conan2-${{ hashFiles('conanfile.py') }}
