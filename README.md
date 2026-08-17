@@ -2,8 +2,9 @@
 
 dice-hash provides a framework to generate stable hashes. It provides state-of-the-art hash functions, supports STL containers out of the box and helps you to defines stable hashes for your own structs and classes. 
 
-**🔋 batteries included:** dice-hash defines _policies_ to support different hash algorithms. It comes with predefined policies for three state-of-the-art hash functions:
+**🔋 batteries included:** dice-hash defines _policies_ to support different hash algorithms. It comes with predefined policies for four state-of-the-art hash functions:
 - [XXH3](https://github.com/Cyan4973/xxHash)
+- [rapidhash](https://github.com/Nicoshev/rapidhash)
 - [wyhash](https://github.com/wangyi-fudan/wyhash)
 - "martinus", the internal hash function from [robin-hood-hashing](https://github.com/martinus/robin-hood-hashing)
 
@@ -18,7 +19,7 @@ arithmetic types like `bool`, `int`, `double`, ... etc.; collections like `std::
 **🔩 extensible:** dice-hash supports you with helper functions to define hashes for your own classes. Checkout [usage](#usage).
 
 ## Requirements
-- A C++20 compatible compiler. Code was only tested on x86_64.
+- A C++20 compatible compiler. Tested on x86_64 and arm64, on Linux and macOS.
 - If you want to use [Blake2b](https://www.blake2.net), [Blake2Xb](https://www.blake2.net/blake2x.pdf) or [LtHash](https://engineering.fb.com/2019/03/01/security/homomorphic-hashing): [libsodium](https://doc.libsodium.org/) (either using conan or a local system installation) (for more details scroll down to "Usage for general data hashing")
 
 ## Include it into your projects 
@@ -30,8 +31,12 @@ To use it with [conan](https://conan.io/) you need to add the repository:
 ```shell
 conan remote add dice-group https://conan.dice-research.org/artifactory/api/conan/tentris
 ```
+The packages are also served from a second public endpoint:
+```shell
+conan remote add tentris https://conan.tentris.io/artifactory/api/conan/tentris
+```
 
-To use it add `dice-hash/0.4.12` to the `[requires]` section of your conan file.
+To use it add `dice-hash/0.5.0` to the `[requires]` section of your conan file.
 
 You can now add it to your target with:
 ```cmake
@@ -50,9 +55,9 @@ cd dice-hash
 wget https://github.com/conan-io/cmake-conan/raw/develop2/conan_provider.cmake -O conan_provider.cmake
 mkdir build
 cd build
-cmake -DBUILD_TESTING -DCMAKE_BUILD_TYPE=Release ..  -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=conan_provider.cmake
+cmake -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=Release ..  -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=conan_provider.cmake
 make -j tests_dice_hash
-./test/tests_dice_hash
+./tests/tests_dice_hash
 ```
 Note: This example uses conan as dependency provider, other providers are possible.
 See https://cmake.org/cmake/help/latest/guide/using-dependencies/index.html#dependency-providers
@@ -108,6 +113,22 @@ One simple example can be found [here](examples/customContainer.cpp).
 If you want to use `DiceHash` in a different structure (like `std::unordered_map`), you will need to set `DiceHash` as the correct template parameter.
 [This](examples/usageForUnorderedSet.cpp) is one example.
 
+### The error value
+A `std::variant` which is `valueless_by_exception` holds no alternative, so no hash can be
+calculated for it. In that case `DiceHash` returns the `ErrorValue` of the policy, which
+`is_faulty` reports:
+```c++
+using Hash = dice::hash::DiceHash<std::variant<int, std::string>>;
+Hash::is_faulty(Hash{}(your_variant));
+```
+Every other value gets a regular hash. Types which hold nothing, like `std::monostate`,
+`std::nullopt` and empty containers, are regular values and are never reported as faulty.
+
+`ErrorValue` is a sentinel, not a value outside the range of the hash functions. A regular
+value can land on it, so `is_faulty` is a strong hint and not a proof. For unordered
+containers this is easy to trigger on purpose, because their hash is the xor of the hashes of
+their elements.
+
 ## Usage for general data hashing
 **The hash functions mentioned in this section are enabled/disabled using the feature flag `WITH_SODIUM=ON/OFF`.**
 **Enabling this flag (default behaviour) results in [libsodium](https://doc.libsodium.org/) being required as a dependency.**
@@ -121,7 +142,7 @@ They are instead meant as general hashing functions for arbitrary data.
 
 To use it you need to include
 ```c++
-#include <dice/hash/blake2/Blake2b.hpp>
+#include <dice/hash/blake/Blake2b.hpp>
 ```
 For a usage examples see: [examples/blake2b.cpp](examples/blake2b.cpp).
 
@@ -130,7 +151,7 @@ Blake2Xb is a hash function that produces hashes of arbitrary length.
 
 To use it you need to include
 ```c++
-#include <dice/hash/blake2/Blake2xb.hpp>
+#include <dice/hash/blake/Blake2Xb.hpp>
 ```
 For a usage examples see: [examples/blake2xb.cpp](examples/blake2xb.cpp).
 
@@ -139,7 +160,7 @@ Blake3 is an evolution of Blake2.
 
 To use it you need to include
 ```c++
-#include <dice/hash/blake2/Blake3.hpp>
+#include <dice/hash/blake/Blake3.hpp>
 ```
 For a usage examples see: [examples/blake3.cpp](examples/blake3.cpp).
 

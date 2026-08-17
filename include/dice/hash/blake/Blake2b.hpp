@@ -101,7 +101,7 @@ namespace dice::hash::blake2b {
 				inner_.specified_output_len_ = output_len;
 			}
 
-			auto const res = crypto_generichash_blake2b_init_salt_personal(&inner_.state_,
+			[[maybe_unused]] auto const res = crypto_generichash_blake2b_init_salt_personal(&inner_.state_,
 																		   reinterpret_cast<unsigned char const *>(key.data()),
 																		   key.size(),
 																		   output_len,
@@ -147,7 +147,7 @@ namespace dice::hash::blake2b {
 		 * @brief digests data into the underlying BLAKE2b state
 		 */
 		void digest(std::span<std::byte const> data) noexcept {
-			auto const res = crypto_generichash_blake2b_update(&inner_.state_,
+			[[maybe_unused]] auto const res = crypto_generichash_blake2b_update(&inner_.state_,
 															   reinterpret_cast<unsigned char const *>(data.data()),
 															   data.size());
 			// cannot fail, see: https://github.com/jedisct1/libsodium/blob/8d9ab6cd764926d4bf1168b122f4a3ff4ea686a0/src/libsodium/crypto_generichash/blake2b/ref/blake2b-ref.c#L263
@@ -168,7 +168,7 @@ namespace dice::hash::blake2b {
 				}
 			}
 
-			auto const res = crypto_generichash_blake2b_final(&inner_.state_,
+			[[maybe_unused]] auto const res = crypto_generichash_blake2b_final(&inner_.state_,
 															  reinterpret_cast<unsigned char *>(out.data()),
 															  out.size());
 			// cannot fail, all invariants have been checked, see: https://github.com/jedisct1/libsodium/blob/d787d2b1cf13ad2e69c3a7ebc3fb7b68b6430774/src/libsodium/crypto_generichash/blake2b/ref/blake2b-ref.c#L292

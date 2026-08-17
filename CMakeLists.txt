@@ -2,10 +2,10 @@ cmake_minimum_required(VERSION 3.24)
 
 project(
         dice-hash
-        VERSION 0.4.12
+        VERSION 0.5.0
         DESCRIPTION "dice-hash provides a framework to generate stable hashes. It provides state-of-the-art hash functions, supports STL containers out of the box and helps you to defines stable hashes for your own structs and classes."
         HOMEPAGE_URL "https://dice-group.github.io/dice-hash/")
-set(POBR_VERSION 1)  # Persisted Object Binary Representation Version
+set(POBR_VERSION 2)  # Persisted Object Binary Representation Version
 
 include(cmake/boilerplate_init.cmake)
 boilerplate_init()
@@ -35,6 +35,9 @@ OPTION(WITH_SODIUM "Enable usage of the external library sodium for Blake2b, Bla
 if (PROJECT_IS_TOP_LEVEL)
     if (BUILD_TESTING)
         set(CONAN_INSTALL_ARGS "${CONAN_INSTALL_ARGS};-o=&:with_test_deps=True")
+        # metall consumes boost headers only. Compiling boost is slow, and its b2
+        # build fails with clang on aarch64.
+        set(CONAN_INSTALL_ARGS "${CONAN_INSTALL_ARGS};-o=boost/*:header_only=True")
     endif ()
     if (WITH_SODIUM)
         set(CONAN_INSTALL_ARGS "${CONAN_INSTALL_ARGS};-o=&:with_sodium=True")
@@ -46,6 +49,7 @@ if (WITH_SODIUM)
     find_package(highway REQUIRED)
 endif ()
 find_package(rapidhash)
+find_package(xxHash REQUIRED)
 
 add_subdirectory(include/dice/hash/blake/internal/blake3)
 
@@ -64,6 +68,7 @@ if (WITH_SODIUM)
             libsodium::libsodium
             blake3
             rapidhash::rapidhash
+            xxHash::xxhash
             PRIVATE
             highway::highway
     )
@@ -79,6 +84,7 @@ else()
             INTERFACE
             blake3
             rapidhash::rapidhash
+            xxHash::xxhash
     )
 endif()
 

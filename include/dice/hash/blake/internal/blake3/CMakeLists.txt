@@ -9,7 +9,7 @@ if (POLICY CMP0128)
 endif()
 
 project(libblake3
-        VERSION 1.5.4
+        VERSION 1.8.6
         DESCRIPTION "BLAKE3 C implementation"
         LANGUAGES C ASM
 )
@@ -17,7 +17,7 @@ project(libblake3
 include(FeatureSummary)
 include(GNUInstallDirs)
 
-set(blake3_rev 95e42b84fc4709974c7b23c7ae885989ab36c31e)
+set(blake3_rev 77b257eee7da5cd608eaf6be8343d3a4c9776af2)
 set(blake3_files
         blake3.c
         blake3.h
@@ -114,6 +114,9 @@ set_target_properties(blake3 PROPERTIES
         SOVERSION 0
         C_VISIBILITY_PRESET hidden
         C_EXTENSIONS OFF
+        # upstream code, its warnings are not actionable here. gcc on aarch64
+        # reports false memcpy bounds errors in blake3.c at -O2.
+        COMPILE_WARNING_AS_ERROR OFF
 )
 target_compile_features(blake3 PUBLIC c_std_99)
 # ensure C_EXTENSIONS OFF is respected without overriding CMAKE_C_STANDARD

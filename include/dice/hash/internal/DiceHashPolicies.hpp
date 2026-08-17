@@ -3,13 +3,21 @@
 
 #include "martinus_robinhood_hash.hpp"
 #include "wyhash.h"
-#ifdef __x86_64__
-#include "xxhash.hpp"
+// exposes the definition of XXH3_state_t, so the streaming state can be held by
+// value instead of on the heap
+#ifndef XXH_STATIC_LINKING_ONLY
+#define XXH_STATIC_LINKING_ONLY
 #endif
+#include <xxhash.h>
+#include <bit>
 #include <type_traits>
 #include "rapidhash.h"
 
 namespace dice::hash::Policies {
+    /** Requirements for a hash policy.
+     * ErrorValue signals that a hash could not be calculated. It must differ from the value the
+     * policy returns for combining nothing, otherwise an empty container looks like an error.
+     */
     template<typename T>
     concept HashPolicy =
     std::is_convertible_v<decltype(T::ErrorValue), std::size_t>
@@ -31,7 +39,7 @@ namespace dice::hash::Policies {
 				dice::hash::wyhash::_wyp[2],
 				dice::hash::wyhash::_wyp[3]
 		};
-		inline static constexpr std::size_t ErrorValue = kSeed;
+		inline static constexpr std::size_t ErrorValue = ~static_cast<std::size_t>(kSeed);
 
 		template<typename T>
 		static std::size_t hash_fundamental(T x) noexcept {
@@ -75,21 +83,20 @@ namespace dice::hash::Policies {
 		};
 	};
 
-#ifdef __x86_64__
 	struct xxh3 {
 		inline static constexpr std::size_t size_t_bits = 8 * sizeof(std::size_t);
 		inline static constexpr std::size_t seed = std::size_t(0xA24BAED4963EE407UL);
-		inline static constexpr std::size_t ErrorValue = seed;
+		inline static constexpr std::size_t ErrorValue = ~seed;
 
 		template<typename T>
 		static std::size_t hash_fundamental(T x) noexcept {
 			return hash_bytes(&x, sizeof(x));
 		}
 		static std::size_t hash_bytes(void const *ptr, std::size_t len) noexcept {
-			return xxh::xxhash3<size_t_bits>(ptr, len, seed);
+			return static_cast<std::size_t>(XXH3_64bits_withSeed(ptr, len, seed));
 		}
 		static std::size_t hash_combine(std::initializer_list<std::size_t> hashes) noexcept {
-			return xxh::xxhash3<size_t_bits>(hashes, seed);
+			return hash_bytes(hashes.begin(), hashes.size() * sizeof(std::size_t));
 		}
 		static std::size_t hash_invertible_combine(std::initializer_list<size_t> hashes) noexcept {
 			std::size_t result = 0;
@@ -100,27 +107,28 @@ namespace dice::hash::Policies {
 		}
 		class HashState {
 		private:
-			xxh::hash3_state64_t hash_state{seed};
+			XXH3_state_t hash_state{};
 
 		public:
-            explicit HashState(std::size_t) noexcept {}
+			explicit HashState(std::size_t) noexcept {
+				XXH3_64bits_reset_withSeed(&hash_state, seed);
+			}
 
 			void add(std::size_t hash) noexcept {
-				hash_state.update(&hash, sizeof(std::size_t));
+				XXH3_64bits_update(&hash_state, &hash, sizeof(std::size_t));
 			}
-            [[nodiscard]] std::size_t digest() noexcept {
-				return hash_state.digest();
+			[[nodiscard]] std::size_t digest() noexcept {
+				return static_cast<std::size_t>(XXH3_64bits_digest(&hash_state));
 			}
 		};
 	};
-#endif
 
 	struct Martinus {
-		static constexpr std::size_t ErrorValue = dice::hash::martinus::seed;
+		static constexpr std::size_t ErrorValue = ~dice::hash::martinus::seed;
 		template<typename T>
 		static std::size_t hash_fundamental(T x) noexcept {
 			if constexpr (sizeof(std::decay_t<T>) == sizeof(size_t)) {
-				return dice::hash::martinus::hash_int(*reinterpret_cast<size_t const *>(&x));
+				return dice::hash::martinus::hash_int(std::bit_cast<size_t>(x));
 			} else if constexpr (sizeof(std::decay_t<T>) > sizeof(size_t) or std::is_floating_point_v<std::decay_t<T>>) {
 				return hash_bytes(&x, sizeof(x));
 			} else {
@@ -156,8 +164,10 @@ namespace dice::hash::Policies {
 	};
 
 	struct rapidhash {
-		inline static constexpr uint64_t kSeed = RAPID_SEED;
-		inline static constexpr std::size_t ErrorValue = kSeed;
+		// the value rapidhash used as its default seed up to version 1.0, where it was the
+		// macro RAPID_SEED. Version 3.0 no longer defines it.
+		inline static constexpr uint64_t kSeed = 0xbdd89aa982704029ull;
+		inline static constexpr std::size_t ErrorValue = ~static_cast<std::size_t>(kSeed);
 
 		template<typename T>
 		static std::size_t hash_fundamental(T x) noexcept {

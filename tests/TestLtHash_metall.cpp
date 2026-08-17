@@ -12,30 +12,30 @@ TEST_CASE("LtHash metall") {
 	std::string const path{"/tmp/" + std::to_string(std::random_device{}())};
 
 	auto pid = fork();
-	assert(pid >= 0);
+	REQUIRE(pid >= 0);
 
 	if (pid == 0) {
-		int st = execl("TestLtHash_metall_phase1", "TestLtHash_metall_phase1", path.data(), nullptr);
-		assert(st == 0);
+		execl("TestLtHash_metall_phase1", "TestLtHash_metall_phase1", path.data(), nullptr);
+		// execl returns only on failure
+		_exit(1);
 	} else {
 		int rc;
-		int st = waitpid(pid, &rc, 0);
-		assert(st >= 0);
-		assert(WIFEXITED(rc));
-		assert(WEXITSTATUS(rc) == 0);
+		REQUIRE(waitpid(pid, &rc, 0) >= 0);
+		REQUIRE(WIFEXITED(rc));
+		REQUIRE(WEXITSTATUS(rc) == 0);
 	}
 
 	pid = fork();
-	assert(pid >= 0);
+	REQUIRE(pid >= 0);
 
 	if (pid == 0) {
-		int st = execl("TestLtHash_metall_phase2", "TestLtHash_metall_phase2", path.data(), nullptr);
-		assert(st == 0);
+		execl("TestLtHash_metall_phase2", "TestLtHash_metall_phase2", path.data(), nullptr);
+		// execl returns only on failure
+		_exit(1);
 	} else {
 		int rc;
-		int st = waitpid(pid, &rc, 0);
-		assert(st >= 0);
-		assert(WIFEXITED(rc));
-		assert(WEXITSTATUS(rc) == 0);
+		REQUIRE(waitpid(pid, &rc, 0) >= 0);
+		REQUIRE(WIFEXITED(rc));
+		REQUIRE(WEXITSTATUS(rc) == 0);
 	}
 }

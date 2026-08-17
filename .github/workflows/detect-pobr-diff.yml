@@ -8,12 +8,14 @@ concurrency:
 
 jobs:
   detect-pobr-diff:
-    uses: dice-group/cpp-conan-release-reusable-workflow/.github/workflows/abi-diff.yml@main
+    uses: dice-group/cpp-conan-release-reusable-workflow/.github/workflows/abi-diff.yml@v2.0.5
     with:
-      os: ubuntu-22.04
-      compiler: clang-17
-      cmake-version: 3.24.0
-      conan-version: 2.12.2
+      os: ubuntu-24.04
+      setup_tools: true
+      cc: clang-17
+      cxx: clang++-17
+      cmake-version: 4.4.0
+      conan-version: 2.31.1
       base-branch: ${{ github.base_ref }}
       search-path: >
         include/dice/hash/internal
@@ -22,5 +24,4 @@ jobs:
       abi-version-header: include/dice/hash/version.hpp
       abi-version-const: dice::hash::pobr_version
     secrets:
-      CONAN_USER: ""
-      CONAN_PW: ""
+      CONAN_CICD_ENDPOINT: ${{ secrets.CONAN_CICD_ENDPOINT }}

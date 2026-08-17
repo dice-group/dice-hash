@@ -164,3 +164,18 @@ modules.xml
 test_package/build
 conan_provider.cmake
 include/dice/hash/version.hpp
+
+# build directories
+build*/
+
+# clangd index
+.cache/
+
+# editors
+.vscode/
+
+# macOS
+.DS_Store
+
+# conan compiles conanfile.py
+__pycache__/

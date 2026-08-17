@@ -14,6 +14,7 @@
 #include <cstring>
 #include <map>
 #include <memory>
+#include <optional>
 #include <set>
 #include <span>
 #include <string>
@@ -58,11 +59,45 @@ namespace dice::hash {
 		}
 	};
 
+	/** Type traits and constants used by dice_hash_templates.
+	 * The traits sit outside of the class because gcc 15 crashes with an internal compiler
+	 * error when the requires clause of a member function template uses a variable template
+	 * of the same class and that function is called with a non-dependent argument.
+	 */
+	namespace internal {
+#ifdef __SIZEOF_INT128__
+		template<typename T>
+		inline constexpr bool is_int128 = std::is_same_v<std::remove_cv_t<T>, __int128> || std::is_same_v<std::remove_cv_t<T>, unsigned __int128>;
+#else
+		template<typename T>
+		inline constexpr bool is_int128 = false;
+#endif // __SIZEOF_INT128__
+
+		/** Types which are hashed by their value, not by their content.
+		 * @tparam T The type to check.
+		 */
+		template<typename T>
+		inline constexpr bool is_fundamental = std::is_fundamental_v<T> || std::is_same_v<std::remove_cv_t<T>, std::byte> || is_int128<T>;
+
+		/** Hashes of the types which hold no value.
+		 * A type which holds no value has nothing to hash, so it gets a fixed constant. The two
+		 * constants only have to be different from each other and from the error value of the
+		 * policy, which dice_hash_templates checks. They are the same for every policy.
+		 */
+		inline constexpr std::size_t monostate_hash = static_cast<std::size_t>(0x734085ee0280dfa9ull);
+		inline constexpr std::size_t nullopt_hash = static_cast<std::size_t>(0x5003c53fd5e09c85ull);
+	}// namespace internal
+
 	/** Class which contains all dice_hash functions.
 	 * @tparam Policy The Policy the hash is based on.
 	 */
 	template<Policies::HashPolicy Policy>
 	class dice_hash_templates {
+		static_assert(internal::monostate_hash != Policy::ErrorValue,
+					  "the error value of the policy collides with the hash of std::monostate");
+		static_assert(internal::nullopt_hash != Policy::ErrorValue,
+					  "the error value of the policy collides with the hash of std::nullopt");
+
 	private:
 		/** Calculates the hash over an ordered container.
          * An example would be a vector, a map, an array or a list.
@@ -114,17 +149,6 @@ namespace dice::hash {
 			return Policy::hash_combine({dice_hash(std::get<ids>(tuple))...});
 		}
 
-#ifdef __SIZEOF_INT128__
-		template<typename T>
-		static constexpr bool is_int128 = std::is_same_v<std::remove_cv_t<T>, __int128> || std::is_same_v<std::remove_cv_t<T>, unsigned __int128>;
-#else
-		template<typename T>
-		static constexpr bool is_int128 = false;
-#endif // __SIZEOF_INT128__
-
-		template<typename T>
-		static constexpr bool is_fundamental = std::is_fundamental_v<T> || std::is_same_v<std::remove_cv_t<T>, std::byte> || is_int128<T>;
-
 	public:
 		/** Base case for dice_hash.
          * This case is only chosen if no other match is found in this struct.
@@ -143,7 +167,7 @@ namespace dice::hash {
          * @param fundamental Value to hash.
          * @return Hash value.
          */
-		template<typename T> requires is_fundamental<std::decay_t<T>>
+		template<typename T> requires internal::is_fundamental<std::decay_t<T>>
 		static std::size_t dice_hash(T const &fundamental) noexcept {
 			return Policy::hash_fundamental(fundamental);
 		}
@@ -210,7 +234,7 @@ namespace dice::hash {
         */
 		template<typename T, std::size_t N>
 		static std::size_t dice_hash(std::array<T, N> const &arr) noexcept {
-			if constexpr (is_fundamental<T>) {
+			if constexpr (internal::is_fundamental<T>) {
 				return Policy::hash_bytes(arr.data(), sizeof(T) * N);
 			} else {
 				return dice_hash_ordered_container(arr);
@@ -225,7 +249,7 @@ namespace dice::hash {
          */
 		template<typename T>
 		static std::size_t dice_hash(std::vector<T> const &vec) noexcept {
-			if constexpr (is_fundamental<T>) {
+			if constexpr (internal::is_fundamental<T>) {
 				static_assert(!std::is_same_v<std::decay_t<T>, bool>,
 							  "vector of booleans has a special implementation which results in errors!");
 				return Policy::hash_bytes(vec.data(), sizeof(T) * vec.size());
@@ -240,7 +264,7 @@ namespace dice::hash {
 		 */
 		template<typename T, std::size_t Extent>
 		static std::size_t dice_hash(std::span<T, Extent> const &span) noexcept {
-			if constexpr (is_fundamental<T>) {
+			if constexpr (internal::is_fundamental<T>) {
 				return Policy::hash_bytes(span.data(), span.size_bytes());
 			} else {
 				return dice_hash_ordered_container(span);
@@ -272,29 +296,53 @@ namespace dice::hash {
 
 		/** Overload for std::monostate.
          * It is needed so its usage in std::variant is possible.
-         * Will simply return the seed.
-         * @return The seed of the hash function.
+         * @return The constant which stands for a value that holds nothing.
          */
 		static std::size_t dice_hash(std::monostate const &) noexcept {
-			return Policy::ErrorValue;
+			return internal::monostate_hash;
+		}
+
+		/** Overload for std::nullopt_t.
+         * @return The constant which stands for a value that holds nothing.
+         */
+		static std::size_t dice_hash(std::nullopt_t const &) noexcept {
+			return internal::nullopt_hash;
+		}
+
+		/** Implementation for optionals.
+         * Hashes an index together with the contained value.
+         * The index is 0 if the optional is empty and 1 if it holds a value.
+         * An empty optional uses std::nullopt as its value.
+         * @tparam T Type of the optional.
+         * @param opt The optional itself.
+         * @return Hash value.
+         */
+		template<typename T>
+		static std::size_t dice_hash(std::optional<T> const &opt) noexcept {
+			if (!opt.has_value()) {
+				static constexpr std::size_t index = 0;
+				return dice_hash(std::tie(index, std::nullopt));
+			} else {
+				static constexpr std::size_t index = 1;
+				return dice_hash(std::tie(index, *opt));
+			}
 		}
 
 		/** Implementation for variant.
-         * Will hash the value which was set.
-         * The hash of a variant of a type is equal to the hash of the type.
-         * For example: a variant of int of 42 is equal to the hash of the int of 42.
-         * If the variant is valueless_by_exception, the seed will be returned.
+         * Hashes the index of the active alternative together with its value.
+         * The index is part of the hash, so two alternatives with equal content
+         * still get different hashes.
          * @tparam VariantArgs Types of the possible values.
          * @param var The variant itself.
-         * @return Hash value.
+         * @return Hash value, the error value of the policy if the variant is valueless_by_exception.
          */
 		template<typename... VariantArgs>
 		static std::size_t dice_hash(std::variant<VariantArgs...> const &var) noexcept {
-			try {
-				return std::visit([]<typename T>(T &&arg) { return dice_hash(std::forward<T>(arg)); }, var);
-			} catch (std::bad_variant_access const &) {
+			if (var.valueless_by_exception()) {
 				return Policy::ErrorValue;
 			}
+			std::size_t const index = var.index();
+			return std::visit([&index](auto const &arg) { return dice_hash(std::tie(index, arg)); }, var);
 		}
 
 		/** Implementation for ordered container.
@@ -364,10 +412,8 @@ namespace dice::hash {
 
     template <typename T>
     using DiceHashMartinus = DiceHash<T, Policies::Martinus>;
-#ifdef __x86_64__
     template <typename T>
     using DiceHashxxh3 = DiceHash<T, Policies::xxh3>;
-#endif
     template <typename T>
     using DiceHashwyhash = DiceHash<T, Policies::wyhash>;
 	template <typename T>
