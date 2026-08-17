@@ -160,7 +160,9 @@ namespace dice::hash::Policies {
 	};
 
 	struct rapidhash {
-		inline static constexpr uint64_t kSeed = RAPID_SEED;
+		// the value rapidhash used as its default seed up to version 1.0, where it was the
+		// macro RAPID_SEED. Version 3.0 no longer defines it.
+		inline static constexpr uint64_t kSeed = 0xbdd89aa982704029ull;
 		inline static constexpr std::size_t ErrorValue = kSeed;
 
 		template<typename T>
