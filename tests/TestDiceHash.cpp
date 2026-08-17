@@ -169,14 +169,14 @@ namespace dice::tests::hash {
 			std::optional<std::string> example{"dog"};
 			std::string target{"dog"};
 
-			REQUIRE(getHash<CurrentPolicy>(std::make_tuple(1, target)) == getHash<CurrentPolicy>(example));
+			REQUIRE(getHash<CurrentPolicy>(std::make_tuple(size_t{1}, target)) == getHash<CurrentPolicy>(example));
 		}
 
 		SECTION("(index based(0), unoccupied optional) and target generate the same hash") {
 			std::optional<std::string> example;
 			std::monostate target{};
 
-			REQUIRE(getHash<CurrentPolicy>(std::make_tuple(0, target)) == getHash<CurrentPolicy>(example));
+			REQUIRE(getHash<CurrentPolicy>(std::make_tuple(size_t{0}, target)) == getHash<CurrentPolicy>(example));
 		}
 
 		SECTION("nullopt_t and monostate generate the same hash") {
