@@ -7,7 +7,8 @@
 #define AllTypesToTestForDiceHash int, long, std::size_t, std::byte, __int128, unsigned __int128, std::string, std::string_view, int *, long *,             \
 								  std::string *, std::unique_ptr<int>, std::shared_ptr<int>, std::vector<int>,                 \
 								  std::set<int>, std::unordered_set<int>, (std::array<int, 10>), (std::tuple<int, int, long>), \
-								  (std::pair<int, int>), (std::variant<std::monostate>), (std::variant<int, float, std::string>)
+								  (std::pair<int, int>), (std::variant<std::monostate>), (std::variant<int, float, std::string>),           \
+								  (std::optional<std::string>), (std::optional<int>), (std::optional<std::monostate>), std::nullopt_t
 
 
 namespace dice::tests::hash {
@@ -131,6 +132,75 @@ namespace dice::tests::hash {
 
 		SECTION("Pairs and tuples of char and string generate the same hash (mixed types)") {
 			REQUIRE(test_pair_tuple<CurrentPolicy>('a', std::string("abc")));
+		}
+
+		SECTION("unoccupied optional and monostate don't generate the same hash") {
+			std::optional<std::string> example;
+			std::monostate target{};
+			REQUIRE(getHash<CurrentPolicy>(target) != getHash<CurrentPolicy>(example));
+		}
+
+		SECTION("unoccupied optional and nullopt_t don't generate the same hash") {
+			std::optional<std::string> example;
+			std::nullopt_t target{std::nullopt};
+			REQUIRE(getHash<CurrentPolicy>(target) != getHash<CurrentPolicy>(example));
+		}
+
+		SECTION("Some option and target don't generate the same hash") {
+			std::optional<std::string> example{"dog"};
+			std::string target{"dog"};
+			REQUIRE(getHash<CurrentPolicy>(target) != getHash<CurrentPolicy>(example));
+		}
+
+		SECTION("Some option(monostate) and monostate don't generate the same hash") {
+			std::optional example{std::monostate{}};
+			std::monostate target{};
+			REQUIRE(getHash<CurrentPolicy>(target) != getHash<CurrentPolicy>(example));
+		}
+
+		SECTION("unoccupied optional(monostate) and occupied optional(monostate) don't generate the same hash") {
+			std::optional<std::monostate> example;
+			std::optional target{std::monostate{}};
+
+			REQUIRE(getHash<CurrentPolicy>(target) != getHash<CurrentPolicy>(example));
+		}
+
+		SECTION("(index based(1), Some option) and target generate the same hash") {
+			std::optional<std::string> example{"dog"};
+			std::string target{"dog"};
+
+			REQUIRE(getHash<CurrentPolicy>(std::make_tuple(size_t{1}, target)) == getHash<CurrentPolicy>(example));
+		}
+
+		SECTION("(index based(0), unoccupied optional) and target generate the same hash") {
+			std::optional<std::string> example;
+			std::monostate target{};
+
+			REQUIRE(getHash<CurrentPolicy>(std::make_tuple(size_t{0}, target)) == getHash<CurrentPolicy>(example));
+		}
+
+		SECTION("nullopt_t and monostate generate the same hash") {
+			std::nullopt_t example{std::nullopt};
+			std::monostate target{};
+			REQUIRE(getHash<CurrentPolicy>(target) == getHash<CurrentPolicy>(example));
+		}
+
+		SECTION("set of optionals compiles") {
+			std::set<std::optional<std::string>> exampleSet;
+			exampleSet.insert("cat");
+			exampleSet.insert(std::nullopt);
+			exampleSet.insert("horse");
+			getHash<CurrentPolicy>(exampleSet);
+		}
+
+		SECTION("arr of optionals compiles") {
+			std::array<std::optional<std::string>, 5> exampleArray{"dog", std::nullopt, "cat", std::nullopt, "horse"};
+			getHash<CurrentPolicy>(exampleArray);
+		}
+
+		SECTION("vec of optionals compiles") {
+			std::vector<std::optional<std::string>> exampleVec{"dog", std::nullopt, "cat", std::nullopt, "horse"};
+			getHash<CurrentPolicy>(exampleVec);
 		}
 
 		SECTION("set of strings compiles") {
