@@ -1,12 +1,15 @@
 #include <dice/hash.hpp>
 #include <initializer_list>
 #include <iostream>
+#include <limits>
 #include <numeric>
 
 
 struct MyCustomPolicy {
 	// needed for bad_variant_access
-	inline static constexpr std::size_t ErrorValue = 42;
+	// hash_bytes below returns the length, so a small number would be the hash of every
+	// buffer of that size and every such buffer would be reported as faulty
+	inline static constexpr std::size_t ErrorValue = std::numeric_limits<std::size_t>::max();
 	template<typename T>
 	static std::size_t hash_fundamental(T x) noexcept {
 		return static_cast<std::size_t>(42 * x);

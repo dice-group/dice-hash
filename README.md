@@ -113,6 +113,22 @@ One simple example can be found [here](examples/customContainer.cpp).
 If you want to use `DiceHash` in a different structure (like `std::unordered_map`), you will need to set `DiceHash` as the correct template parameter.
 [This](examples/usageForUnorderedSet.cpp) is one example.
 
+### The error value
+A `std::variant` which is `valueless_by_exception` holds no alternative, so no hash can be
+calculated for it. In that case `DiceHash` returns the `ErrorValue` of the policy, which
+`is_faulty` reports:
+```c++
+using Hash = dice::hash::DiceHash<std::variant<int, std::string>>;
+Hash::is_faulty(Hash{}(your_variant));
+```
+Every other value gets a regular hash. Types which hold nothing, like `std::monostate`,
+`std::nullopt` and empty containers, are regular values and are never reported as faulty.
+
+`ErrorValue` is a sentinel, not a value outside the range of the hash functions. A regular
+value can land on it, so `is_faulty` is a strong hint and not a proof. For unordered
+containers this is easy to trigger on purpose, because their hash is the xor of the hashes of
+their elements.
+
 ## Usage for general data hashing
 **The hash functions mentioned in this section are enabled/disabled using the feature flag `WITH_SODIUM=ON/OFF`.**
 **Enabling this flag (default behaviour) results in [libsodium](https://doc.libsodium.org/) being required as a dependency.**
