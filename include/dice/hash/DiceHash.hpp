@@ -309,12 +309,13 @@ namespace dice::hash {
 		template<typename T>
 		static std::size_t dice_hash(std::optional<T> const &opt) noexcept {
 			if (!opt.has_value()) {
-				static constexpr int index = 0;
+				static constexpr size_t index = 0;
 				static constexpr std::monostate empty{};
 				return dice_hash(std::tie(index, empty));
+			} else {
+				static constexpr size_t index = 1;
+				return dice_hash(std::tie(index, *opt));
 			}
-			static constexpr int index = 1;
-			return dice_hash(std::tie(index, *opt));
 		}
 
 		/** Implementation for variant.
