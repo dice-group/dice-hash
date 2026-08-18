@@ -48,7 +48,25 @@ if (WITH_SODIUM)
     find_package(libsodium REQUIRED)
     find_package(highway REQUIRED)
 endif ()
-find_package(rapidhash)
+
+# rapidhash consists of a single header and ships no CMakeLists.txt, so fetch it
+# ourselves. An enclosing project may provide rapidhash itself, in which case its
+# target wins and that project is also responsible for exporting it.
+if (NOT TARGET rapidhash AND NOT TARGET rapidhash::rapidhash)
+    add_subdirectory(include/dice/hash/rapidhash/internal/rapidhash)
+endif ()
+
+# link against the namespaced name regardless of who provides the target
+if (NOT TARGET rapidhash::rapidhash)
+    get_target_property(rapidhash_alias rapidhash ALIASED_TARGET)
+    if (rapidhash_alias)
+        add_library(rapidhash::rapidhash ALIAS ${rapidhash_alias})
+    else ()
+        add_library(rapidhash::rapidhash ALIAS rapidhash)
+    endif ()
+    unset(rapidhash_alias)
+endif ()
+
 find_package(xxHash REQUIRED)
 
 add_subdirectory(include/dice/hash/blake/internal/blake3)
