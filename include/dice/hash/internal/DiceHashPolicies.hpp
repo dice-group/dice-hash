@@ -1,17 +1,18 @@
 #ifndef DICE_HASH_DICEHASHPOLICIES_HPP
 #define DICE_HASH_DICEHASHPOLICIES_HPP
 
-#include "martinus_robinhood_hash.hpp"
-#include "wyhash.h"
+#include <dice/hash/internal/robinhood/martinus_robinhood_hash.hpp>
+#include <dice/hash/internal/wyhash/wyhash.h>
 // exposes the definition of XXH3_state_t, so the streaming state can be held by
 // value instead of on the heap
 #ifndef XXH_STATIC_LINKING_ONLY
 #define XXH_STATIC_LINKING_ONLY
 #endif
 #include <xxhash.h>
+#include <rapidhash.h>
+
 #include <bit>
 #include <type_traits>
-#include "rapidhash.h"
 
 namespace dice::hash::Policies {
     /** Requirements for a hash policy.
