@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.24)
 
 project(
         dice-hash
-        VERSION 0.5.1
+        VERSION 0.5.2
         DESCRIPTION "dice-hash provides a framework to generate stable hashes. It provides state-of-the-art hash functions, supports STL containers out of the box and helps you to defines stable hashes for your own structs and classes."
         HOMEPAGE_URL "https://dice-group.github.io/dice-hash/")
 set(POBR_VERSION 2)  # Persisted Object Binary Representation Version
@@ -53,7 +53,7 @@ endif ()
 # ourselves. An enclosing project may provide rapidhash itself, in which case its
 # target wins and that project is also responsible for exporting it.
 if (NOT TARGET rapidhash AND NOT TARGET rapidhash::rapidhash)
-    add_subdirectory(include/dice/hash/rapidhash/internal/rapidhash)
+    add_subdirectory(include/dice/hash/internal/rapidhash)
 endif ()
 
 # link against the namespaced name regardless of who provides the target
@@ -69,7 +69,29 @@ endif ()
 
 find_package(xxHash REQUIRED)
 
-add_subdirectory(include/dice/hash/blake/internal/blake3)
+# the official Blake3 implementation ships no usable CMakeLists.txt, so build it
+# ourselves. An enclosing project may provide blake3 itself, in which case its target
+# wins and that project is also responsible for exporting it, putting blake3.h on the
+# include path and shipping the Blake3 licenses.
+if (NOT TARGET blake3 AND NOT TARGET BLAKE3::blake3)
+    add_subdirectory(include/dice/hash/blake/internal/blake3)
+endif ()
+
+# link against the namespaced name regardless of who provides the target. find_package(blake3)
+# only defines BLAKE3::blake3, so linking the bare name would silently degrade to -lblake3.
+if (NOT TARGET BLAKE3::blake3)
+    get_target_property(blake3_alias blake3 ALIASED_TARGET)
+    if (blake3_alias)
+        add_library(BLAKE3::blake3 ALIAS ${blake3_alias})
+    else ()
+        add_library(BLAKE3::blake3 ALIAS blake3)
+    endif ()
+    unset(blake3_alias)
+endif ()
+
+# install rules for the licenses of the header-only vendored dependencies
+add_subdirectory(include/dice/hash/internal/wyhash)
+add_subdirectory(include/dice/hash/internal/robinhood)
 
 if (WITH_SODIUM)
     add_library(${PROJECT_NAME}
@@ -84,7 +106,7 @@ if (WITH_SODIUM)
     target_link_libraries(${PROJECT_NAME}
             PUBLIC
             libsodium::libsodium
-            blake3
+            BLAKE3::blake3
             rapidhash::rapidhash
             xxHash::xxhash
             PRIVATE
@@ -100,7 +122,7 @@ else()
     )
     target_link_libraries(${PROJECT_NAME}
             INTERFACE
-            blake3
+            BLAKE3::blake3
             rapidhash::rapidhash
             xxHash::xxhash
     )

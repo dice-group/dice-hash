@@ -7,7 +7,15 @@ from conan.tools.files import load, rmdir, copy
 
 
 class DiceHashConan(ConanFile):
-    license = "MIT", "Apache-2.0"
+    # dice-hash itself is (MIT OR Apache-2.0).
+    # The package also ships third-party code:
+    #   rapidhash (MIT)
+    #   martinus/robin-hood-hashing (MIT)
+    #   wyhash (Unlicense)
+    #   blake3 (CC0-1.0 OR Apache-2.0 OR Apache-2.0 WITH LLVM-exception)
+    #
+    # see licenses/ and the notice headers in include/dice/hash/internal/
+    license = "(MIT OR Apache-2.0) AND MIT AND MIT AND Unlicense AND (CC0-1.0 OR Apache-2.0 OR Apache-2.0 WITH LLVM-exception)"
     author = "DICE Group <info@dice-research.org>"
     homepage = "https://github.com/dice-group/dice-hash"
     url = homepage
@@ -72,11 +80,15 @@ class DiceHashConan(ConanFile):
     def package(self):
         self._configure_cmake().install()
 
+        # blake3 and rapidhash are pulled in via FetchContent and install their licenses
+        # to share/licenses, so rescue those before share is removed below
+        copy(self, pattern="*", src=os.path.join(self.package_folder, "share", "licenses"),
+             dst=os.path.join(self.package_folder, "licenses"), keep_path=False)
+
         for dir in ("lib", "res", "share"):
             rmdir(self, os.path.join(self.package_folder, dir))
 
         rmdir(self, os.path.join(self.package_folder, "cmake"))
-        rmdir(self, os.path.join(self.package_folder, "share"))
         copy(self, pattern="LICENSE*", dst=os.path.join(self.package_folder, "licenses"), src=self.folders.source_folder)
         copy(self, pattern="*.a", src=os.path.join(self.build_folder, "include/dice/hash/blake/internal/blake3"), dst=os.path.join(self.package_folder, "lib"), keep_path=False)
         copy(self, pattern="*.a", src=self.build_folder, dst=os.path.join(self.package_folder, "lib"), keep_path=False)

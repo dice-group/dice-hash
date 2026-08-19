@@ -17,49 +17,19 @@ project(libblake3
 include(FeatureSummary)
 include(GNUInstallDirs)
 
-set(blake3_rev 77b257eee7da5cd608eaf6be8343d3a4c9776af2)
-set(blake3_files
-        blake3.c
-        blake3.h
-        blake3-config.cmake.in
-        blake3_avx2.c
-        blake3_avx2_x86-64_unix.S
-        blake3_avx2_x86-64_windows_gnu.S
-        blake3_avx2_x86-64_windows_msvc.asm
-        blake3_avx512.c
-        blake3_avx512_x86-64_unix.S
-        blake3_avx512_x86-64_windows_gnu.S
-        blake3_avx512_x86-64_windows_msvc.asm
-        blake3_dispatch.c
-        blake3_impl.h
-        blake3_neon.c
-        blake3_portable.c
-        blake3_sse2.c
-        blake3_sse2_x86-64_unix.S
-        blake3_sse2_x86-64_windows_gnu.S
-        blake3_sse2_x86-64_windows_msvc.asm
-        blake3_sse41.c
-        blake3_sse41_x86-64_unix.S
-        blake3_sse41_x86-64_windows_gnu.S
-        blake3_sse41_x86-64_windows_msvc.asm
-        libblake3.pc.in
-)
-set(blake3_license_files
-        LICENSE_A2
-        LICENSE_A2LLVM
-        LICENSE_CC0
+include(FetchContent)
+# the handle is deliberately not named blake3: FetchContent declarations are keyed by
+# name and the first one wins, so an enclosing project fetching its own blake3 would
+# silently substitute its revision for the one pinned below
+FetchContent_Declare(
+        dice_blake3
+        GIT_REPOSITORY https://github.com/BLAKE3-team/BLAKE3.git
+        GIT_TAG 77b257eee7da5cd608eaf6be8343d3a4c9776af2  # tag 1.8.6
 )
 
-foreach(file ${blake3_files})
-  file(DOWNLOAD "https://raw.githubusercontent.com/BLAKE3-team/BLAKE3/${blake3_rev}/c/${file}"
-          "${CMAKE_CURRENT_BINARY_DIR}/src/blake3/${file}"
-          TLS_VERIFY ON)
-endforeach()
-foreach(file ${blake3_license_files})
-  file(DOWNLOAD "https://raw.githubusercontent.com/BLAKE3-team/BLAKE3/${blake3_rev}/${file}"
-        "${CMAKE_CURRENT_BINARY_DIR}/src/blake3/${file}"
-        TLS_VERIFY ON)
-endforeach()
+# upstream ships no CMakeLists.txt at the repository root, so this populates the
+# sources without adding a competing blake3 target
+FetchContent_MakeAvailable(dice_blake3)
 
 # architecture lists for which to enable assembly / SIMD sources
 set(BLAKE3_AMD64_NAMES amd64 AMD64 x86_64)
@@ -90,9 +60,9 @@ endif()
 
 # library target
 add_library(blake3
-        ${CMAKE_CURRENT_BINARY_DIR}/src/blake3/blake3.c
-        ${CMAKE_CURRENT_BINARY_DIR}/src/blake3/blake3_dispatch.c
-        ${CMAKE_CURRENT_BINARY_DIR}/src/blake3/blake3_portable.c
+        ${dice_blake3_SOURCE_DIR}/c/blake3.c
+        ${dice_blake3_SOURCE_DIR}/c/blake3_dispatch.c
+        ${dice_blake3_SOURCE_DIR}/c/blake3_portable.c
 )
 add_library(BLAKE3::blake3 ALIAS blake3)
 
@@ -106,7 +76,7 @@ if (BUILD_SHARED_LIBS)
   list(APPEND BLAKE3_PKGCONFIG_CFLAGS -DBLAKE3_DLL)
 endif()
 target_include_directories(blake3 PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/src/blake3/>
+        $<BUILD_INTERFACE:${dice_blake3_SOURCE_DIR}/c/>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 set_target_properties(blake3 PROPERTIES
@@ -145,10 +115,10 @@ if(CMAKE_SYSTEM_PROCESSOR IN_LIST BLAKE3_AMD64_NAMES OR BLAKE3_USE_AMD64_ASM)
   if(MSVC)
     enable_language(ASM_MASM)
     target_sources(blake3 PRIVATE
-            ${CMAKE_CURRENT_BINARY_DIR}/src/blake3/blake3_avx2_x86-64_windows_msvc.asm
-            ${CMAKE_CURRENT_BINARY_DIR}/src/blake3/blake3_avx512_x86-64_windows_msvc.asm
-            ${CMAKE_CURRENT_BINARY_DIR}/src/blake3/blake3_sse2_x86-64_windows_msvc.asm
-            ${CMAKE_CURRENT_BINARY_DIR}/src/blake3/blake3_sse41_x86-64_windows_msvc.asm
+            ${dice_blake3_SOURCE_DIR}/c/blake3_avx2_x86-64_windows_msvc.asm
+            ${dice_blake3_SOURCE_DIR}/c/blake3_avx512_x86-64_windows_msvc.asm
+            ${dice_blake3_SOURCE_DIR}/c/blake3_sse2_x86-64_windows_msvc.asm
+            ${dice_blake3_SOURCE_DIR}/c/blake3_sse41_x86-64_windows_msvc.asm
     )
 
   elseif(CMAKE_C_COMPILER_ID STREQUAL "GNU"
@@ -156,18 +126,18 @@ if(CMAKE_SYSTEM_PROCESSOR IN_LIST BLAKE3_AMD64_NAMES OR BLAKE3_USE_AMD64_ASM)
           OR CMAKE_C_COMPILER_ID STREQUAL "AppleClang")
     if (WIN32)
       target_sources(blake3 PRIVATE
-              ${CMAKE_CURRENT_BINARY_DIR}/src/blake3/blake3_avx2_x86-64_windows_gnu.S
-              ${CMAKE_CURRENT_BINARY_DIR}/src/blake3/blake3_avx512_x86-64_windows_gnu.S
-              ${CMAKE_CURRENT_BINARY_DIR}/src/blake3/blake3_sse2_x86-64_windows_gnu.S
-              ${CMAKE_CURRENT_BINARY_DIR}/src/blake3/blake3_sse41_x86-64_windows_gnu.S
+              ${dice_blake3_SOURCE_DIR}/c/blake3_avx2_x86-64_windows_gnu.S
+              ${dice_blake3_SOURCE_DIR}/c/blake3_avx512_x86-64_windows_gnu.S
+              ${dice_blake3_SOURCE_DIR}/c/blake3_sse2_x86-64_windows_gnu.S
+              ${dice_blake3_SOURCE_DIR}/c/blake3_sse41_x86-64_windows_gnu.S
       )
 
     elseif(UNIX)
       target_sources(blake3 PRIVATE
-              ${CMAKE_CURRENT_BINARY_DIR}/src/blake3/blake3_avx2_x86-64_unix.S
-              ${CMAKE_CURRENT_BINARY_DIR}/src/blake3/blake3_avx512_x86-64_unix.S
-              ${CMAKE_CURRENT_BINARY_DIR}/src/blake3/blake3_sse2_x86-64_unix.S
-              ${CMAKE_CURRENT_BINARY_DIR}/src/blake3/blake3_sse41_x86-64_unix.S
+              ${dice_blake3_SOURCE_DIR}/c/blake3_avx2_x86-64_unix.S
+              ${dice_blake3_SOURCE_DIR}/c/blake3_avx512_x86-64_unix.S
+              ${dice_blake3_SOURCE_DIR}/c/blake3_sse2_x86-64_unix.S
+              ${dice_blake3_SOURCE_DIR}/c/blake3_sse41_x86-64_unix.S
       )
 
     else()
@@ -186,15 +156,15 @@ elseif((CMAKE_SYSTEM_PROCESSOR IN_LIST BLAKE3_X86_NAMES OR BLAKE3_USE_X86_INTRIN
   set(BLAKE3_SIMD_X86_INTRINSICS ON)
 
   target_sources(blake3 PRIVATE
-          ${CMAKE_CURRENT_BINARY_DIR}/src/blake3/blake3_avx2.c
-          ${CMAKE_CURRENT_BINARY_DIR}/src/blake3/blake3_avx512.c
-          ${CMAKE_CURRENT_BINARY_DIR}/src/blake3/blake3_sse2.c
-          ${CMAKE_CURRENT_BINARY_DIR}/src/blake3/blake3_sse41.c
+          ${dice_blake3_SOURCE_DIR}/c/blake3_avx2.c
+          ${dice_blake3_SOURCE_DIR}/c/blake3_avx512.c
+          ${dice_blake3_SOURCE_DIR}/c/blake3_sse2.c
+          ${dice_blake3_SOURCE_DIR}/c/blake3_sse41.c
   )
-  set_source_files_properties(blake3_avx2.c PROPERTIES COMPILE_FLAGS "${BLAKE3_CFLAGS_AVX2}")
-  set_source_files_properties(blake3_avx512.c PROPERTIES COMPILE_FLAGS "${BLAKE3_CFLAGS_AVX512}")
-  set_source_files_properties(blake3_sse2.c PROPERTIES COMPILE_FLAGS "${BLAKE3_CFLAGS_SSE2}")
-  set_source_files_properties(blake3_sse41.c PROPERTIES COMPILE_FLAGS "${BLAKE3_CFLAGS_SSE4.1}")
+  set_source_files_properties(${dice_blake3_SOURCE_DIR}/c/blake3_avx2.c PROPERTIES COMPILE_FLAGS "${BLAKE3_CFLAGS_AVX2}")
+  set_source_files_properties(${dice_blake3_SOURCE_DIR}/c/blake3_avx512.c PROPERTIES COMPILE_FLAGS "${BLAKE3_CFLAGS_AVX512}")
+  set_source_files_properties(${dice_blake3_SOURCE_DIR}/c/blake3_sse2.c PROPERTIES COMPILE_FLAGS "${BLAKE3_CFLAGS_SSE2}")
+  set_source_files_properties(${dice_blake3_SOURCE_DIR}/c/blake3_sse41.c PROPERTIES COMPILE_FLAGS "${BLAKE3_CFLAGS_SSE4.1}")
 
 elseif((CMAKE_SYSTEM_PROCESSOR IN_LIST BLAKE3_ARMv8_NAMES
         OR ANDROID_ABI STREQUAL "armeabi-v7a"
@@ -204,14 +174,14 @@ elseif((CMAKE_SYSTEM_PROCESSOR IN_LIST BLAKE3_ARMv8_NAMES
   set(BLAKE3_SIMD_NEON_INTRINSICS ON)
 
   target_sources(blake3 PRIVATE
-          ${CMAKE_CURRENT_BINARY_DIR}/src/blake3/blake3_neon.c
+          ${dice_blake3_SOURCE_DIR}/c/blake3_neon.c
   )
   target_compile_definitions(blake3 PRIVATE
           BLAKE3_USE_NEON=1
   )
 
   if (DEFINED BLAKE3_CFLAGS_NEON)
-    set_source_files_properties(blake3_neon.c PROPERTIES COMPILE_FLAGS "${BLAKE3_CFLAGS_NEON}")
+    set_source_files_properties(${dice_blake3_SOURCE_DIR}/c/blake3_neon.c PROPERTIES COMPILE_FLAGS "${BLAKE3_CFLAGS_NEON}")
   endif()
 
 else()
@@ -219,13 +189,14 @@ else()
 endif()
 
 # cmake install support
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/src/blake3/blake3.h DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
-install(FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/src/blake3/LICENSE_A2
-        ${CMAKE_CURRENT_BINARY_DIR}/src/blake3/LICENSE_A2LLVM
-        ${CMAKE_CURRENT_BINARY_DIR}/src/blake3/LICENSE_CC0
-        DESTINATION "${CMAKE_INSTALL_DATADIR}/licenses"
-)
+install(FILES ${dice_blake3_SOURCE_DIR}/c/blake3.h DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+# RENAME only takes a single file, so one install() per license
+foreach (blake3_license LICENSE_A2 LICENSE_A2LLVM LICENSE_CC0)
+  install(FILES ${dice_blake3_SOURCE_DIR}/${blake3_license}
+          DESTINATION "${CMAKE_INSTALL_DATADIR}/licenses"
+          RENAME ${blake3_license}-blake
+  )
+endforeach ()
 install(TARGETS blake3 EXPORT blake3-targets)
 install(EXPORT blake3-targets
         NAMESPACE BLAKE3::
@@ -233,7 +204,7 @@ install(EXPORT blake3-targets
 )
 
 include(CMakePackageConfigHelpers)
-configure_package_config_file(${CMAKE_CURRENT_BINARY_DIR}/src/blake3/blake3-config.cmake.in
+configure_package_config_file(${dice_blake3_SOURCE_DIR}/c/blake3-config.cmake.in
         "${CMAKE_CURRENT_BINARY_DIR}/blake3-config.cmake"
 
         INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/blake3"
@@ -249,8 +220,8 @@ install(FILES
         DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/blake3"
 )
 
-configure_file(${CMAKE_CURRENT_BINARY_DIR}/src/blake3/libblake3.pc.in ${CMAKE_CURRENT_BINARY_DIR}/src/blake3/libblake3.pc @ONLY)
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/src/blake3/libblake3.pc"
+configure_file(${dice_blake3_SOURCE_DIR}/c/libblake3.pc.in ${CMAKE_CURRENT_BINARY_DIR}/libblake3.pc @ONLY)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libblake3.pc"
         DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 
 # print feature summary
