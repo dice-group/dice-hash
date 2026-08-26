@@ -61,7 +61,7 @@ jobs:
           key: ${{ matrix.os }}-${{ matrix.cc }}-${{ matrix.san-name }}
 
       - name: Install conan
-        uses: dice-group/cpp-conan-release-reusable-workflow/.github/actions/configure_conan@v2.0.5
+        uses: dice-group/cpp-conan-release-reusable-workflow/.github/actions/configure_conan@v2.1.0
         with:
           conan-version: 2.31.2
 
@@ -80,7 +80,7 @@ jobs:
           key: ${{ matrix.os }}-${{ matrix.cc }}-conan2-${{ hashFiles('conanfile.py') }}
 
       - name: Get conan provider
-        uses: dice-group/cpp-conan-release-reusable-workflow/.github/actions/add_conan_provider@v2.0.5
+        uses: dice-group/cpp-conan-release-reusable-workflow/.github/actions/add_conan_provider@v2.1.0
 
       - name: Configure
         run: |
@@ -140,7 +140,7 @@ jobs:
           key: macos-15-gcc-15
 
       - name: Install conan
-        uses: dice-group/cpp-conan-release-reusable-workflow/.github/actions/configure_conan@v2.0.5
+        uses: dice-group/cpp-conan-release-reusable-workflow/.github/actions/configure_conan@v2.1.0
         with:
           conan-version: 2.31.2
 
@@ -159,7 +159,7 @@ jobs:
           key: macos-15-gcc-15-conan2-${{ hashFiles('conanfile.py') }}
 
       - name: Get conan provider
-        uses: dice-group/cpp-conan-release-reusable-workflow/.github/actions/add_conan_provider@v2.0.5
+        uses: dice-group/cpp-conan-release-reusable-workflow/.github/actions/add_conan_provider@v2.1.0
 
       - name: Configure
         run: |
