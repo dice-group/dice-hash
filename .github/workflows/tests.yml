@@ -62,8 +62,6 @@ jobs:
 
       - name: Install conan
         uses: dice-group/cpp-conan-release-reusable-workflow/.github/actions/configure_conan@v2.1.0
-        with:
-          conan-version: 2.31.2
 
       - name: Add conan remotes
         run: |
@@ -141,8 +139,6 @@ jobs:
 
       - name: Install conan
         uses: dice-group/cpp-conan-release-reusable-workflow/.github/actions/configure_conan@v2.1.0
-        with:
-          conan-version: 2.31.2
 
       - name: Add conan remotes
         run: |
