@@ -83,6 +83,9 @@ namespace dice::hash {
 		 * These are the fundamental types, except `long double` in two formats (see `FloatingPoint.hpp`):
 		 * in x87 extended precision it has padding, and in the double-double format the low part of a
 		 * value can be `+0.0` or `-0.0`. Ranges of these are hashed value by value.
+		 * A single floating point value hashes `-0.0` like `+0.0`. A range of `float`, `double` or
+		 * `long double` that is hashed as one block of bytes keeps the sign of zero, so in it `-0.0`
+		 * and `+0.0` give different hashes.
 		 * @tparam T The type to check.
 		 */
 		template<typename T>
