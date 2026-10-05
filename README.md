@@ -79,6 +79,17 @@ hash(42);
 ```
 [basicUsage](examples/basicUsage.cpp) is a run able example for this use-case.
 
+`DiceHash<T>` uses the policy `dice::hash::Policies::wyhash`. To use another policy, name it as the
+second template argument, or use one of the aliases `DiceHashMartinus`, `DiceHashxxh3`,
+`DiceHashwyhash` and `DiceHashrapidhash`:
+```c++
+dice::hash::DiceHash<int, dice::hash::Policies::Martinus> hash;
+dice::hash::DiceHashMartinus<int> same_hash;
+```
+[policyUsage](examples/policyUsage.cpp) is a runnable example for this.
+If you persist hash values, name the policy explicitly. Then a change of the default policy does
+not change your values.
+
 If you need `DiceHash` to be able to work on your own types, you can specialize the `dice::hash::dice_hash_overload` template:
 ```c++
 struct YourType{};

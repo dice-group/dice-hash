@@ -377,9 +377,9 @@ namespace dice::hash {
 	/** Wrapper class for the dice::hash::dice_hash function.
      * It is a typical hash interface.
      * @tparam T The type to define the hash for.
-     * @tparam Policy The Policy defines how the hash works on a basic level.
+     * @tparam Policy The Policy defines how the hash works on a basic level. The default is `Policies::wyhash`.
      */
-	template<typename T, Policies::HashPolicy Policy = Policies::Martinus>
+	template<typename T, Policies::HashPolicy Policy = Policies::wyhash>
 	struct DiceHash : private Policy {
 		/** Policy function for combining already hashed values.
 		 * This using declaration is equal to a handwritten wrapper function.
