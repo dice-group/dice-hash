@@ -405,6 +405,39 @@ namespace dice::tests::hash {
 			std::size_t d = 42;
 			dice::hash::DiceHash<CurrentPolicy>::hash_combine({a, b, c, d});
 		}
+
+		SECTION("A part that hashes to 0 does not set the hash of a pair or tuple to 0") {
+			using Set = std::unordered_set<std::uint64_t>;
+			// the hash of an empty unordered container is the xor of no hashes
+			REQUIRE(getHash<CurrentPolicy>(Set{}) == 0);
+
+			std::size_t const pair1 = getHash<CurrentPolicy>(std::pair<Set, std::uint64_t>{Set{}, 1});
+			std::size_t const pair2 = getHash<CurrentPolicy>(std::pair<Set, std::uint64_t>{Set{}, 2});
+			CHECK(pair1 != 0);
+			CHECK(pair1 != pair2);
+
+			std::size_t const tuple1 = getHash<CurrentPolicy>(std::tuple<std::uint64_t, Set>{1, Set{}});
+			std::size_t const tuple2 = getHash<CurrentPolicy>(std::tuple<std::uint64_t, Set>{2, Set{}});
+			CHECK(tuple1 != 0);
+			CHECK(tuple1 != tuple2);
+		}
+
+		SECTION("A part that hashes to 0 does not set the hash of a vector to 0") {
+			using Sets = std::vector<std::unordered_set<std::uint64_t>>;
+			std::size_t const vector1 = getHash<CurrentPolicy>(Sets{{1}, {}});
+			std::size_t const vector2 = getHash<CurrentPolicy>(Sets{{2}, {}});
+			CHECK(vector1 != 0);
+			CHECK(vector1 != vector2);
+		}
+	}
+
+	TEST_CASE("rapidhash runs in its protected mode", "[DiceHash]") {
+		using Policy = dice::hash::Policies::rapidhash;
+		// In the protected mode `rapid_mix` xors the 128-bit product into its operands, so mixing
+		// in 0 keeps the other operand. In the fast mode the product replaces the operands, and
+		// the product with 0 is 0.
+		CHECK(rapid_mix(Policy::kSeed, 0) == Policy::kSeed);
+		CHECK(rapid_mix(0, 42) == 42);
 	}
 }// namespace dice::tests::hash
 

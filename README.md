@@ -4,9 +4,11 @@ dice-hash provides a framework to generate stable hashes. It provides state-of-t
 
 **🔋 batteries included:** dice-hash defines _policies_ to support different hash algorithms. It comes with predefined policies for four state-of-the-art hash functions:
 - [XXH3](https://github.com/Cyan4973/xxHash)
-- [rapidhash](https://github.com/Nicoshev/rapidhash)
+- [rapidhash](https://github.com/Nicoshev/rapidhash), in its protected mode (`RAPIDHASH_PROTECTED`)
 - [wyhash](https://github.com/wangyi-fudan/wyhash)
 - "martinus", the internal hash function from [robin-hood-hashing](https://github.com/martinus/robin-hood-hashing)
+
+dice-hash defines `RAPIDHASH_PROTECTED` before it includes `rapidhash.h`. A translation unit that includes `rapidhash.h` before dice-hash, or that defines `RAPIDHASH_FAST`, does not compile. A translation unit that includes dice-hash and calls rapidhash directly also gets the protected mode. The mode holds per translation unit: a program in which one translation unit includes `rapidhash.h` without dice-hash and another one includes dice-hash has two definitions of the functions of `rapidhash.h`, one per mode. This breaks the one definition rule. Such a program must define `RAPIDHASH_PROTECTED` in every translation unit that includes `rapidhash.h`.
 
 These three, additional, general purpose hash functions are also (optionally) provided
 - [Blake2b](https://www.blake2.net)

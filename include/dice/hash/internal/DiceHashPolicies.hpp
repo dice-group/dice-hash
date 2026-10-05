@@ -9,7 +9,19 @@
 #define XXH_STATIC_LINKING_ONLY
 #endif
 #include <xxhash.h>
+// `Policies::rapidhash` uses rapidhash in its protected mode: `rapid_mum` xors the 128-bit
+// product into its two operands instead of replacing them. The mode decides every hash
+// value of the policy, so dice-hash sets it here for each translation unit.
+#ifndef RAPIDHASH_PROTECTED
+#define RAPIDHASH_PROTECTED
+#endif
 #include <rapidhash.h>
+// `rapidhash.h` defines `RAPIDHASH_FAST` when `RAPIDHASH_PROTECTED` is not defined. So
+// `RAPIDHASH_FAST` is defined here if the user defined it, or if `rapidhash.h` was included
+// before dice-hash in its fast mode.
+#ifdef RAPIDHASH_FAST
+#error "dice-hash needs rapidhash in its protected mode. Include dice-hash before rapidhash.h and do not define RAPIDHASH_FAST."
+#endif
 
 #include <bit>
 #include <type_traits>
@@ -169,6 +181,14 @@ namespace dice::hash::Policies {
 		};
 	};
 
+	/** Hashes with rapidhash in its protected mode (`RAPIDHASH_PROTECTED`).
+	 * `hash_fundamental` and `hash_bytes` use `rapidhash_withSeed`. `hash_combine` and `HashState`
+	 * mix each input hash into the state with `rapid_mix`. In the protected mode `rapid_mix(a, b)`
+	 * is `a ^ b ^ lo ^ hi`, where `lo` and `hi` are the halves of the 128-bit product of `a` and
+	 * `b`. So an input hash of 0 keeps the state, and a state of 0 keeps the input hash.
+	 * The product of `a` and 1 is `a`, so `rapid_mix(a, 1)` and `rapid_mix(1, a)` are 1 for every
+	 * `a`. An input hash of 1 sets the state to 1, and the state stays 1 for all later input hashes.
+	 */
 	struct rapidhash {
 		// the value rapidhash used as its default seed up to version 1.0, where it was the
 		// macro RAPID_SEED. Version 3.0 no longer defines it.
