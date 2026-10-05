@@ -8,7 +8,7 @@ dice-hash provides a framework to generate stable hashes. It provides state-of-t
 - [wyhash](https://github.com/wangyi-fudan/wyhash)
 - "martinus", the internal hash function from [robin-hood-hashing](https://github.com/martinus/robin-hood-hashing)
 
-dice-hash has its own copy of `rapidhash.h` (tag `rapidhash_v3`) in the namespace `dice::hash::rapidhash`, with the protected mode fixed in the code. No macro changes it, also not `RAPIDHASH_PROTECTED` or `RAPIDHASH_FAST`. A program can include the original `rapidhash.h` in any translation unit and in either mode. The names differ, so the hash values of dice-hash stay the same, and the original `rapidhash.h` keeps the mode that the program chose. dice-hash defines no macro of the original `rapidhash.h`. dice-hash does not provide the original `rapidhash.h`: a program that uses it gets it from rapidhash.
+dice-hash has its own copy of `rapidhash.h` (tag `rapidhash_v3`) in the namespace `dice::hash::rapidhash`, with the protected mode fixed in the code. No macro changes it, also not `RAPIDHASH_PROTECTED` or `RAPIDHASH_FAST`. A program can include the original `rapidhash.h` in any translation unit and in either mode. The names differ, so the hash values of dice-hash stay the same, and the original `rapidhash.h` keeps the mode that the program chose. dice-hash defines no macro of the original `rapidhash.h`. With `using namespace dice::hash;`, the name `rapidhash` means both the function of the original and the namespace of dice-hash, so call the original as `::rapidhash(...)`. dice-hash does not provide the original `rapidhash.h`: a program that uses it gets it from rapidhash.
 
 These three, additional, general purpose hash functions are also (optionally) provided
 - [Blake2b](https://www.blake2.net)

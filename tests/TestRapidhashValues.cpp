@@ -73,13 +73,14 @@ namespace dice::tests::hash::rapidhash_values {
 		STATIC_REQUIRE(macros == (DICE_HASH_TEST_RAPIDHASH_MACROS != 0));
 	}
 
-	TEST_CASE("hash_bytes of rapidhash keeps its values for every length", "[rapidhash]") {
+	TEST_CASE("hash_bytes of rapidhash keeps its values on every path", "[rapidhash]") {
 		struct Case {
 			std::size_t len;
 			std::uint64_t hash;
 		};
-		// rapidhash reads 0 to 3, 4 to 7 and 8 to 16 bytes in three different ways. From 17 to 112
-		// bytes it adds one step per 16 bytes. Above 112 bytes it runs a loop over 112 bytes first.
+		// rapidhash has its own branch for 0 bytes, and reads 1 to 3, 4 to 7 and 8 to 16 bytes in three
+		// different ways. From 17 to 112 bytes it adds one step per 16 bytes. Above 112 bytes it runs a
+		// loop over 112 bytes first.
 		constexpr Case cases[] = {
 				{0, 12189947477442126982ull},
 				{1, 8671219834948532705ull},
