@@ -418,8 +418,23 @@ namespace dice::hash {
 			static constexpr bool combine_keeps = false;
 		};
 
-		/** `hash_fundamental` uses `hash_int` for types with up to 8 bytes, except `float`.
-		 * `float` and types with more than 8 bytes go through `hash_bytes`.
+		/** The number of bytes that the policies of dice-hash hash for a value of the fundamental type
+		 * `T`: the value bytes of a floating point type (`float_value_size`), `sizeof(T)` for the
+		 * other types.
+		 */
+		template<typename T>
+		constexpr std::size_t fundamental_hashed_size() noexcept {
+			if constexpr (std::is_floating_point_v<T>) {
+				return float_value_size<T>;
+			} else {
+				return sizeof(T);
+			}
+		}
+
+		/** `hash_fundamental` uses `hash_int` for the types with up to 8 bytes, except the floating
+		 * point types, and for the floating point types with 8 value bytes (`double`). The other
+		 * floating point types (`float`, `long double` where it is larger than `double`) and the
+		 * types with more than 8 bytes go through `hash_bytes` over their value bytes.
 		 * `hash_int` multiplies and rotates, so some input bits never change some output bits.
 		 * `hash_bytes` is MurmurHash64A. When 4 to 7 bytes follow the last full block of 8 bytes,
 		 * some output bits flip with a probability of 0.44 instead of 0.5. This affects `float`
@@ -429,9 +444,9 @@ namespace dice::hash {
 		template<>
 		struct avalanching_functions<Policies::Martinus> {
 			template<typename T>
-			static constexpr bool fundamental = sizeof(T) != sizeof(std::size_t)
-												&& (sizeof(T) > sizeof(std::size_t) || std::is_floating_point_v<T>)
-												&& sizeof(T) % 8 < 4;
+			static constexpr bool fundamental = fundamental_hashed_size<T>() != sizeof(std::size_t)
+												&& (fundamental_hashed_size<T>() > sizeof(std::size_t) || std::is_floating_point_v<T>)
+												&& fundamental_hashed_size<T>() % 8 < 4;
 			static constexpr bool bytes = false;
 			static constexpr bool combine = true;
 			static constexpr bool combine_keeps = true;
@@ -448,10 +463,9 @@ namespace dice::hash {
 			static constexpr bool combine_keeps = true;
 		};
 
-		/** `hash_fundamental` uses `wyhash64` for integer types. `wyhash64` takes 64 bits, so an
-		 * integer type with more bits loses its upper bits. With libstdc++, `std::is_integral_v<__int128>`
-		 * is true in the GNU modes of the compilers (for example `-std=gnu++20`) and false in the strict
-		 * modes. With libc++ it is true in every mode. Other types go through `wyhash`.
+		/** `hash_fundamental` uses `wyhash64` for the integer types with up to 64 bits, and `wyhash`
+		 * over the bytes for the other types: floating point values (their value bytes), pointers,
+		 * `__int128` and `unsigned __int128`. Both avalanche, in every `-std` mode.
 		 * `hash_combine` and `HashState` call `_wymix` once per input hash. `_wymix` with a fixed
 		 * first argument does not mix every bit of the second argument. So they keep the avalanche
 		 * of avalanching input hashes, but they do not create it.
@@ -459,16 +473,17 @@ namespace dice::hash {
 		template<>
 		struct avalanching_functions<Policies::wyhash> {
 			template<typename T>
-			static constexpr bool fundamental = !std::is_integral_v<T> || sizeof(T) <= sizeof(std::uint64_t);
+			static constexpr bool fundamental = true;
 			static constexpr bool bytes = true;
 			static constexpr bool combine = false;
 			static constexpr bool combine_keeps = true;
 		};
 
 		/** `hash_fundamental` and `hash_bytes` use `rapidhash_withSeed`.
-		 * `hash_combine` and `HashState` call `rapid_mix` once per input hash. `rapid_mix` with a
-		 * fixed first argument does not mix every bit of the second argument. So they keep the
-		 * avalanche of avalanching input hashes, but they do not create it.
+		 * `hash_combine` and `HashState` call `rapid_mix` once per input hash. rapidhash runs in its
+		 * protected mode, so `rapid_mix(a, b)` is `a ^ b` xor the two halves of the 128-bit product of
+		 * `a` and `b`. With a fixed first argument it does not mix every bit of the second argument.
+		 * So they keep the avalanche of avalanching input hashes, but they do not create it.
 		 */
 		template<>
 		struct avalanching_functions<Policies::rapidhash> {
@@ -556,12 +571,14 @@ namespace dice::hash {
 			}
 		}
 
-		/** Mixing of a sequence that holds values of the type `T`: `hash_bytes` over the values if
-		 * `T` is fundamental, otherwise `HashState` over the hashes of the values.
+		/** Mixing of a `std::vector`, `std::array` or `std::span` that holds values of the type `T`.
+		 * `dice_hash_templates` hashes it as one block with `hash_bytes` if `hash_range_as_bytes<T>`
+		 * is true, otherwise value by value with `HashState` over the hashes of the values. Ranges of
+		 * floating point values are hashed value by value.
 		 */
 		template<typename Policy, typename T>
 		constexpr mixing sequence_mixing() noexcept {
-			if constexpr (is_fundamental<T>) {
+			if constexpr (hash_range_as_bytes<T>) {
 				return bytes_mixing<Policy>();
 			} else {
 				return combine_mixing<Policy, T>();
@@ -706,16 +723,14 @@ namespace dice::hash {
      * - `xxh3`: every other type.
      * - `wyhash` and `rapidhash`: fundamental types, pointers, smart pointers, strings, string
      *   views, and vectors, arrays and spans of fundamental types. Pairs, tuples, optionals,
-     *   variants and the other containers only if all their parts are avalanching. With `wyhash`,
-     *   an integer type with more than 64 bits is not avalanching if `std::is_integral_v` is true
-     *   for it. This is the case for `__int128` with libc++, and with libstdc++ in the GNU modes
-     *   of the compilers.
+     *   variants and the other containers only if all their parts are avalanching.
      * - `Martinus`: pairs, tuples, optionals, variants, ordered containers, and vectors, arrays and
-     *   spans of types that are not fundamental. Fundamental types with 16 bytes, like `__int128`.
-     *   Not avalanching are the other fundamental types, pointers, smart pointers, strings, string
-     *   views, and vectors, arrays and spans of fundamental types.
+     *   spans of floating point types and of types that are not fundamental. `__int128`,
+     *   `unsigned __int128`, and `long double` where it is larger than `double`. Not avalanching
+     *   are the other fundamental types, pointers, smart pointers, strings, string views, and
+     *   vectors, arrays and spans of the other fundamental types.
      * - A policy of your own: no other type.
-     * The README explains the reasons.
+     * `DiceHash<T>` without a policy uses `wyhash`. The README explains the reasons.
      * @tparam T The type to define the hash for.
      * @tparam Policy The Policy defines how the hash works on a basic level. The default is `Policies::wyhash`.
      */

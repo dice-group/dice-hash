@@ -142,15 +142,17 @@ with a mask, and needs no extra mixing step.
 `DiceHash<T, Policy>` declares the member type `is_avalanching` (as `void`) exactly for the
 combinations of type and policy whose result is avalanching. This is the convention of
 [ankerl::unordered_dense](https://github.com/martinus/unordered_dense). A hash table can check it with
-`requires { typename Hash::is_avalanching; }`.
+`requires { typename Hash::is_avalanching; }`. `DiceHash<T>` without a policy uses `wyhash`, so it
+declares `is_avalanching` for the types of the `wyhash` column, for example integers and strings.
 
 On a 64-bit platform:
 
 | type | `Martinus` | `xxh3` | `wyhash` | `rapidhash` |
 |---|---|---|---|---|
-| integers up to 64 bits, `bool`, character types, `std::byte`, `float`, `double`, pointers, `std::unique_ptr`, `std::shared_ptr` | no | yes | yes | yes |
-| fundamental types with 16 bytes, like `__int128` | yes | yes | yes, if `std::is_integral_v<T>` is false | yes |
-| strings, string views, and `std::vector`, `std::array` and `std::span` of fundamental types | no | yes | yes | yes |
+| integers up to 64 bits, `bool`, character types, `std::byte`, `float`, `double`, `long double` where it is not larger than `double`, pointers, `std::unique_ptr`, `std::shared_ptr` | no | yes | yes | yes |
+| `__int128`, `unsigned __int128`, and `long double` where it is larger than `double` | yes | yes | yes | yes |
+| strings, string views, and `std::vector`, `std::array` and `std::span` of fundamental types that are not floating point types | no | yes | yes | yes |
+| `std::vector`, `std::array` and `std::span` of floating point types | yes | yes | yes | yes |
 | `std::pair`, `std::tuple`, `std::optional`, `std::variant`, ordered containers, and `std::vector`, `std::array` and `std::span` of other types | yes | yes | if all parts are | if all parts are |
 | unordered containers | no | no | no | no |
 | `std::monostate`, `std::nullopt_t`, `std::nullptr_t` | yes | yes | yes | yes |
@@ -166,20 +168,23 @@ The reasons:
 - `Martinus` hashes integers up to 8 bytes, `bool`, `double` and pointers with a multiplication and
   a rotation. Some input bits never change some output bits. Its byte hash is MurmurHash64A. When
   4 to 7 bytes follow the last full block of 8 bytes, some output bits flip with a probability of
-  0.44 instead of 0.5. This affects `float` and every string whose length leaves such a rest. Its
-  `hash_combine` and `HashState` mix every input hash again, so pairs, tuples and the other
-  combined types are avalanching even if their parts are not (unless a part has a
-  `dice_hash_overload` without a true `is_avalanching`). For example `std::pair<std::string, int>` is
-  avalanching, but `std::string` and `int` are not.
+  0.44 instead of 0.5. This affects `float` and every string whose length leaves such a rest. A
+  `long double` that is larger than `double` is hashed with MurmurHash64A over its 10 or 16 value
+  bytes, so it is avalanching. Its `hash_combine` and `HashState` mix every input hash again, so
+  pairs, tuples and the other combined types are avalanching even if their parts are not (unless a
+  part has a `dice_hash_overload` without a true `is_avalanching`). For example
+  `std::pair<std::string, int>` is avalanching, but `std::string` and `int` are not.
+- A `std::vector`, `std::array` or `std::span` of a fundamental type is hashed as one block of
+  bytes, except for the floating point types. A range of floating point values is hashed value by
+  value with `HashState`, as a range of pairs. So with `Martinus` a `std::vector<double>` is
+  avalanching and a `std::vector<int>` is not.
 - `xxh3` hashes every value and every combination with XXH3.
-- `wyhash` and `rapidhash` hash every value with a function that avalanches. Their `hash_combine`
-  and `HashState` keep the avalanche of their inputs, but they do not create it. So a combined
-  type is avalanching only if all its parts are.
-- `wyhash` hashes integer types with `wyhash64`, which takes 64 bits. An integer type with more
-  bits loses its upper bits. With libstdc++, `std::is_integral_v<__int128>` is true in the GNU
-  modes of the compilers (for example `-std=gnu++20`) and false in the strict modes. In the strict
-  modes `__int128` is hashed as bytes and is avalanching. With libc++, `std::is_integral_v<__int128>`
-  is true in every mode.
+- `wyhash` and `rapidhash` hash every value with a function that avalanches. `wyhash` hashes
+  integers up to 64 bits with `wyhash64` and `__int128` and `unsigned __int128` by their 16 bytes,
+  in every `-std` mode. Their `hash_combine` and `HashState` keep the avalanche of their inputs, but
+  they do not create it. So a combined type is avalanching only if all its parts are.
+- `-0.0` hashes like `+0.0` with every policy. So for the inputs `+0.0` and `-0.0` the sign bit
+  changes no output bit. These are two of all values of the type, so the type is still avalanching.
 - The hash of an unordered container is the xor of the hashes of its elements. This keeps
   relations between results: for all values `a`, `b` and `c`,
   `h({a, b}) ^ h({a, c}) == h({b, c})`. With `xxh3`, `wyhash` and `rapidhash` a single flipped

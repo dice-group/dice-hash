@@ -56,13 +56,18 @@ namespace dice::hash {
  * deviation of the estimate is 0.5 / sqrt(pairs). The bound is 6 standard deviations, and at least
  * 0.025. For 20000 random inputs this is 0.025, which is 7 standard deviations (0.0035). The chance
  * that a true probability of one half lands outside is below 3e-12 per pair of bits. The rows with
- * random inputs have up to about 140000 pairs of bits per policy, so there a hash that avalanches
+ * random inputs have up to about 170000 pairs of bits per policy, so there a hash that avalanches
  * fails with a chance below 1e-6, also with another seed. Types with 8 bits have 128 pairs of inputs
  * per input bit, so their bound is 0.265. Types with 16 bits have 32768 pairs, so their bound is
  * 0.025. These rows use every value, so they do not depend on the seed.
  *
  * `bool` is not in the list: it has a single bit, so each output bit flips with a probability of
- * either 0 or 1.
+ * either 0 or 1. The input bits of `long double` are its value bytes (`float_value_size`), for
+ * example the 10 bytes of x87 extended precision. Its padding bytes are not hashed.
+ *
+ * The file is also built with `-std=gnu++20` (see `tests/CMakeLists.txt`). With libstdc++,
+ * `std::is_integral_v<__int128>` is true there, so the row of `unsigned __int128` checks that `wyhash`
+ * hashes an integral `__int128` by its bytes too.
  */
 namespace dice::tests::hash::avalanche {
 	using dice::hash::DiceHash;
@@ -195,6 +200,12 @@ namespace dice::tests::hash::avalanche {
 		check_if_marked<u128, Policy>("unsigned __int128", 16, &load<u128>);
 		check_if_marked<float, Policy>("float", 4, &load<float>);
 		check_if_marked<double, Policy>("double", 8, &load<double>);
+		constexpr std::size_t long_double_bytes = dice::hash::internal::float_value_size<long double>;
+		check_if_marked<long double, Policy>("long double", long_double_bytes, [](unsigned char const *b) {
+			long double value{};
+			std::memcpy(&value, b, long_double_bytes);
+			return value;
+		});
 		check_if_marked<u64 *, Policy>("std::uint64_t *", 8, &load<u64 *>);
 		check_if_marked<Id, Policy>("Id, a std::uint64_t through its dice_hash_overload", 8, [](unsigned char const *b) {
 			return Id{load<u64>(b)};
@@ -209,6 +220,15 @@ namespace dice::tests::hash::avalanche {
 		});
 		check_if_marked<std::vector<u32>, Policy>("std::vector<std::uint32_t> of 3 elements", 12, [](unsigned char const *b) {
 			return std::vector<u32>{load<u32>(b), load<u32>(b + 4), load<u32>(b + 8)};
+		});
+		check_if_marked<std::vector<float>, Policy>("std::vector<float> of 3 elements", 12, [](unsigned char const *b) {
+			return std::vector<float>{load<float>(b), load<float>(b + 4), load<float>(b + 8)};
+		});
+		check_if_marked<std::vector<double>, Policy>("std::vector<double> of 2 elements", 16, [](unsigned char const *b) {
+			return std::vector<double>{load<double>(b), load<double>(b + 8)};
+		});
+		check_if_marked<std::array<double, 2>, Policy>("std::array<double, 2>", 16, [](unsigned char const *b) {
+			return std::array<double, 2>{load<double>(b), load<double>(b + 8)};
 		});
 
 		check_if_marked<std::pair<u64, u64>, Policy>("std::pair<std::uint64_t, std::uint64_t>", 16, [](unsigned char const *b) {
