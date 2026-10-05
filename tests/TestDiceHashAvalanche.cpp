@@ -16,10 +16,31 @@
 #include <string>
 #include <string_view>
 #include <tuple>
+#include <type_traits>
 #include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>
+
+namespace dice::tests::hash::avalanche {
+	/** A type with its own `dice_hash_overload`, which hashes the member. */
+	struct Id {
+		std::uint64_t value;
+	};
+}// namespace dice::tests::hash::avalanche
+
+namespace dice::hash {
+	/** The result is the hash of a `std::uint64_t`. So the overload declares `is_avalanching` with a
+	 * true value exactly for the policies that mark `DiceHash<std::uint64_t, Policy>`.
+	 */
+	template<typename Policy>
+	struct dice_hash_overload<Policy, dice::tests::hash::avalanche::Id> {
+		using is_avalanching = std::bool_constant<requires { typename DiceHash<std::uint64_t, Policy>::is_avalanching; }>;
+		static std::size_t dice_hash(dice::tests::hash::avalanche::Id const &id) noexcept {
+			return dice_hash_templates<Policy>::dice_hash(id.value);
+		}
+	};
+}// namespace dice::hash
 
 /** Statistical checks of the member type `is_avalanching` of `DiceHash`.
  *
@@ -174,6 +195,9 @@ namespace dice::tests::hash::avalanche {
 		check_if_marked<float, Policy>("float", 4, &load<float>);
 		check_if_marked<double, Policy>("double", 8, &load<double>);
 		check_if_marked<u64 *, Policy>("std::uint64_t *", 8, &load<u64 *>);
+		check_if_marked<Id, Policy>("Id, a std::uint64_t through its dice_hash_overload", 8, [](unsigned char const *b) {
+			return Id{load<u64>(b)};
+		});
 
 		for (std::size_t const length : std::array<std::size_t, 5>{3, 7, 12, 16, 17}) {
 			check_if_marked<std::string, Policy>("std::string of length " + std::to_string(length), length,

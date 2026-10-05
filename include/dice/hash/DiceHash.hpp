@@ -38,6 +38,13 @@ namespace dice::hash {
 
 	/** Helper struct for defining the hash for custom structs.
 	 * Because of partial specialization problems with functions, this struct must be specialized to define the hash for a custom type.
+	 *
+	 * A specialization can declare the member type `is_avalanching` (as `void`). It promises that the result of its
+	 * `dice_hash` is avalanching with `Policy`, and `DiceHash<T, Policy>` then declares `is_avalanching` too. dice-hash
+	 * does not check the promise. A member type with a `value` that is false, like `std::false_type`, makes no promise.
+	 * So `using is_avalanching = std::bool_constant<condition>;` promises it only for the policies where `condition`
+	 * is true. The specialization must be declared before `DiceHash<T, Policy>`, or a `DiceHash` of a type that
+	 * contains `T`, is first instantiated as a class.
 	 * @tparam Policy The policy to use.
 	 * @tparam T The custom type.
 	 */
@@ -389,8 +396,11 @@ namespace dice::hash {
 		 * `bytes`: `hash_bytes`, for every length.
 		 * `combine`: `hash_combine` and `HashState`. True if they give an avalanching result also
 		 * for input hashes from the paths of `dice_hash_templates` that do not avalanche.
+		 * `combine_keeps`: `hash_combine` and `HashState`. True if they give an avalanching result
+		 * when all input hashes are avalanching.
 		 * A policy without a specialization promises nothing, so `DiceHash` never declares
-		 * `is_avalanching` for it, except for the types that have only one value.
+		 * `is_avalanching` for it, except for `std::monostate`, `std::nullopt_t`, `std::nullptr_t`
+		 * and the types whose `dice_hash_overload` declares `is_avalanching`.
 		 * @tparam Policy The policy.
 		 */
 		template<typename Policy>
@@ -399,6 +409,7 @@ namespace dice::hash {
 			static constexpr bool fundamental = false;
 			static constexpr bool bytes = false;
 			static constexpr bool combine = false;
+			static constexpr bool combine_keeps = false;
 		};
 
 		/** `hash_fundamental` uses `hash_int` for types with up to 8 bytes, except `float`.
@@ -417,6 +428,7 @@ namespace dice::hash {
 												&& sizeof(T) % 8 < 4;
 			static constexpr bool bytes = false;
 			static constexpr bool combine = true;
+			static constexpr bool combine_keeps = true;
 		};
 
 		/** Every function hashes the bytes with XXH3.
@@ -427,6 +439,7 @@ namespace dice::hash {
 			static constexpr bool fundamental = true;
 			static constexpr bool bytes = true;
 			static constexpr bool combine = true;
+			static constexpr bool combine_keeps = true;
 		};
 
 		/** `hash_fundamental` uses `wyhash64` for integer types. `wyhash64` takes 64 bits, so an
@@ -434,7 +447,8 @@ namespace dice::hash {
 		 * in the GNU modes of the compilers (for example `-std=gnu++20`) and false in the strict modes.
 		 * Other types go through `wyhash`.
 		 * `hash_combine` and `HashState` call `_wymix` once per input hash. `_wymix` with a fixed
-		 * first argument does not mix every bit of the second argument.
+		 * first argument does not mix every bit of the second argument. So they keep the avalanche
+		 * of avalanching input hashes, but they do not create it.
 		 */
 		template<>
 		struct avalanching_functions<Policies::wyhash> {
@@ -442,11 +456,13 @@ namespace dice::hash {
 			static constexpr bool fundamental = !std::is_integral_v<T> || sizeof(T) <= sizeof(std::uint64_t);
 			static constexpr bool bytes = true;
 			static constexpr bool combine = false;
+			static constexpr bool combine_keeps = true;
 		};
 
 		/** `hash_fundamental` and `hash_bytes` use `rapidhash_withSeed`.
 		 * `hash_combine` and `HashState` call `rapid_mix` once per input hash. `rapid_mix` with a
-		 * fixed first argument does not mix every bit of the second argument.
+		 * fixed first argument does not mix every bit of the second argument. So they keep the
+		 * avalanche of avalanching input hashes, but they do not create it.
 		 */
 		template<>
 		struct avalanching_functions<Policies::rapidhash> {
@@ -454,19 +470,22 @@ namespace dice::hash {
 			static constexpr bool fundamental = true;
 			static constexpr bool bytes = true;
 			static constexpr bool combine = false;
+			static constexpr bool combine_keeps = true;
 		};
 
 		/** How well `dice_hash_templates<Policy>::dice_hash` mixes the result for a type.
 		 */
 		enum class mixing {
-			/** Nothing is known. Types with a `dice_hash_overload`, and results of a combine that
-			 * does not avalanche over parts that do not avalanche.
+			/** Nothing is known. Types with a `dice_hash_overload` that does not declare
+			 * `is_avalanching`, and results of a combine that does not avalanche over parts that do
+			 * not avalanche.
 			 */
 			unknown,
 			/** A path of `dice_hash_templates` whose result does not avalanche. */
 			plain,
 			/** Every input bit changes each bit of the result with a probability of about one half.
-			 * Types with only one value are avalanching, because they have no input bit.
+			 * Types with only one value are avalanching, because they have no input bit. Types whose
+			 * `dice_hash_overload` declares `is_avalanching` are avalanching by the promise of the user.
 			 */
 			avalanching
 		};
@@ -503,9 +522,29 @@ namespace dice::hash {
 		constexpr mixing combine_mixing() noexcept {
 			if constexpr (((mixing_v<Policy, Parts> == mixing::unknown) || ...)) {
 				return mixing::unknown;
-			} else if constexpr (avalanching_functions<Policy>::combine
-								 || ((mixing_v<Policy, Parts> == mixing::avalanching) && ...)) {
+			} else if constexpr (avalanching_functions<Policy>::combine) {
 				return mixing::avalanching;
+			} else if constexpr (avalanching_functions<Policy>::combine_keeps
+								 && ((mixing_v<Policy, Parts> == mixing::avalanching) && ...)) {
+				return mixing::avalanching;
+			} else {
+				return mixing::unknown;
+			}
+		}
+
+		/** Mixing of a type that `dice_hash_templates` hashes with `dice_hash_overload<Policy, T>`.
+		 * The result is avalanching if the overload declares the member type `is_avalanching`,
+		 * except if that type has a `value` that is false.
+		 */
+		template<typename Policy, typename T>
+		constexpr mixing overload_mixing() noexcept {
+			if constexpr (requires { typename dice_hash_overload<Policy, T>::is_avalanching; }) {
+				using promise = typename dice_hash_overload<Policy, T>::is_avalanching;
+				if constexpr (requires { promise::value; }) {
+					return static_cast<bool>(promise::value) ? mixing::avalanching : mixing::unknown;
+				} else {
+					return mixing::avalanching;
+				}
 			} else {
 				return mixing::unknown;
 			}
@@ -543,7 +582,7 @@ namespace dice::hash {
 				} else if constexpr (is_unordered_container_v<T>) {
 					return mixing_v<Policy, element_t<T>> == mixing::unknown ? mixing::unknown : mixing::plain;
 				} else {
-					return mixing::unknown;
+					return overload_mixing<Policy, T>();
 				}
 			}();
 		};
@@ -641,9 +680,13 @@ namespace dice::hash {
      * about one half. A hash table can then use the lowest bits of the result directly, for example
      * with a mask. This is the convention of ankerl::unordered_dense. On a 64-bit platform:
      * - Never avalanching: unordered containers, because their hash is the xor of the hashes of
-     *   their elements. Types with a `dice_hash_overload`, and every type that contains one.
+     *   their elements. Types with a `dice_hash_overload` that does not declare `is_avalanching`,
+     *   and every type that contains one.
      * - Always avalanching: `std::monostate`, `std::nullopt_t` and `std::nullptr_t`, because they
      *   have only one value.
+     * - Avalanching by the promise of the user: types whose `dice_hash_overload` declares
+     *   `is_avalanching` for the policy (see `dice_hash_overload`). The types that contain them
+     *   follow the rules below.
      * - `xxh3`: every other type.
      * - `wyhash` and `rapidhash`: fundamental types, pointers, smart pointers, strings, string
      *   views, and vectors, arrays and spans of fundamental types. Pairs, tuples, optionals,
@@ -654,6 +697,7 @@ namespace dice::hash {
      *   spans of types that are not fundamental. Fundamental types with 16 bytes, like `__int128`.
      *   Not avalanching are the other fundamental types, pointers, smart pointers, strings, string
      *   views, and vectors, arrays and spans of fundamental types.
+     * - A policy of your own: no other type.
      * The README explains the reasons.
      * @tparam T The type to define the hash for.
      * @tparam Policy The Policy defines how the hash works on a basic level. The default is `Policies::wyhash`.

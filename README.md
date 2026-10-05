@@ -147,11 +147,13 @@ On a 64-bit platform:
 | `std::pair`, `std::tuple`, `std::optional`, `std::variant`, ordered containers, and `std::vector`, `std::array` and `std::span` of other types | yes | yes | if all parts are | if all parts are |
 | unordered containers | no | no | no | no |
 | `std::monostate`, `std::nullopt_t`, `std::nullptr_t` | yes | yes | yes | yes |
-| types with a `dice_hash_overload`, and types that contain one | no | no | no | no |
+| types whose `dice_hash_overload` declares `is_avalanching` for the policy (see below) | yes | yes | yes | yes |
+| types with another `dice_hash_overload`, and types that contain one | no | no | no | no |
 
 Ordered containers are `std::map`, `std::set` and the types of `is_ordered_container`. Unordered
 containers are `std::unordered_map`, `std::unordered_set` and the types of `is_unordered_container`.
-A policy of your own has no avalanching results, except for the three types with only one value.
+A policy of your own has no avalanching results, except for the three types with only one value
+and the types whose `dice_hash_overload` declares `is_avalanching`.
 
 The reasons:
 - `Martinus` hashes integers up to 8 bytes, `bool`, `double` and pointers with a multiplication and
@@ -160,8 +162,8 @@ The reasons:
   0.44 instead of 0.5. This affects `float` and every string whose length leaves such a rest. Its
   `hash_combine` and `HashState` mix every input hash again, so pairs, tuples and the other
   combined types are avalanching even if their parts are not (unless a part has a
-  `dice_hash_overload`). For example `std::pair<std::string, int>` is avalanching, but
-  `std::string` and `int` are not.
+  `dice_hash_overload` without `is_avalanching`). For example `std::pair<std::string, int>` is
+  avalanching, but `std::string` and `int` are not.
 - `xxh3` hashes every value and every combination with XXH3.
 - `wyhash` and `rapidhash` hash every value with a function that avalanches. Their `hash_combine`
   and `HashState` keep the avalanche of their inputs, but they do not create it. So a combined
@@ -181,6 +183,38 @@ The reasons:
 list of types. It flips each input bit of many inputs and checks that each output bit flips with a
 probability between 0.475 and 0.525. Types with 8 bits have only 256 values, so their bound is
 wider.
+
+#### Avalanching hashes of your own types
+`DiceHash` cannot see what the `dice_hash_overload` of a type does. If its result is avalanching,
+declare the member type `is_avalanching` in the specialization:
+```c++
+struct Point { int x; int y; };
+namespace dice::hash {
+    template <typename Policy>
+    struct dice_hash_overload<Policy, Point> {
+        using is_avalanching = void;
+        static std::size_t dice_hash(Point const& p) noexcept {
+            return dice_hash_templates<Policy>::dice_hash(std::pair{p.x, p.y});
+        }
+    };
+}
+```
+`DiceHash<Point, Policy>` then declares `is_avalanching` for every policy. Pairs, tuples,
+optionals, variants, ordered containers, vectors, arrays and spans of `Point` follow the table above,
+with `Point` as an avalanching part. With a policy of your own they are not avalanching.
+
+The member type is a promise for each policy, and dice-hash does not check it. It holds if the
+overload returns `dice_hash_templates<Policy>::dice_hash(v)` and `DiceHash` marks the type of `v`
+for the policy. `std::pair<int, int>` is marked for every policy. A single `int` is not marked
+with `Martinus`. If `is_avalanching` names a type with a `value` that is false, it makes no promise.
+So `using is_avalanching = std::bool_constant<!std::is_same_v<Policy, Policies::Martinus>>;` promises
+it for every policy except `Martinus`.
+
+Declare the specialization before `DiceHash<Point, Policy>`, or a `DiceHash` of a type that contains
+`Point`, is first instantiated as a class. A member of the type
+`std::unordered_set<Point, dice::hash::DiceHash<Point>>` is such an instantiation. Otherwise the
+program is ill-formed: gcc reports a partial specialization after instantiation, and clang uses the
+primary template, so `DiceHash<Point>` is not marked and its call does not compile.
 
 ### The error value
 A `std::variant` which is `valueless_by_exception` holds no alternative, so no hash can be
