@@ -17,6 +17,7 @@ These three, additional, general purpose hash functions are also (optionally) pr
 
 **📦 STL out of the box:** dice-hash supports many common STL types already: 
 arithmetic types like `bool`, `int`, `double`, ... etc.; collections like `std::unordered_map/set`, `std::map/set`, `std::vector`, `std::tuple`, `std::pair`, `std::optional`, `std::variant`, `std::array` and; all combinations of them. 
+Floating point values are hashed by the bytes of their value: `-0.0` hashes like `+0.0`, and a `long double` hashes only its value bytes, not its padding. A `std::vector`, `std::array` or `std::span` of floating point values is hashed value by value, so the same holds in it.
 
 **🔩 extensible:** dice-hash supports you with helper functions to define hashes for your own classes. Checkout [usage](#usage).
 
