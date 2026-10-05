@@ -11,7 +11,11 @@
 
 #include "dice/hash/internal/Container_trait.hpp"
 #include "dice/hash/internal/DiceHashPolicies.hpp"
+#include <array>
+#include <cstddef>
+#include <cstdint>
 #include <cstring>
+#include <iterator>
 #include <map>
 #include <memory>
 #include <optional>
@@ -20,6 +24,7 @@
 #include <string>
 #include <string_view>
 #include <tuple>
+#include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -374,13 +379,288 @@ namespace dice::hash {
 		}
 	};
 
+	/** Traits that decide which `DiceHash` declares the member type `is_avalanching`.
+	 * A result is avalanching if every bit of the input changes each bit of the result with a
+	 * probability of about one half.
+	 */
+	namespace internal {
+		/** Tells which functions of a policy give avalanching results.
+		 * `fundamental<T>`: `hash_fundamental` for the type `T`.
+		 * `bytes`: `hash_bytes`, for every length.
+		 * `combine`: `hash_combine` and `HashState`. True if they give an avalanching result also
+		 * for input hashes from the paths of `dice_hash_templates` that do not avalanche.
+		 * A policy without a specialization promises nothing, so `DiceHash` never declares
+		 * `is_avalanching` for it, except for the types that have only one value.
+		 * @tparam Policy The policy.
+		 */
+		template<typename Policy>
+		struct avalanching_functions {
+			template<typename T>
+			static constexpr bool fundamental = false;
+			static constexpr bool bytes = false;
+			static constexpr bool combine = false;
+		};
+
+		/** `hash_fundamental` uses `hash_int` for types with up to 8 bytes, except `float`.
+		 * `float` and types with more than 8 bytes go through `hash_bytes`.
+		 * `hash_int` multiplies and rotates, so some input bits never change some output bits.
+		 * `hash_bytes` is MurmurHash64A. When 4 to 7 bytes follow the last full block of 8 bytes,
+		 * some output bits flip with a probability of 0.44 instead of 0.5. This affects `float`
+		 * and every string whose length leaves such a rest.
+		 * `hash_combine` and `HashState` mix each input hash and mix the result again at the end.
+		 */
+		template<>
+		struct avalanching_functions<Policies::Martinus> {
+			template<typename T>
+			static constexpr bool fundamental = sizeof(T) != sizeof(std::size_t)
+												&& (sizeof(T) > sizeof(std::size_t) || std::is_floating_point_v<T>)
+												&& sizeof(T) % 8 < 4;
+			static constexpr bool bytes = false;
+			static constexpr bool combine = true;
+		};
+
+		/** Every function hashes the bytes with XXH3.
+		 */
+		template<>
+		struct avalanching_functions<Policies::xxh3> {
+			template<typename T>
+			static constexpr bool fundamental = true;
+			static constexpr bool bytes = true;
+			static constexpr bool combine = true;
+		};
+
+		/** `hash_fundamental` uses `wyhash64` for integer types. `wyhash64` takes 64 bits, so an
+		 * integer type with more bits loses its upper bits. `std::is_integral_v<__int128>` is true
+		 * in the GNU modes of the compilers (for example `-std=gnu++20`) and false in the strict modes.
+		 * Other types go through `wyhash`.
+		 * `hash_combine` and `HashState` call `_wymix` once per input hash. `_wymix` with a fixed
+		 * first argument does not mix every bit of the second argument.
+		 */
+		template<>
+		struct avalanching_functions<Policies::wyhash> {
+			template<typename T>
+			static constexpr bool fundamental = !std::is_integral_v<T> || sizeof(T) <= sizeof(std::uint64_t);
+			static constexpr bool bytes = true;
+			static constexpr bool combine = false;
+		};
+
+		/** `hash_fundamental` and `hash_bytes` use `rapidhash_withSeed`.
+		 * `hash_combine` and `HashState` call `rapid_mix` once per input hash. `rapid_mix` with a
+		 * fixed first argument does not mix every bit of the second argument.
+		 */
+		template<>
+		struct avalanching_functions<Policies::rapidhash> {
+			template<typename T>
+			static constexpr bool fundamental = true;
+			static constexpr bool bytes = true;
+			static constexpr bool combine = false;
+		};
+
+		/** How well `dice_hash_templates<Policy>::dice_hash` mixes the result for a type.
+		 */
+		enum class mixing {
+			/** Nothing is known. Types with a `dice_hash_overload`, and results of a combine that
+			 * does not avalanche over parts that do not avalanche.
+			 */
+			unknown,
+			/** A path of `dice_hash_templates` whose result does not avalanche. */
+			plain,
+			/** Every input bit changes each bit of the result with a probability of about one half.
+			 * Types with only one value are avalanching, because they have no input bit.
+			 */
+			avalanching
+		};
+
+		/** The mixing of a type with its cv-qualifiers removed. The specializations below follow
+		 * the overloads of `dice_hash_templates`.
+		 * @tparam Policy The policy.
+		 * @tparam T The type to hash, without cv-qualifiers.
+		 */
+		template<typename Policy, typename T>
+		struct mixing_of;
+
+		template<typename Policy, typename T>
+		inline constexpr mixing mixing_v = mixing_of<Policy, std::remove_cv_t<T>>::value;
+
+		/** Mixing of `hash_fundamental`. */
+		template<typename Policy, typename T>
+		constexpr mixing fundamental_mixing() noexcept {
+			if constexpr (std::is_null_pointer_v<T>) {
+				return mixing::avalanching;
+			} else {
+				return avalanching_functions<Policy>::template fundamental<T> ? mixing::avalanching : mixing::plain;
+			}
+		}
+
+		/** Mixing of `hash_bytes`. */
+		template<typename Policy>
+		constexpr mixing bytes_mixing() noexcept {
+			return avalanching_functions<Policy>::bytes ? mixing::avalanching : mixing::plain;
+		}
+
+		/** Mixing of `hash_combine` or `HashState` over the hashes of values of the types `Parts`. */
+		template<typename Policy, typename... Parts>
+		constexpr mixing combine_mixing() noexcept {
+			if constexpr (((mixing_v<Policy, Parts> == mixing::unknown) || ...)) {
+				return mixing::unknown;
+			} else if constexpr (avalanching_functions<Policy>::combine
+								 || ((mixing_v<Policy, Parts> == mixing::avalanching) && ...)) {
+				return mixing::avalanching;
+			} else {
+				return mixing::unknown;
+			}
+		}
+
+		/** Mixing of a sequence that holds values of the type `T`: `hash_bytes` over the values if
+		 * `T` is fundamental, otherwise `HashState` over the hashes of the values.
+		 */
+		template<typename Policy, typename T>
+		constexpr mixing sequence_mixing() noexcept {
+			if constexpr (is_fundamental<T>) {
+				return bytes_mixing<Policy>();
+			} else {
+				return combine_mixing<Policy, T>();
+			}
+		}
+
+		/** The type of the elements that a range-based for loop over a `Container const &` gives. */
+		template<typename Container>
+		using element_t = std::remove_cvref_t<decltype(*std::begin(std::declval<Container const &>()))>;
+
+		/** Fundamental types, the containers of `is_ordered_container` and `is_unordered_container`,
+		 * and types with a `dice_hash_overload`.
+		 * The hash of an unordered container is the xor of the hashes of its elements. This keeps
+		 * relations between results, for example `h({a, b}) ^ h({a, c}) == h({b, c})`. So it is
+		 * never avalanching.
+		 */
+		template<typename Policy, typename T>
+		struct mixing_of {
+			static constexpr mixing value = [] {
+				if constexpr (is_fundamental<T>) {
+					return fundamental_mixing<Policy, T>();
+				} else if constexpr (is_ordered_container_v<T>) {
+					return combine_mixing<Policy, element_t<T>>();
+				} else if constexpr (is_unordered_container_v<T>) {
+					return mixing_v<Policy, element_t<T>> == mixing::unknown ? mixing::unknown : mixing::plain;
+				} else {
+					return mixing::unknown;
+				}
+			}();
+		};
+
+		template<typename Policy, typename CharT>
+		struct mixing_of<Policy, std::basic_string<CharT>> {
+			static constexpr mixing value = bytes_mixing<Policy>();
+		};
+
+		template<typename Policy, typename CharT>
+		struct mixing_of<Policy, std::basic_string_view<CharT>> {
+			static constexpr mixing value = bytes_mixing<Policy>();
+		};
+
+		template<typename Policy, typename T>
+		struct mixing_of<Policy, T *> {
+			static constexpr mixing value = fundamental_mixing<Policy, T *>();
+		};
+
+		template<typename Policy, typename T>
+		struct mixing_of<Policy, std::unique_ptr<T>> {
+			static constexpr mixing value = mixing_v<Policy, typename std::unique_ptr<T>::pointer>;
+		};
+
+		template<typename Policy, typename T>
+		struct mixing_of<Policy, std::shared_ptr<T>> {
+			static constexpr mixing value = mixing_v<Policy, typename std::shared_ptr<T>::element_type *>;
+		};
+
+		template<typename Policy, typename T, std::size_t N>
+		struct mixing_of<Policy, std::array<T, N>> {
+			static constexpr mixing value = sequence_mixing<Policy, T>();
+		};
+
+		/** `std::vector<bool>` has no hash, its `dice_hash` does not compile. */
+		template<typename Policy, typename T>
+		struct mixing_of<Policy, std::vector<T>> {
+			static constexpr mixing value = std::is_same_v<std::remove_cv_t<T>, bool> ? mixing::unknown : sequence_mixing<Policy, T>();
+		};
+
+		template<typename Policy, typename T, std::size_t Extent>
+		struct mixing_of<Policy, std::span<T, Extent>> {
+			static constexpr mixing value = sequence_mixing<Policy, T>();
+		};
+
+		template<typename Policy, typename... Ts>
+		struct mixing_of<Policy, std::tuple<Ts...>> {
+			static constexpr mixing value = combine_mixing<Policy, Ts...>();
+		};
+
+		template<typename Policy, typename T, typename V>
+		struct mixing_of<Policy, std::pair<T, V>> {
+			static constexpr mixing value = combine_mixing<Policy, T, V>();
+		};
+
+		template<typename Policy>
+		struct mixing_of<Policy, std::monostate> {
+			static constexpr mixing value = mixing::avalanching;
+		};
+
+		template<typename Policy>
+		struct mixing_of<Policy, std::nullopt_t> {
+			static constexpr mixing value = mixing::avalanching;
+		};
+
+		/** An optional combines its index with its value, or with `std::nullopt` if it is empty.
+		 * `std::nullopt_t` is avalanching, so it is left out.
+		 */
+		template<typename Policy, typename T>
+		struct mixing_of<Policy, std::optional<T>> {
+			static constexpr mixing value = combine_mixing<Policy, std::size_t, T>();
+		};
+
+		/** A variant combines its index with the value of the active alternative. */
+		template<typename Policy, typename... Ts>
+		struct mixing_of<Policy, std::variant<Ts...>> {
+			static constexpr mixing value = combine_mixing<Policy, std::size_t, Ts...>();
+		};
+
+		/** Base of `DiceHash` that declares `is_avalanching` if `avalanching` is true. */
+		template<bool avalanching>
+		struct avalanching_marker {};
+
+		template<>
+		struct avalanching_marker<true> {
+			using is_avalanching = void;
+		};
+	}// namespace internal
+
 	/** Wrapper class for the dice::hash::dice_hash function.
      * It is a typical hash interface.
+     *
+     * `DiceHash` declares the member type `is_avalanching` (as `void`) exactly if its result is
+     * avalanching: every bit of the input changes each bit of the result with a probability of
+     * about one half. A hash table can then use the lowest bits of the result directly, for example
+     * with a mask. This is the convention of ankerl::unordered_dense. On a 64-bit platform:
+     * - Never avalanching: unordered containers, because their hash is the xor of the hashes of
+     *   their elements. Types with a `dice_hash_overload`, and every type that contains one.
+     * - Always avalanching: `std::monostate`, `std::nullopt_t` and `std::nullptr_t`, because they
+     *   have only one value.
+     * - `xxh3`: every other type.
+     * - `wyhash` and `rapidhash`: fundamental types, pointers, smart pointers, strings, string
+     *   views, and vectors, arrays and spans of fundamental types. Pairs, tuples, optionals,
+     *   variants and the other containers only if all their parts are avalanching. With `wyhash`,
+     *   an integer type with more than 64 bits is not avalanching if `std::is_integral_v` is true
+     *   for it. This is the case for `__int128` in the GNU modes of the compilers.
+     * - `Martinus`: pairs, tuples, optionals, variants, ordered containers, and vectors, arrays and
+     *   spans of types that are not fundamental. Fundamental types with 16 bytes, like `__int128`.
+     *   Not avalanching are the other fundamental types, pointers, smart pointers, strings, string
+     *   views, and vectors, arrays and spans of fundamental types.
+     * The README explains the reasons.
      * @tparam T The type to define the hash for.
      * @tparam Policy The Policy defines how the hash works on a basic level. The default is `Policies::wyhash`.
      */
 	template<typename T, Policies::HashPolicy Policy = Policies::wyhash>
-	struct DiceHash : private Policy {
+	struct DiceHash : private Policy,
+					  public internal::avalanching_marker<internal::mixing_v<Policy, T> == internal::mixing::avalanching> {
 		/** Policy function for combining already hashed values.
 		 * This using declaration is equal to a handwritten wrapper function.
 		 *@param list Initializer list of std::size_t hashes.

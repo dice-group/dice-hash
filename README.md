@@ -127,6 +127,61 @@ One simple example can be found [here](examples/customContainer.cpp).
 If you want to use `DiceHash` in a different structure (like `std::unordered_map`), you will need to set `DiceHash` as the correct template parameter.
 [This](examples/usageForUnorderedSet.cpp) is one example.
 
+### Avalanching hashes
+A hash is avalanching if every bit of the input changes each bit of the result with a probability
+of about one half. A hash table can then use the lowest bits of the result directly, for example
+with a mask, and needs no extra mixing step.
+
+`DiceHash<T, Policy>` declares the member type `is_avalanching` (as `void`) exactly for the
+combinations of type and policy whose result is avalanching. This is the convention of
+[ankerl::unordered_dense](https://github.com/martinus/unordered_dense). A hash table can check it with
+`requires { typename Hash::is_avalanching; }`.
+
+On a 64-bit platform:
+
+| type | `Martinus` | `xxh3` | `wyhash` | `rapidhash` |
+|---|---|---|---|---|
+| integers up to 64 bits, `bool`, character types, `std::byte`, `float`, `double`, pointers, `std::unique_ptr`, `std::shared_ptr` | no | yes | yes | yes |
+| fundamental types with 16 bytes, like `__int128` | yes | yes | yes, if `std::is_integral_v<T>` is false | yes |
+| strings, string views, and `std::vector`, `std::array` and `std::span` of fundamental types | no | yes | yes | yes |
+| `std::pair`, `std::tuple`, `std::optional`, `std::variant`, ordered containers, and `std::vector`, `std::array` and `std::span` of other types | yes | yes | if all parts are | if all parts are |
+| unordered containers | no | no | no | no |
+| `std::monostate`, `std::nullopt_t`, `std::nullptr_t` | yes | yes | yes | yes |
+| types with a `dice_hash_overload`, and types that contain one | no | no | no | no |
+
+Ordered containers are `std::map`, `std::set` and the types of `is_ordered_container`. Unordered
+containers are `std::unordered_map`, `std::unordered_set` and the types of `is_unordered_container`.
+A policy of your own has no avalanching results, except for the three types with only one value.
+
+The reasons:
+- `Martinus` hashes integers up to 8 bytes, `bool`, `double` and pointers with a multiplication and
+  a rotation. Some input bits never change some output bits. Its byte hash is MurmurHash64A. When
+  4 to 7 bytes follow the last full block of 8 bytes, some output bits flip with a probability of
+  0.44 instead of 0.5. This affects `float` and every string whose length leaves such a rest. Its
+  `hash_combine` and `HashState` mix every input hash again, so pairs, tuples and the other
+  combined types are avalanching even if their parts are not (unless a part has a
+  `dice_hash_overload`). For example `std::pair<std::string, int>` is avalanching, but
+  `std::string` and `int` are not.
+- `xxh3` hashes every value and every combination with XXH3.
+- `wyhash` and `rapidhash` hash every value with a function that avalanches. Their `hash_combine`
+  and `HashState` keep the avalanche of their inputs, but they do not create it. So a combined
+  type is avalanching only if all its parts are.
+- `wyhash` hashes integer types with `wyhash64`, which takes 64 bits. An integer type with more
+  bits loses its upper bits. `std::is_integral_v<__int128>` is true in the GNU modes of the
+  compilers (for example `-std=gnu++20`) and false in the strict modes. In the strict modes
+  `__int128` is hashed as bytes and is avalanching.
+- The hash of an unordered container is the xor of the hashes of its elements. This keeps
+  relations between results: for all values `a`, `b` and `c`,
+  `h({a, b}) ^ h({a, c}) == h({b, c})`. With `xxh3`, `wyhash` and `rapidhash` a single flipped
+  input bit still changes about half of the result bits, but the result is not marked for any
+  policy.
+- The types with only one value have no input bit that could fail the test.
+
+[TestDiceHashAvalanche.cpp](tests/TestDiceHashAvalanche.cpp) checks every marked combination of a
+list of types. It flips each input bit of many inputs and checks that each output bit flips with a
+probability between 0.475 and 0.525. Types with 8 bits have only 256 values, so their bound is
+wider.
+
 ### The error value
 A `std::variant` which is `valueless_by_exception` holds no alternative, so no hash can be
 calculated for it. In that case `DiceHash` returns the `ErrorValue` of the policy, which
