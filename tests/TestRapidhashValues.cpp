@@ -25,7 +25,16 @@
 #error "the copy of rapidhash.h leaves one of its macros defined"
 #endif
 
-// dice-hash defines no macro of the original `rapidhash.h`, so it does not change the mode of the original.
+// The copy of `wyhash.h` undefines its own macros `DICE_HASH_WYHASH_LIKELY` and `DICE_HASH_WYHASH_UNLIKELY` at its end.
+#if defined(DICE_HASH_WYHASH_LIKELY) || defined(DICE_HASH_WYHASH_UNLIKELY)
+#error "the copy of wyhash.h leaves one of its macros defined"
+#endif
+
+// dice-hash defines no macro of the original `rapidhash.h`: none of its `RAPIDHASH_` macros, and not `_likely_` or
+// `_unlikely_`. So it does not change the mode of the original, and the macros of the original are not defined twice.
+#if defined(_likely_) || defined(_unlikely_)
+#error "dice-hash defines _likely_ or _unlikely_, which the original rapidhash.h defines too"
+#endif
 #if !DICE_HASH_TEST_RAPIDHASH_MACROS
 #if defined(RAPIDHASH_PROTECTED) || defined(RAPIDHASH_FAST) || defined(RAPIDHASH_COMPACT) || defined(RAPIDHASH_UNROLLED) \
 		|| defined(RAPIDHASH_ALWAYS_INLINE) || defined(RAPIDHASH_INLINE) || defined(RAPIDHASH_INLINE_CONSTEXPR)          \

@@ -34,13 +34,13 @@
 #pragma intrinsic(_umul128)
 #endif
 
-//likely and unlikely macros
+//likely and unlikely macros, undefined at the end of this header
 #if defined(__GNUC__) || defined(__INTEL_COMPILER) || defined(__clang__)
-#define _likely_(x) __builtin_expect(x, 1)
-#define _unlikely_(x) __builtin_expect(x, 0)
+#define DICE_HASH_WYHASH_LIKELY(x) __builtin_expect(x, 1)
+#define DICE_HASH_WYHASH_UNLIKELY(x) __builtin_expect(x, 0)
 #else
-#define _likely_(x) (x)
-#define _unlikely_(x) (x)
+#define DICE_HASH_WYHASH_LIKELY(x) (x)
+#define DICE_HASH_WYHASH_UNLIKELY(x) (x)
 #endif
 namespace dice::hash::wyhash {
 	//128bit multiply function
@@ -160,18 +160,18 @@ namespace dice::hash::wyhash {
 		const uint8_t *p = (const uint8_t *) key;
 		seed ^= *secret;
 		uint64_t a, b;
-		if (_likely_(len <= 16)) {
-			if (_likely_(len >= 4)) {
+		if (DICE_HASH_WYHASH_LIKELY(len <= 16)) {
+			if (DICE_HASH_WYHASH_LIKELY(len >= 4)) {
 				a = (_wyr4(p) << 32) | _wyr4(p + ((len >> 3) << 2));
 				b = (_wyr4(p + len - 4) << 32) | _wyr4(p + len - 4 - ((len >> 3) << 2));
-			} else if (_likely_(len > 0)) {
+			} else if (DICE_HASH_WYHASH_LIKELY(len > 0)) {
 				a = _wyr3(p, len);
 				b = 0;
 			} else
 				a = b = 0;
 		} else {
 			size_t i = len;
-			if (_unlikely_(i > 48)) {
+			if (DICE_HASH_WYHASH_UNLIKELY(i > 48)) {
 				uint64_t see1 = seed, see2 = seed;
 				do {
 					seed = _wymix(_wyr8(p) ^ secret[1], _wyr8(p + 8) ^ seed);
@@ -179,10 +179,10 @@ namespace dice::hash::wyhash {
 					see2 = _wymix(_wyr8(p + 32) ^ secret[3], _wyr8(p + 40) ^ see2);
 					p += 48;
 					i -= 48;
-				} while (_likely_(i > 48));
+				} while (DICE_HASH_WYHASH_LIKELY(i > 48));
 				seed ^= see1 ^ see2;
 			}
-			while (_unlikely_(i > 16)) {
+			while (DICE_HASH_WYHASH_UNLIKELY(i > 16)) {
 				seed = _wymix(_wyr8(p) ^ secret[1], _wyr8(p + 8) ^ seed);
 				i -= 16;
 				p += 16;
@@ -273,6 +273,10 @@ namespace dice::hash::wyhash {
 
 #endif
 }
+
+#undef DICE_HASH_WYHASH_LIKELY
+#undef DICE_HASH_WYHASH_UNLIKELY
+
 /* The Unlicense
 This is free and unencumbered software released into the public domain.
 
