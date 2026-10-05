@@ -436,8 +436,8 @@ namespace dice::tests::hash {
 		// In the protected mode `rapid_mix` xors the 128-bit product into its operands, so mixing
 		// in 0 keeps the other operand. In the fast mode the product replaces the operands, and
 		// the product with 0 is 0.
-		CHECK(rapid_mix(Policy::kSeed, 0) == Policy::kSeed);
-		CHECK(rapid_mix(0, 42) == 42);
+		CHECK(dice::hash::rapidhash::rapid_mix(Policy::kSeed, 0) == Policy::kSeed);
+		CHECK(dice::hash::rapidhash::rapid_mix(0, 42) == 42);
 	}
 }// namespace dice::tests::hash
 

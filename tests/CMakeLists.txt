@@ -129,3 +129,25 @@ if (WITH_SODIUM)
         endforeach ()
     endif ()
 endif ()
+
+# `TestRapidhashValues.cpp` is built once without and once with the macros `RAPIDHASH_FAST` and
+# `RAPIDHASH_UNROLLED` of the original `rapidhash.h`. The copy of dice-hash reads neither, so both
+# builds check the same values.
+add_executable(tests_rapidhash_values TestRapidhashValues.cpp)
+target_link_libraries(tests_rapidhash_values PRIVATE
+        Catch2::Catch2WithMain
+        dice-hash::dice-hash
+        )
+set_target_properties(tests_rapidhash_values PROPERTIES CXX_STANDARD 20)
+target_compile_definitions(tests_rapidhash_values PRIVATE DICE_HASH_TEST_RAPIDHASH_MACROS=0)
+catch_discover_tests(tests_rapidhash_values TEST_SUFFIX " (no rapidhash macros)")
+
+add_executable(tests_rapidhash_values_macros TestRapidhashValues.cpp)
+target_link_libraries(tests_rapidhash_values_macros PRIVATE
+        Catch2::Catch2WithMain
+        dice-hash::dice-hash
+        )
+set_target_properties(tests_rapidhash_values_macros PROPERTIES CXX_STANDARD 20)
+target_compile_definitions(tests_rapidhash_values_macros PRIVATE
+        DICE_HASH_TEST_RAPIDHASH_MACROS=1 RAPIDHASH_FAST RAPIDHASH_UNROLLED)
+catch_discover_tests(tests_rapidhash_values_macros TEST_SUFFIX " (RAPIDHASH_FAST and RAPIDHASH_UNROLLED)")
