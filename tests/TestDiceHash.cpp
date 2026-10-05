@@ -2,6 +2,9 @@
 
 #include <dice/hash.hpp>
 
+#include <cstring>
+#include <limits>
+
 #define AllPoliciesToTestForDiceHash dice::hash::Policies::Martinus, dice::hash::Policies::xxh3, \
 									 dice::hash::Policies::wyhash, dice::hash::Policies::rapidhash
 #define AllTypesToTestForDiceHash int, long, std::size_t, std::byte, __int128, unsigned __int128, std::string, std::string_view, int *, long *,             \
@@ -438,6 +441,186 @@ namespace dice::tests::hash {
 		// the product with 0 is 0.
 		CHECK(dice::hash::rapidhash::rapid_mix(Policy::kSeed, 0) == Policy::kSeed);
 		CHECK(dice::hash::rapidhash::rapid_mix(0, 42) == 42);
+	}
+
+	/** The number of bytes that hold the value of a `long double`.
+	 * It comes from the macros of gcc and clang, not from the code under test: 10 for x87 extended
+	 * precision, else every byte.
+	 */
+#if defined(__LDBL_MANT_DIG__) && __LDBL_MANT_DIG__ == 64
+	inline constexpr std::size_t long_double_value_size = 10;
+#else
+	inline constexpr std::size_t long_double_value_size = sizeof(long double);
+#endif
+
+	/** The hash of a floating point value, computed from the primitives of the policy: the hash of
+	 * the value bytes (`hash_int` of them for Martinus if they fill a `size_t`). For `float`, `double`
+	 * and a `long double` without padding, this is how the policies hashed floating point values
+	 * before they hashed only the value bytes.
+	 */
+	template<typename Policy, typename T>
+	std::size_t value_bytes_hash(T const &x) {
+		constexpr std::size_t value_size = std::is_same_v<T, long double> ? long_double_value_size : sizeof(T);
+		if constexpr (std::is_same_v<Policy, dice::hash::Policies::Martinus> && value_size == sizeof(std::size_t)) {
+			std::size_t word;
+			std::memcpy(&word, &x, sizeof(word));
+			return dice::hash::martinus::hash_int(word);
+		} else {
+			return Policy::hash_bytes(&x, value_size);
+		}
+	}
+
+	/** Checks for some values of `T` that they hash to `value_bytes_hash`.
+	 */
+	template<typename Policy, typename T>
+	void check_value_bytes_hash() {
+		using limits = std::numeric_limits<T>;
+		static_assert(limits::is_specialized);
+		T const values[] = {T(0), T(1), T(-1.5), T(3.14159), limits::max(), limits::lowest(), limits::min(),
+							limits::denorm_min(), -limits::denorm_min(), limits::infinity(), -limits::infinity(),
+							limits::quiet_NaN()};
+		for (T const &x : values) {
+			CAPTURE(static_cast<double>(x));
+			REQUIRE(getHash<Policy>(x) == value_bytes_hash<Policy>(x));
+		}
+	}
+
+	/** Writes `value` to `target` and sets every byte after the value bytes to `padding`.
+	 * The bytes are written with `std::memcpy`, because a copy of a `long double` by value need not
+	 * keep the padding.
+	 */
+	void write_with_padding(long double *target, long double value, unsigned char padding) {
+		unsigned char bytes[sizeof(long double)];
+		std::memset(bytes, padding, sizeof(bytes));
+		std::memcpy(bytes, &value, long_double_value_size);
+		std::memcpy(target, bytes, sizeof(bytes));
+	}
+
+	TEST_CASE("The format of floating point types is detected", "[DiceHash]") {
+		using dice::hash::internal::FloatFormat;
+		using dice::hash::internal::float_format;
+		using dice::hash::internal::float_format_of;
+		using dice::hash::internal::float_value_size_of;
+
+		// arguments: radix, digits, max_exponent, sizeof, little endian
+		// IEEE binary32 and binary64
+		STATIC_REQUIRE(float_format_of(2, 24, 128, 4, true) == FloatFormat::all_bytes);
+		STATIC_REQUIRE(float_format_of(2, 53, 1024, 8, true) == FloatFormat::all_bytes);
+		// IEEE binary128: long double on aarch64 Linux, RISC-V and s390x
+		STATIC_REQUIRE(float_format_of(2, 113, 16384, 16, true) == FloatFormat::all_bytes);
+		STATIC_REQUIRE(float_format_of(2, 113, 16384, 16, false) == FloatFormat::all_bytes);
+		// x87 extended precision: long double on x86_64 (16 bytes) and x86 (12 bytes)
+		STATIC_REQUIRE(float_format_of(2, 64, 16384, 16, true) == FloatFormat::x87_extended);
+		STATIC_REQUIRE(float_format_of(2, 64, 16384, 12, true) == FloatFormat::x87_extended);
+		// m68k extended precision: the limits of x87, but big endian with padding in the middle
+		STATIC_REQUIRE(float_format_of(2, 64, 16384, 12, false) == FloatFormat::all_bytes);
+		// double-double: long double on PowerPC
+		STATIC_REQUIRE(float_format_of(2, 106, 1024, 16, true) == FloatFormat::double_double);
+		STATIC_REQUIRE(float_format_of(2, 106, 1024, 16, false) == FloatFormat::double_double);
+
+		STATIC_REQUIRE(float_value_size_of(FloatFormat::x87_extended, 16) == 10);
+		STATIC_REQUIRE(float_value_size_of(FloatFormat::x87_extended, 12) == 10);
+		STATIC_REQUIRE(float_value_size_of(FloatFormat::double_double, 16) == 16);
+		STATIC_REQUIRE(float_value_size_of(FloatFormat::all_bytes, 16) == 16);
+		STATIC_REQUIRE(float_value_size_of(FloatFormat::all_bytes, 8) == 8);
+
+		STATIC_REQUIRE(float_format<float> == FloatFormat::all_bytes);
+		STATIC_REQUIRE(float_format<double> == FloatFormat::all_bytes);
+#if defined(__LDBL_MANT_DIG__) && defined(__LDBL_MAX_EXP__)
+		// the macros of gcc and clang name the format of `long double` independent of `std::numeric_limits`
+		constexpr FloatFormat expected = __LDBL_MANT_DIG__ == 64 && __LDBL_MAX_EXP__ == 16384 ? FloatFormat::x87_extended
+										 : __LDBL_MANT_DIG__ == 106							  ? FloatFormat::double_double
+																							  : FloatFormat::all_bytes;
+		STATIC_REQUIRE(float_format<long double> == expected);
+#endif
+	}
+
+	TEST_CASE("The low part of a double-double value is +0.0 in canonical form", "[DiceHash]") {
+		using dice::hash::internal::canonical_float_bytes;
+		using dice::hash::internal::FloatFormat;
+		using Bytes = std::array<unsigned char, 16>;
+
+		// -1.0 as (-1.0, -0.0), the result of negating 1.0, and as (-1.0, +0.0)
+		constexpr Bytes le_negated{0, 0, 0, 0, 0, 0, 0xf0, 0xbf, 0, 0, 0, 0, 0, 0, 0, 0x80};
+		constexpr Bytes le_converted{0, 0, 0, 0, 0, 0, 0xf0, 0xbf, 0, 0, 0, 0, 0, 0, 0, 0};
+		STATIC_REQUIRE(canonical_float_bytes<FloatFormat::double_double>(le_negated, true) == le_converted);
+		STATIC_REQUIRE(canonical_float_bytes<FloatFormat::double_double>(le_converted, true) == le_converted);
+
+		constexpr Bytes be_negated{0xbf, 0xf0, 0, 0, 0, 0, 0, 0, 0x80, 0, 0, 0, 0, 0, 0, 0};
+		constexpr Bytes be_converted{0xbf, 0xf0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+		STATIC_REQUIRE(canonical_float_bytes<FloatFormat::double_double>(be_negated, false) == be_converted);
+		STATIC_REQUIRE(canonical_float_bytes<FloatFormat::double_double>(be_converted, false) == be_converted);
+
+		// a nonzero low part does not change: 1.0 + 2^-60, and its negation
+		constexpr Bytes le_low{0, 0, 0, 0, 0, 0, 0xf0, 0x3f, 0, 0, 0, 0, 0, 0, 0x30, 0x3c};
+		constexpr Bytes le_negative_low{0, 0, 0, 0, 0, 0, 0xf0, 0xbf, 0, 0, 0, 0, 0, 0, 0x30, 0xbc};
+		STATIC_REQUIRE(canonical_float_bytes<FloatFormat::double_double>(le_low, true) == le_low);
+		STATIC_REQUIRE(canonical_float_bytes<FloatFormat::double_double>(le_negative_low, true) == le_negative_low);
+	}
+
+	TEMPLATE_TEST_CASE("Floating point values hash their value bytes", "[DiceHash]", AllPoliciesToTestForDiceHash) {
+		using CurrentPolicy = TestType;
+
+		SECTION("float and double hash as the policy hashes their bytes") {
+			check_value_bytes_hash<CurrentPolicy, float>();
+			check_value_bytes_hash<CurrentPolicy, double>();
+		}
+
+		SECTION("long double hashes only its value bytes") {
+			check_value_bytes_hash<CurrentPolicy, long double>();
+		}
+
+#ifdef __SIZEOF_FLOAT128__
+		SECTION("__float128 hashes its 16 bytes where it is a floating point type") {
+			// libstdc++ counts `__float128` as a floating point type in the GNU modes (`-std=gnu++20`).
+			// `tests_dice_hash_gnu` is built in such a mode.
+#if defined(DICE_HASH_TEST_GNU_MODE) && defined(__GLIBCXX__) && defined(_GLIBCXX_USE_FLOAT128)
+			STATIC_REQUIRE(std::is_floating_point_v<__float128>);
+#endif
+			if constexpr (std::is_floating_point_v<__float128>) {
+				STATIC_REQUIRE(dice::hash::internal::float_value_size<__float128> == 16);
+				check_value_bytes_hash<CurrentPolicy, __float128>();
+			} else {
+				SUCCEED("__float128 is not a floating point type in this mode");
+			}
+		}
+#endif
+
+		SECTION("Ranges of long double with the same values and different padding hash the same") {
+			if constexpr (long_double_value_size < sizeof(long double)) {
+				for (long double const value : {1.5L, -2.25L, 0.0L}) {
+					CAPTURE(static_cast<double>(value));
+					// Only ranges are checked: `hash_fundamental` takes a single value by value, and
+					// the copy need not keep the padding of the original object.
+					std::array<long double, 2> arr_x;
+					std::array<long double, 2> arr_y;
+					std::vector<long double> vec_x(2);
+					std::vector<long double> vec_y(2);
+					for (std::size_t i = 0; i < 2; ++i) {
+						write_with_padding(&arr_x[i], value, 0x00);
+						write_with_padding(&arr_y[i], value, 0xff);
+						write_with_padding(&vec_x[i], value, 0x5a);
+						write_with_padding(&vec_y[i], value, 0xa5);
+					}
+					REQUIRE(getHash<CurrentPolicy>(arr_x) == getHash<CurrentPolicy>(arr_y));
+					REQUIRE(getHash<CurrentPolicy>(vec_x) == getHash<CurrentPolicy>(vec_y));
+					REQUIRE(getHash<CurrentPolicy>(std::span<long double const>{arr_x}) == getHash<CurrentPolicy>(std::span<long double const>{vec_y}));
+				}
+			} else {
+				WARN("long double has no padding bytes on this platform");
+			}
+		}
+
+		SECTION("Vectors and arrays of long double generate the same hash") {
+			REQUIRE(test_vec_arr<CurrentPolicy>(1.0L, 2.0L, 3.0L));
+		}
+
+		SECTION("Ranges of float and double hash as one block of bytes") {
+			std::vector<float> const floats{1.0f, -2.5f, 3.25f};
+			std::vector<double> const doubles{1.0, -2.5, 3.25};
+			REQUIRE(getHash<CurrentPolicy>(floats) == CurrentPolicy::hash_bytes(floats.data(), sizeof(float) * floats.size()));
+			REQUIRE(getHash<CurrentPolicy>(doubles) == CurrentPolicy::hash_bytes(doubles.data(), sizeof(double) * doubles.size()));
+		}
 	}
 }// namespace dice::tests::hash
 

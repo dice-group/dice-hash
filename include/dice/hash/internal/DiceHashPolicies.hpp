@@ -1,6 +1,7 @@
 #ifndef DICE_HASH_DICEHASHPOLICIES_HPP
 #define DICE_HASH_DICEHASHPOLICIES_HPP
 
+#include <dice/hash/internal/FloatingPoint.hpp>
 #include <dice/hash/internal/rapidhash/rapidhash.h>
 #include <dice/hash/internal/robinhood/martinus_robinhood_hash.hpp>
 #include <dice/hash/internal/wyhash/wyhash.h>
@@ -42,14 +43,18 @@ namespace dice::hash::Policies {
 		};
 		inline static constexpr std::size_t ErrorValue = ~static_cast<std::size_t>(kSeed);
 
-		/** Integers of up to 64 bits are hashed with `wyhash64`. All other types are hashed by
-		 * their bytes, also `__int128` and `unsigned __int128`, so that `wyhash64` does not truncate
-		 * them to 64 bits.
+		/** Integers of up to 64 bits are hashed with `wyhash64`. Floating point values are hashed by
+		 * their value bytes (`internal::float_value_bytes`). All other types are hashed by their
+		 * bytes, also `__int128` and `unsigned __int128`, so that `wyhash64` does not truncate them to
+		 * 64 bits.
 		 */
 		template<typename T>
 		static std::size_t hash_fundamental(T x) noexcept {
 			if constexpr (std::is_integral_v<T> && sizeof(T) <= sizeof(uint64_t)) {
 				return static_cast<std::size_t>(dice::hash::wyhash::wyhash64(kSeed, x));
+			} else if constexpr (std::is_floating_point_v<T>) {
+				auto const bytes = dice::hash::internal::float_value_bytes(x);
+				return hash_bytes(bytes.data(), bytes.size());
 			} else {
 				return static_cast<std::size_t>(dice::hash::wyhash::wyhash(&x, sizeof(T), kSeed, kWyhashSalt));
 			}
@@ -96,7 +101,12 @@ namespace dice::hash::Policies {
 
 		template<typename T>
 		static std::size_t hash_fundamental(T x) noexcept {
-			return hash_bytes(&x, sizeof(x));
+			if constexpr (std::is_floating_point_v<T>) {
+				auto const bytes = dice::hash::internal::float_value_bytes(x);
+				return hash_bytes(bytes.data(), bytes.size());
+			} else {
+				return hash_bytes(&x, sizeof(x));
+			}
 		}
 		static std::size_t hash_bytes(void const *ptr, std::size_t len) noexcept {
 			return static_cast<std::size_t>(XXH3_64bits_withSeed(ptr, len, seed));
@@ -133,9 +143,16 @@ namespace dice::hash::Policies {
 		static constexpr std::size_t ErrorValue = ~dice::hash::martinus::seed;
 		template<typename T>
 		static std::size_t hash_fundamental(T x) noexcept {
-			if constexpr (sizeof(std::decay_t<T>) == sizeof(size_t)) {
+			if constexpr (std::is_floating_point_v<std::decay_t<T>>) {
+				auto const bytes = dice::hash::internal::float_value_bytes(x);
+				if constexpr (sizeof(bytes) == sizeof(size_t)) {
+					return dice::hash::martinus::hash_int(std::bit_cast<size_t>(bytes));
+				} else {
+					return hash_bytes(bytes.data(), bytes.size());
+				}
+			} else if constexpr (sizeof(std::decay_t<T>) == sizeof(size_t)) {
 				return dice::hash::martinus::hash_int(std::bit_cast<size_t>(x));
-			} else if constexpr (sizeof(std::decay_t<T>) > sizeof(size_t) or std::is_floating_point_v<std::decay_t<T>>) {
+			} else if constexpr (sizeof(std::decay_t<T>) > sizeof(size_t)) {
 				return hash_bytes(&x, sizeof(x));
 			} else {
 				return dice::hash::martinus::hash_int(static_cast<size_t>(x));
@@ -187,7 +204,12 @@ namespace dice::hash::Policies {
 
 		template<typename T>
 		static std::size_t hash_fundamental(T x) noexcept {
-			return static_cast<std::size_t>(dice::hash::rapidhash::rapidhash_withSeed(&x, sizeof(T), kSeed));
+			if constexpr (std::is_floating_point_v<T>) {
+				auto const bytes = dice::hash::internal::float_value_bytes(x);
+				return hash_bytes(bytes.data(), bytes.size());
+			} else {
+				return static_cast<std::size_t>(dice::hash::rapidhash::rapidhash_withSeed(&x, sizeof(T), kSeed));
+			}
 		}
 
 		static std::size_t hash_bytes(void const *ptr, std::size_t len) noexcept {

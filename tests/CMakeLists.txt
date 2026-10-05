@@ -129,3 +129,14 @@ if (WITH_SODIUM)
         endforeach ()
     endif ()
 endif ()
+
+# `TestDiceHash.cpp` is also built with `-std=gnu++20`. In this mode libstdc++ counts `__float128` as a
+# floating point type, so the tests of floating point values check it too.
+add_executable(tests_dice_hash_gnu TestDiceHash.cpp)
+target_link_libraries(tests_dice_hash_gnu PRIVATE
+        Catch2::Catch2WithMain
+        dice-hash::dice-hash
+        )
+set_target_properties(tests_dice_hash_gnu PROPERTIES CXX_STANDARD 20 CXX_EXTENSIONS ON)
+target_compile_definitions(tests_dice_hash_gnu PRIVATE DICE_HASH_TEST_GNU_MODE=1)
+catch_discover_tests(tests_dice_hash_gnu TEST_SUFFIX " (gnu++20)")

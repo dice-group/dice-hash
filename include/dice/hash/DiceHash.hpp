@@ -79,6 +79,21 @@ namespace dice::hash {
 		template<typename T>
 		inline constexpr bool is_fundamental = std::is_fundamental_v<T> || std::is_same_v<std::remove_cv_t<T>, std::byte> || is_int128<T>;
 
+		/** Types whose `std::array`, `std::vector` and `std::span` are hashed as one block of bytes.
+		 * These are the fundamental types, except `long double` in two formats (see `FloatingPoint.hpp`):
+		 * in x87 extended precision it has padding, and in the double-double format the low part of a
+		 * value can be `+0.0` or `-0.0`. Ranges of these are hashed value by value.
+		 * @tparam T The type to check.
+		 */
+		template<typename T>
+		inline constexpr bool hash_range_as_bytes = [] {
+			if constexpr (std::is_floating_point_v<T>) {
+				return float_format<std::remove_cv_t<T>> == FloatFormat::all_bytes;
+			} else {
+				return is_fundamental<T>;
+			}
+		}();
+
 		/** Hashes of the types which hold no value.
 		 * A type which holds no value has nothing to hash, so it gets a fixed constant. The two
 		 * constants only have to be different from each other and from the error value of the
@@ -226,7 +241,8 @@ namespace dice::hash {
 		}
 
 		/** Implementation for std arrays.
-        * It will use different implementations if the type is fundamental or not.
+        * An array of a type in `internal::hash_range_as_bytes` is hashed as one block of bytes,
+        * other arrays value by value.
         * @tparam T The type of the values.
         * @tparam N The number of values.
         * @param arr The array itself.
@@ -234,7 +250,7 @@ namespace dice::hash {
         */
 		template<typename T, std::size_t N>
 		static std::size_t dice_hash(std::array<T, N> const &arr) noexcept {
-			if constexpr (internal::is_fundamental<T>) {
+			if constexpr (internal::hash_range_as_bytes<T>) {
 				return Policy::hash_bytes(arr.data(), sizeof(T) * N);
 			} else {
 				return dice_hash_ordered_container(arr);
@@ -242,14 +258,15 @@ namespace dice::hash {
 		}
 
 		/** Implementation for vectors.
-         * It will use different implementations for fundamental and non-fundamental types.
+         * A vector of a type in `internal::hash_range_as_bytes` is hashed as one block of bytes,
+         * other vectors value by value.
          * @tparam T The type of the values.
          * @param vec The vector itself.
          * @return Hash value.
          */
 		template<typename T>
 		static std::size_t dice_hash(std::vector<T> const &vec) noexcept {
-			if constexpr (internal::is_fundamental<T>) {
+			if constexpr (internal::hash_range_as_bytes<T>) {
 				static_assert(!std::is_same_v<std::decay_t<T>, bool>,
 							  "vector of booleans has a special implementation which results in errors!");
 				return Policy::hash_bytes(vec.data(), sizeof(T) * vec.size());
@@ -258,13 +275,15 @@ namespace dice::hash {
 			}
 		}
 
-		/** Implementation for byte spans
-		 * @param bytes byte span to hash
+		/** Implementation for spans.
+		 * A span of a type in `internal::hash_range_as_bytes` is hashed as one block of bytes,
+		 * other spans value by value.
+		 * @param span The span to hash.
 		 * @return Hash value.
 		 */
 		template<typename T, std::size_t Extent>
 		static std::size_t dice_hash(std::span<T, Extent> const &span) noexcept {
-			if constexpr (internal::is_fundamental<T>) {
+			if constexpr (internal::hash_range_as_bytes<T>) {
 				return Policy::hash_bytes(span.data(), span.size_bytes());
 			} else {
 				return dice_hash_ordered_container(span);
