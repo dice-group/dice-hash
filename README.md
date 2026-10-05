@@ -103,6 +103,13 @@ namespace dice::hash {
 }
 ```
 [Here](examples/customType.cpp) is an compilable example. 
+Declare the specialization before `DiceHash<YourType>`, or a `DiceHash` of a type that contains
+`YourType`, is first instantiated as a class. For example, a member of the type
+`std::unordered_set<YourType, dice::hash::DiceHash<YourType>>` instantiates it. `DiceHash` reads the
+member type `is_avalanching` of the specialization (see
+[Avalanching hashes of your own types](#avalanching-hashes-of-your-own-types)), so a specialization
+that comes later is ill-formed: gcc reports a partial specialization after instantiation, and clang
+uses the primary template, so the call of `DiceHash<YourType>` does not compile.
 
 If you want to combine the hash of two or more objects you can use the
 `hash_combine` or `hash_invertible_combine` function.
@@ -162,16 +169,17 @@ The reasons:
   0.44 instead of 0.5. This affects `float` and every string whose length leaves such a rest. Its
   `hash_combine` and `HashState` mix every input hash again, so pairs, tuples and the other
   combined types are avalanching even if their parts are not (unless a part has a
-  `dice_hash_overload` without `is_avalanching`). For example `std::pair<std::string, int>` is
+  `dice_hash_overload` without a true `is_avalanching`). For example `std::pair<std::string, int>` is
   avalanching, but `std::string` and `int` are not.
 - `xxh3` hashes every value and every combination with XXH3.
 - `wyhash` and `rapidhash` hash every value with a function that avalanches. Their `hash_combine`
   and `HashState` keep the avalanche of their inputs, but they do not create it. So a combined
   type is avalanching only if all its parts are.
 - `wyhash` hashes integer types with `wyhash64`, which takes 64 bits. An integer type with more
-  bits loses its upper bits. `std::is_integral_v<__int128>` is true in the GNU modes of the
-  compilers (for example `-std=gnu++20`) and false in the strict modes. In the strict modes
-  `__int128` is hashed as bytes and is avalanching.
+  bits loses its upper bits. With libstdc++, `std::is_integral_v<__int128>` is true in the GNU
+  modes of the compilers (for example `-std=gnu++20`) and false in the strict modes. In the strict
+  modes `__int128` is hashed as bytes and is avalanching. With libc++, `std::is_integral_v<__int128>`
+  is true in every mode.
 - The hash of an unordered container is the xor of the hashes of its elements. This keeps
   relations between results: for all values `a`, `b` and `c`,
   `h({a, b}) ^ h({a, c}) == h({b, c})`. With `xxh3`, `wyhash` and `rapidhash` a single flipped
@@ -186,35 +194,42 @@ wider.
 
 #### Avalanching hashes of your own types
 `DiceHash` cannot see what the `dice_hash_overload` of a type does. If its result is avalanching,
-declare the member type `is_avalanching` in the specialization:
+declare the member type `is_avalanching` in the specialization. If `dice_hash` returns
+`dice_hash_templates<Policy>::dice_hash(v)`, use `dice::hash::avalanching_like` with the type of `v`:
 ```c++
 struct Point { int x; int y; };
 namespace dice::hash {
     template <typename Policy>
     struct dice_hash_overload<Policy, Point> {
-        using is_avalanching = void;
+        using is_avalanching = avalanching_like<std::pair<int, int>, Policy>;
         static std::size_t dice_hash(Point const& p) noexcept {
             return dice_hash_templates<Policy>::dice_hash(std::pair{p.x, p.y});
         }
     };
 }
 ```
-`DiceHash<Point, Policy>` then declares `is_avalanching` for every policy. Pairs, tuples,
-optionals, variants, ordered containers, vectors, arrays and spans of `Point` follow the table above,
-with `Point` as an avalanching part. With a policy of your own they are not avalanching.
+`avalanching_like<std::pair<int, int>, Policy>` is `std::true_type` exactly for the policies for
+which `DiceHash<std::pair<int, int>, Policy>` declares `is_avalanching`. These are the four policies
+of dice-hash, but not a policy of your own. So `DiceHash<Point, Policy>` declares `is_avalanching`
+for the four policies of dice-hash. With an overload that hashes a single `int`,
+`avalanching_like<int, Policy>` would be false for `Martinus`. Pairs, tuples, optionals, variants,
+ordered containers, vectors, arrays and spans of `Point` follow the table above, with `Point` as an
+avalanching part. With a policy of your own they are not avalanching.
 
-The member type is a promise for each policy, and dice-hash does not check it. It holds if the
-overload returns `dice_hash_templates<Policy>::dice_hash(v)` and `DiceHash` marks the type of `v`
-for the policy. `std::pair<int, int>` is marked for every policy. A single `int` is not marked
-with `Martinus`. If `is_avalanching` names a type with a `value` that is false, it makes no promise.
-So `using is_avalanching = std::bool_constant<!std::is_same_v<Policy, Policies::Martinus>>;` promises
-it for every policy except `Martinus`.
+`using is_avalanching = void;` promises the avalanche for every policy, also for every policy of
+your own. Use it only if the result does not depend on the policy in that way, for example if
+`dice_hash` applies a hash function of its own that avalanches. If `is_avalanching` names a type
+with a `value` that is false, like `std::false_type`, it makes no promise. A specialization that
+derives from a class with `is_avalanching`, for example another `dice_hash_overload`, gets the
+promise of that class. dice-hash does not check a promise.
+
+A hash table that honors `is_avalanching` uses the result of `DiceHash` without a mixing step of
+its own. So when a specialization starts to declare `is_avalanching`, such a table places the keys
+in other buckets. A table that was persisted with the old placement is not valid any more.
 
 Declare the specialization before `DiceHash<Point, Policy>`, or a `DiceHash` of a type that contains
-`Point`, is first instantiated as a class. A member of the type
-`std::unordered_set<Point, dice::hash::DiceHash<Point>>` is such an instantiation. Otherwise the
-program is ill-formed: gcc reports a partial specialization after instantiation, and clang uses the
-primary template, so `DiceHash<Point>` is not marked and its call does not compile.
+`Point`, is first instantiated as a class. This holds for every specialization of
+`dice_hash_overload`, with or without `is_avalanching`, as described above.
 
 ### The error value
 A `std::variant` which is `valueless_by_exception` holds no alternative, so no hash can be

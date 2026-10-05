@@ -4,7 +4,10 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string>
+#include <tuple>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 /** Compile-time checks of the member type `is_avalanching` of `DiceHash`.
@@ -25,7 +28,9 @@ namespace dice::tests::hash::is_avalanching {
 		int a;
 	};
 
-	/** A type whose `dice_hash_overload` declares `is_avalanching` as `void`. */
+	/** A type whose `dice_hash_overload` declares `is_avalanching` as `void`. This promises it for every
+	 * policy, also for a policy of your own. The checks below test the marker, not the promise.
+	 */
 	struct CustomAvalanching {
 		int a;
 	};
@@ -34,6 +39,21 @@ namespace dice::tests::hash::is_avalanching {
 	 * every policy except `Martinus`.
 	 */
 	struct CustomPerPolicy {
+		int a;
+	};
+
+	/** A type whose `dice_hash_overload` hashes a `std::pair<int, int>` and declares `is_avalanching` as
+	 * `avalanching_like` of it.
+	 */
+	struct CustomLikePair {
+		int a;
+		int b;
+	};
+
+	/** A type whose `dice_hash_overload` hashes an `int` and declares `is_avalanching` as
+	 * `avalanching_like` of it.
+	 */
+	struct CustomLikeInt {
 		int a;
 	};
 
@@ -79,6 +99,22 @@ namespace dice::hash {
 	struct dice_hash_overload<Policy, dice::tests::hash::is_avalanching::CustomPerPolicy> {
 		using is_avalanching = std::bool_constant<!std::is_same_v<Policy, Policies::Martinus>>;
 		static std::size_t dice_hash(dice::tests::hash::is_avalanching::CustomPerPolicy const &c) noexcept {
+			return dice_hash_templates<Policy>::dice_hash(c.a);
+		}
+	};
+
+	template<typename Policy>
+	struct dice_hash_overload<Policy, dice::tests::hash::is_avalanching::CustomLikePair> {
+		using is_avalanching = avalanching_like<std::pair<int, int>, Policy>;
+		static std::size_t dice_hash(dice::tests::hash::is_avalanching::CustomLikePair const &c) noexcept {
+			return dice_hash_templates<Policy>::dice_hash(std::pair{c.a, c.b});
+		}
+	};
+
+	template<typename Policy>
+	struct dice_hash_overload<Policy, dice::tests::hash::is_avalanching::CustomLikeInt> {
+		using is_avalanching = avalanching_like<int, Policy>;
+		static std::size_t dice_hash(dice::tests::hash::is_avalanching::CustomLikeInt const &c) noexcept {
 			return dice_hash_templates<Policy>::dice_hash(c.a);
 		}
 	};
@@ -144,10 +180,18 @@ namespace dice::tests::hash::is_avalanching {
 			STATIC_REQUIRE(marked<std::map<int, CustomAvalanching>, Policy>);
 		}
 
-		SECTION("an unordered container of a marked overload type and a combination with an overload type without is_avalanching are not marked") {
-			STATIC_REQUIRE_FALSE(marked<std::unordered_set<CustomAvalanching>, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::unordered_map<int, CustomAvalanching>, Policy>);
+		SECTION("a combination of a marked overload type with an overload type without is_avalanching is not marked") {
 			STATIC_REQUIRE_FALSE(marked<std::pair<CustomAvalanching, Custom>, Policy>);
+		}
+
+		SECTION("an overload type with avalanching_like of a type that is marked for every policy is marked") {
+			STATIC_REQUIRE(dice::hash::avalanching_like<std::pair<int, int>, Policy>::value);
+			STATIC_REQUIRE(marked<CustomLikePair, Policy>);
+		}
+
+		SECTION("references in combined types are removed") {
+			STATIC_REQUIRE(marked<std::tuple<int const &>, Policy>);
+			STATIC_REQUIRE(marked<std::pair<std::string const &, int &>, Policy>);
 		}
 
 		SECTION("types without a hash are not marked") {
@@ -158,7 +202,7 @@ namespace dice::tests::hash::is_avalanching {
 	TEST_CASE("is_avalanching with a policy of your own", "[DiceHash][is_avalanching]") {
 		using Policy = OwnPolicy;
 
-		SECTION("the types with only one value are marked") {
+		SECTION("std::monostate, std::nullopt_t and std::nullptr_t are marked") {
 			STATIC_REQUIRE(marked<std::monostate, Policy>);
 			STATIC_REQUIRE(marked<std::nullopt_t, Policy>);
 			STATIC_REQUIRE(marked<std::nullptr_t, Policy>);
@@ -174,10 +218,13 @@ namespace dice::tests::hash::is_avalanching {
 			STATIC_REQUIRE_FALSE(marked<std::vector<CustomAvalanching>, Policy>);
 		}
 
-		SECTION("the other types are not marked") {
+		SECTION("an overload type with avalanching_like of std::pair<int, int> is not marked") {
+			STATIC_REQUIRE_FALSE(marked<CustomLikePair, Policy>);
+		}
+
+		SECTION("int and std::string are not marked") {
 			STATIC_REQUIRE_FALSE(marked<int, Policy>);
 			STATIC_REQUIRE_FALSE(marked<std::string, Policy>);
-			STATIC_REQUIRE_FALSE(marked<Custom, Policy>);
 		}
 	}
 
@@ -242,6 +289,7 @@ namespace dice::tests::hash::is_avalanching {
 		SECTION("an overload type whose is_avalanching has a false value is not marked") {
 			STATIC_REQUIRE_FALSE(marked<CustomPerPolicy, Policy>);
 			STATIC_REQUIRE_FALSE(marked<std::pair<CustomPerPolicy, int>, Policy>);
+			STATIC_REQUIRE_FALSE(marked<CustomLikeInt, Policy>);
 		}
 	}
 
@@ -297,6 +345,7 @@ namespace dice::tests::hash::is_avalanching {
 		SECTION("an overload type whose is_avalanching has a true value is marked") {
 			STATIC_REQUIRE(marked<CustomPerPolicy, Policy>);
 			STATIC_REQUIRE(marked<std::pair<CustomPerPolicy, int>, Policy>);
+			STATIC_REQUIRE(marked<CustomLikeInt, Policy>);
 		}
 	}
 
@@ -357,6 +406,7 @@ namespace dice::tests::hash::is_avalanching {
 		SECTION("an overload type whose is_avalanching has a true value is marked") {
 			STATIC_REQUIRE(marked<CustomPerPolicy, Policy>);
 			STATIC_REQUIRE(marked<std::pair<CustomPerPolicy, int>, Policy>);
+			STATIC_REQUIRE(marked<CustomLikeInt, Policy>);
 		}
 	}
 

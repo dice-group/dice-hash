@@ -39,12 +39,18 @@ namespace dice::hash {
 	/** Helper struct for defining the hash for custom structs.
 	 * Because of partial specialization problems with functions, this struct must be specialized to define the hash for a custom type.
 	 *
-	 * A specialization can declare the member type `is_avalanching` (as `void`). It promises that the result of its
-	 * `dice_hash` is avalanching with `Policy`, and `DiceHash<T, Policy>` then declares `is_avalanching` too. dice-hash
-	 * does not check the promise. A member type with a `value` that is false, like `std::false_type`, makes no promise.
-	 * So `using is_avalanching = std::bool_constant<condition>;` promises it only for the policies where `condition`
-	 * is true. The specialization must be declared before `DiceHash<T, Policy>`, or a `DiceHash` of a type that
-	 * contains `T`, is first instantiated as a class.
+	 * Every specialization must be declared before `DiceHash<T, Policy>`, or a `DiceHash` of a type that contains
+	 * `T`, is first instantiated as a class, also a specialization without `is_avalanching`. The class reads the
+	 * member type `is_avalanching` of the specialization.
+	 *
+	 * A specialization can declare the member type `is_avalanching`. It promises that the result of its `dice_hash`
+	 * is avalanching with `Policy`, and `DiceHash<T, Policy>` then declares `is_avalanching` too. dice-hash does not
+	 * check the promise. A member type with a `value` that is false, like `std::false_type`, makes no promise.
+	 * `using is_avalanching = avalanching_like<U, Policy>;` promises it exactly for the policies for which
+	 * `DiceHash<U, Policy>` declares `is_avalanching`. Use it if `dice_hash` returns
+	 * `dice_hash_templates<Policy>::dice_hash(u)` for a `u` of the type `U`. `using is_avalanching = void;`
+	 * promises it for every policy, also for a policy of your own. A specialization that derives from a class with
+	 * `is_avalanching`, for example another `dice_hash_overload`, gets the promise of that class.
 	 * @tparam Policy The policy to use.
 	 * @tparam T The custom type.
 	 */
@@ -443,9 +449,9 @@ namespace dice::hash {
 		};
 
 		/** `hash_fundamental` uses `wyhash64` for integer types. `wyhash64` takes 64 bits, so an
-		 * integer type with more bits loses its upper bits. `std::is_integral_v<__int128>` is true
-		 * in the GNU modes of the compilers (for example `-std=gnu++20`) and false in the strict modes.
-		 * Other types go through `wyhash`.
+		 * integer type with more bits loses its upper bits. With libstdc++, `std::is_integral_v<__int128>`
+		 * is true in the GNU modes of the compilers (for example `-std=gnu++20`) and false in the strict
+		 * modes. With libc++ it is true in every mode. Other types go through `wyhash`.
 		 * `hash_combine` and `HashState` call `_wymix` once per input hash. `_wymix` with a fixed
 		 * first argument does not mix every bit of the second argument. So they keep the avalanche
 		 * of avalanching input hashes, but they do not create it.
@@ -476,7 +482,7 @@ namespace dice::hash {
 		/** How well `dice_hash_templates<Policy>::dice_hash` mixes the result for a type.
 		 */
 		enum class mixing {
-			/** Nothing is known. Types with a `dice_hash_overload` that does not declare
+			/** Nothing is known. Types with a `dice_hash_overload` that does not declare a true
 			 * `is_avalanching`, and results of a combine that does not avalanche over parts that do
 			 * not avalanche.
 			 */
@@ -490,16 +496,16 @@ namespace dice::hash {
 			avalanching
 		};
 
-		/** The mixing of a type with its cv-qualifiers removed. The specializations below follow
-		 * the overloads of `dice_hash_templates`.
+		/** The mixing of a type with its cv-qualifiers and references removed. The specializations
+		 * below follow the overloads of `dice_hash_templates`.
 		 * @tparam Policy The policy.
-		 * @tparam T The type to hash, without cv-qualifiers.
+		 * @tparam T The type to hash, without cv-qualifiers and references.
 		 */
 		template<typename Policy, typename T>
 		struct mixing_of;
 
 		template<typename Policy, typename T>
-		inline constexpr mixing mixing_v = mixing_of<Policy, std::remove_cv_t<T>>::value;
+		inline constexpr mixing mixing_v = mixing_of<Policy, std::remove_cvref_t<T>>::value;
 
 		/** Mixing of `hash_fundamental`. */
 		template<typename Policy, typename T>
@@ -672,6 +678,16 @@ namespace dice::hash {
 		};
 	}// namespace internal
 
+	/** `std::true_type` if `DiceHash<T, Policy>` declares `is_avalanching`, otherwise `std::false_type`.
+	 * A `dice_hash_overload<Policy, X>` whose `dice_hash` returns `dice_hash_templates<Policy>::dice_hash(t)`
+	 * for a `t` of the type `T` can declare `using is_avalanching = avalanching_like<T, Policy>;`. `T` is
+	 * the type that the overload hashes, not `X` or a type that contains `X`.
+	 * @tparam T The type that the overload passes to `dice_hash_templates<Policy>::dice_hash`.
+	 * @tparam Policy The policy.
+	 */
+	template<typename T, Policies::HashPolicy Policy>
+	using avalanching_like = std::bool_constant<internal::mixing_v<Policy, T> == internal::mixing::avalanching>;
+
 	/** Wrapper class for the dice::hash::dice_hash function.
      * It is a typical hash interface.
      *
@@ -680,8 +696,8 @@ namespace dice::hash {
      * about one half. A hash table can then use the lowest bits of the result directly, for example
      * with a mask. This is the convention of ankerl::unordered_dense. On a 64-bit platform:
      * - Never avalanching: unordered containers, because their hash is the xor of the hashes of
-     *   their elements. Types with a `dice_hash_overload` that does not declare `is_avalanching`,
-     *   and every type that contains one.
+     *   their elements. Types with a `dice_hash_overload` that does not declare a true
+     *   `is_avalanching`, and every type that contains one.
      * - Always avalanching: `std::monostate`, `std::nullopt_t` and `std::nullptr_t`, because they
      *   have only one value.
      * - Avalanching by the promise of the user: types whose `dice_hash_overload` declares
@@ -692,7 +708,8 @@ namespace dice::hash {
      *   views, and vectors, arrays and spans of fundamental types. Pairs, tuples, optionals,
      *   variants and the other containers only if all their parts are avalanching. With `wyhash`,
      *   an integer type with more than 64 bits is not avalanching if `std::is_integral_v` is true
-     *   for it. This is the case for `__int128` in the GNU modes of the compilers.
+     *   for it. This is the case for `__int128` with libc++, and with libstdc++ in the GNU modes
+     *   of the compilers.
      * - `Martinus`: pairs, tuples, optionals, variants, ordered containers, and vectors, arrays and
      *   spans of types that are not fundamental. Fundamental types with 16 bytes, like `__int128`.
      *   Not avalanching are the other fundamental types, pointers, smart pointers, strings, string
