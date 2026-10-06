@@ -431,6 +431,13 @@ namespace dice::tests::hash {
 		}
 	}
 
+	TEST_CASE("long double is not hashed as a fundamental type", "[DiceHash]") {
+		STATIC_REQUIRE_FALSE(dice::hash::internal::is_fundamental<long double>);
+		STATIC_REQUIRE_FALSE(dice::hash::internal::is_fundamental<long double const>);
+		STATIC_REQUIRE(dice::hash::internal::is_fundamental<float>);
+		STATIC_REQUIRE(dice::hash::internal::is_fundamental<double>);
+	}
+
 	TEST_CASE("rapidhash runs in its protected mode", "[DiceHash]") {
 		using Policy = dice::hash::Policies::rapidhash;
 		// In the protected mode `rapid_mix` xors the 128-bit product into its operands, so mixing

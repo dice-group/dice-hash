@@ -48,6 +48,7 @@ namespace dice::hash::Policies {
 		 */
 		template<typename T>
 		static std::size_t hash_fundamental(T x) noexcept {
+			static_assert(!std::is_same_v<std::remove_cv_t<T>, long double>, "long double is not supported, it can have padding bytes");
 			if constexpr (std::is_integral_v<T> && sizeof(T) <= sizeof(uint64_t)) {
 				return static_cast<std::size_t>(dice::hash::wyhash::wyhash64(kSeed, x));
 			} else {
@@ -96,6 +97,7 @@ namespace dice::hash::Policies {
 
 		template<typename T>
 		static std::size_t hash_fundamental(T x) noexcept {
+			static_assert(!std::is_same_v<std::remove_cv_t<T>, long double>, "long double is not supported, it can have padding bytes");
 			return hash_bytes(&x, sizeof(x));
 		}
 		static std::size_t hash_bytes(void const *ptr, std::size_t len) noexcept {
@@ -133,6 +135,7 @@ namespace dice::hash::Policies {
 		static constexpr std::size_t ErrorValue = ~dice::hash::martinus::seed;
 		template<typename T>
 		static std::size_t hash_fundamental(T x) noexcept {
+			static_assert(!std::is_same_v<std::remove_cv_t<T>, long double>, "long double is not supported, it can have padding bytes");
 			if constexpr (sizeof(std::decay_t<T>) == sizeof(size_t)) {
 				return dice::hash::martinus::hash_int(std::bit_cast<size_t>(x));
 			} else if constexpr (sizeof(std::decay_t<T>) > sizeof(size_t) or std::is_floating_point_v<std::decay_t<T>>) {
@@ -187,6 +190,7 @@ namespace dice::hash::Policies {
 
 		template<typename T>
 		static std::size_t hash_fundamental(T x) noexcept {
+			static_assert(!std::is_same_v<std::remove_cv_t<T>, long double>, "long double is not supported, it can have padding bytes");
 			return static_cast<std::size_t>(dice::hash::rapidhash::rapidhash_withSeed(&x, sizeof(T), kSeed));
 		}
 

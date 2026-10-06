@@ -74,10 +74,14 @@ namespace dice::hash {
 #endif // __SIZEOF_INT128__
 
 		/** Types which are hashed by their value, not by their content.
+		 * `long double` is not one of them, so dice-hash has no hash for it. With gcc and clang on x86
+		 * and x86_64 it has padding bytes with undefined content, so two equal values could get
+		 * different hashes.
 		 * @tparam T The type to check.
 		 */
 		template<typename T>
-		inline constexpr bool is_fundamental = std::is_fundamental_v<T> || std::is_same_v<std::remove_cv_t<T>, std::byte> || is_int128<T>;
+		inline constexpr bool is_fundamental = (std::is_fundamental_v<T> && !std::is_same_v<std::remove_cv_t<T>, long double>)
+											   || std::is_same_v<std::remove_cv_t<T>, std::byte> || is_int128<T>;
 
 		/** Hashes of the types which hold no value.
 		 * A type which holds no value has nothing to hash, so it gets a fixed constant. The two
