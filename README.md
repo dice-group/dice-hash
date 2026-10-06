@@ -17,7 +17,7 @@ These three, additional, general purpose hash functions are also (optionally) pr
 
 **📦 STL out of the box:** dice-hash supports many common STL types already: 
 arithmetic types like `bool`, `int`, `double`, ... etc.; collections like `std::unordered_map/set`, `std::map/set`, `std::vector`, `std::tuple`, `std::pair`, `std::optional`, `std::variant`, `std::array` and; all combinations of them. 
-A `long double` hashes only the bytes of its value, not its padding, also in a `std::vector`, `std::array` or `std::span`.
+`long double` is not supported: with gcc and clang on x86 and x86_64 it has padding bytes with undefined content, so equal values could get different hashes.
 
 **🔩 extensible:** dice-hash supports you with helper functions to define hashes for your own classes. Checkout [usage](#usage).
 
