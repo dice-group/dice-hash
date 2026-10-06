@@ -1,15 +1,13 @@
 /** Tests for the hash of 128-bit integers.
  * This file is built twice: once with `-std=c++20` and once with `-std=gnu++20`
  * (see `tests/CMakeLists.txt`). `DICE_HASH_TEST_STRICT_MODE` is 1 in the first build and 0 in the second.
- * In the GNU modes libstdc++ counts `__int128` as an integral type, in the strict modes it does not.
+ * Whether `std::is_integral_v<__int128>` is true depends on the standard library, its version and the mode.
  * The hash of a 128-bit integer must not depend on this.
  */
 
 #include <catch2/catch_all.hpp>
 
 #include <dice/hash.hpp>
-
-#include <type_traits>
 
 #define AllPoliciesToTestForInt128 dice::hash::Policies::Martinus, dice::hash::Policies::xxh3, \
 								   dice::hash::Policies::wyhash, dice::hash::Policies::rapidhash
@@ -23,11 +21,6 @@ namespace dice::tests::hash::int128 {
 		constexpr bool strict_mode = false;
 #endif
 		STATIC_REQUIRE(strict_mode == (DICE_HASH_TEST_STRICT_MODE != 0));
-#if defined(__SIZEOF_INT128__) && defined(__GLIBCXX__)
-		// libstdc++ counts `__int128` as integral only in the GNU modes. So the GNU build takes the
-		// integral path of the policies.
-		STATIC_REQUIRE(std::is_integral_v<__int128> == !strict_mode);
-#endif
 	}
 
 #ifdef __SIZEOF_INT128__
