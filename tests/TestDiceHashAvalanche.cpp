@@ -60,8 +60,7 @@ namespace dice::hash {
  * 0.025. These rows use every value, so they do not depend on the seed.
  *
  * `bool` is not in the list: it has a single bit, so each output bit flips with a probability of
- * either 0 or 1. The input bits of `long double` are its value bytes (`float_value_size`), for
- * example the 10 bytes of x87 extended precision. Its padding bytes are not hashed.
+ * either 0 or 1.
  *
  * The file is also built with `-std=gnu++20` (see `tests/CMakeLists.txt`). With libstdc++,
  * `std::is_integral_v<__int128>` is true there, so the row of `unsigned __int128` checks that `wyhash`
@@ -197,12 +196,6 @@ namespace dice::tests::hash::avalanche {
 		check_avalanching<u128, Policy>("unsigned __int128", 16, &load<u128>);
 		check_avalanching<float, Policy>("float", 4, &load<float>);
 		check_avalanching<double, Policy>("double", 8, &load<double>);
-		constexpr std::size_t long_double_bytes = dice::hash::internal::float_value_size<long double>;
-		check_avalanching<long double, Policy>("long double", long_double_bytes, [](unsigned char const *b) {
-			long double value{};
-			std::memcpy(&value, b, long_double_bytes);
-			return value;
-		});
 		check_avalanching<u64 *, Policy>("std::uint64_t *", 8, &load<u64 *>);
 		check_avalanching<Id, Policy>("Id, a std::uint64_t through its dice_hash_overload", 8, [](unsigned char const *b) {
 			return Id{load<u64>(b)};

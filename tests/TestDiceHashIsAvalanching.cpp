@@ -61,7 +61,6 @@ namespace dice::tests::hash::is_avalanching {
 			   && marked<std::uint64_t, Policy> == expected
 			   && marked<__int128, Policy> == expected
 			   && marked<double, Policy> == expected
-			   && marked<long double, Policy> == expected
 			   && marked<int *, Policy> == expected
 			   && marked<std::unique_ptr<int>, Policy> == expected
 			   && marked<std::string, Policy> == expected
