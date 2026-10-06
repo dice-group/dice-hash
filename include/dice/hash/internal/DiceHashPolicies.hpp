@@ -33,6 +33,11 @@ namespace dice::hash::Policies {
     &&std::is_nothrow_invocable_r_v<std::size_t, decltype(&T::HashState::digest), typename T::HashState &>;
 
 	struct wyhash {
+		/** Every function of this policy gives an avalanching result, so `DiceHash` with this policy
+		 * declares `is_avalanching`.
+		 */
+		using is_avalanching = void;
+
 		inline static constexpr uint64_t kSeed = 0xe17a1465UL;
 		inline static constexpr uint64_t kWyhashSalt[4] = {
 				dice::hash::wyhash::_wyp[0],
@@ -91,6 +96,11 @@ namespace dice::hash::Policies {
 	};
 
 	struct xxh3 {
+		/** Every function of this policy gives an avalanching result, so `DiceHash` with this policy
+		 * declares `is_avalanching`.
+		 */
+		using is_avalanching = void;
+
 		inline static constexpr std::size_t size_t_bits = 8 * sizeof(std::size_t);
 		inline static constexpr std::size_t seed = std::size_t(0xA24BAED4963EE407UL);
 		inline static constexpr std::size_t ErrorValue = ~seed;
@@ -131,6 +141,10 @@ namespace dice::hash::Policies {
 		};
 	};
 
+	/** Hashes integers with up to 8 bytes, `double` and pointers with a multiplication and a
+	 * rotation, and bytes with MurmurHash64A. It declares no `is_avalanching`: in `hash_int` some
+	 * input bits never change some output bits.
+	 */
 	struct Martinus {
 		static constexpr std::size_t ErrorValue = ~dice::hash::martinus::seed;
 		template<typename T>
@@ -183,6 +197,11 @@ namespace dice::hash::Policies {
 	 * `a`. An input hash of 1 sets the state to 1, and the state stays 1 for all later input hashes.
 	 */
 	struct rapidhash {
+		/** Every function of this policy gives an avalanching result, so `DiceHash` with this policy
+		 * declares `is_avalanching`.
+		 */
+		using is_avalanching = void;
+
 		// the value rapidhash used as its default seed up to version 1.0, where it was the
 		// macro RAPID_SEED. Version 3.0 no longer defines it.
 		inline static constexpr uint64_t kSeed = 0xbdd89aa982704029ull;

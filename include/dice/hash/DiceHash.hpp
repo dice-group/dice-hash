@@ -33,6 +33,8 @@ namespace dice::hash {
 
 	/** Helper struct for defining the hash for custom structs.
 	 * Because of partial specialization problems with functions, this struct must be specialized to define the hash for a custom type.
+	 * If `Policy` declares `is_avalanching`, the result of `dice_hash` must be avalanching too. dice-hash does not check
+	 * this. A `dice_hash` that returns `dice_hash_templates<Policy>::dice_hash(v)` keeps the avalanche of the policy.
 	 * @tparam Policy The policy to use.
 	 * @tparam T The custom type.
 	 */
@@ -374,13 +376,34 @@ namespace dice::hash {
 		}
 	};
 
+	namespace internal {
+		/** Base of `DiceHash`. It holds the policy as a protected base, so that `DiceHash` can use its
+		 * functions, and declares `is_avalanching` publicly if the policy declares it.
+		 */
+		template<typename Policy>
+		struct policy_base : protected Policy {};
+
+		template<typename Policy>
+			requires requires { typename Policy::is_avalanching; }
+		struct policy_base<Policy> : protected Policy {
+			using typename Policy::is_avalanching;
+		};
+	}// namespace internal
+
 	/** Wrapper class for the dice::hash::dice_hash function.
      * It is a typical hash interface.
+     *
+     * `DiceHash` declares the member type `is_avalanching` (as `void`) exactly if `Policy` declares it:
+     * every bit of the input changes each bit of the result with a probability of about one half. A
+     * hash table can then use the lowest bits of the result directly, for example with a mask. This
+     * is the convention of ankerl::unordered_dense. `xxh3`, `wyhash` and `rapidhash` declare it,
+     * `Martinus` does not. The marker does not depend on `T`: a `dice_hash_overload` must keep the
+     * avalanche of the policy.
      * @tparam T The type to define the hash for.
      * @tparam Policy The Policy defines how the hash works on a basic level. The default is `Policies::wyhash`.
      */
 	template<typename T, Policies::HashPolicy Policy = Policies::wyhash>
-	struct DiceHash : private Policy {
+	struct DiceHash : public internal::policy_base<Policy> {
 		/** Policy function for combining already hashed values.
 		 * This using declaration is equal to a handwritten wrapper function.
 		 *@param list Initializer list of std::size_t hashes.

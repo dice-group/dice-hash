@@ -36,6 +36,15 @@ set_target_properties(tests_int128_gnu PROPERTIES CXX_STANDARD 20 CXX_EXTENSIONS
 target_compile_definitions(tests_int128_gnu PRIVATE DICE_HASH_TEST_STRICT_MODE=0)
 catch_discover_tests(tests_int128_gnu TEST_SUFFIX " (gnu++20)")
 
+# compile-time checks of DiceHash::is_avalanching
+add_executable(tests_dice_hash_is_avalanching TestDiceHashIsAvalanching.cpp)
+target_link_libraries(tests_dice_hash_is_avalanching PRIVATE
+        Catch2::Catch2WithMain
+        dice-hash::dice-hash
+        )
+set_target_properties(tests_dice_hash_is_avalanching PROPERTIES CXX_STANDARD 20)
+catch_discover_tests(tests_dice_hash_is_avalanching)
+
 if (WITH_SODIUM)
     add_executable(tests_Blake2b TestBlake2b.cpp)
     target_link_libraries(tests_Blake2b PRIVATE

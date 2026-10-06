@@ -103,7 +103,6 @@ namespace dice::hash {
 }
 ```
 [Here](examples/customType.cpp) is an compilable example. 
-
 If you want to combine the hash of two or more objects you can use the
 `hash_combine` or `hash_invertible_combine` function.
 These are part of the Policy, however they can be called via the DiceHash object.
@@ -126,6 +125,23 @@ One simple example can be found [here](examples/customContainer.cpp).
 
 If you want to use `DiceHash` in a different structure (like `std::unordered_map`), you will need to set `DiceHash` as the correct template parameter.
 [This](examples/usageForUnorderedSet.cpp) is one example.
+
+### Avalanching hashes
+A hash is avalanching if every bit of the input changes each bit of the result with a probability
+of about one half. A hash table can then use the lowest bits of the result directly, for example
+with a mask, and needs no extra mixing step. A policy declares the member type `is_avalanching` if
+all its functions are avalanching, and `DiceHash<T, Policy>` then declares `is_avalanching` for every
+`T`. This is the convention of [ankerl::unordered_dense](https://github.com/martinus/unordered_dense).
+A hash table can check it with `requires { typename Hash::is_avalanching; }`.
+
+`xxh3`, `wyhash` and `rapidhash` declare `is_avalanching`. `Martinus` does not. `DiceHash<T>`
+without a policy uses `wyhash`.
+
+The marker does not depend on the type. The user makes sure that the types keep the avalanche: a
+`dice_hash_overload` must give an avalanching result with an avalanching policy. An overload that
+returns `dice_hash_templates<Policy>::dice_hash(v)` does this. A policy of your own declares
+`using is_avalanching = void;` only if all its functions are avalanching. A policy that derives
+from `wyhash`, `xxh3` or `rapidhash` inherits the declaration.
 
 ### The error value
 A `std::variant` which is `valueless_by_exception` holds no alternative, so no hash can be
