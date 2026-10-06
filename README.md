@@ -39,7 +39,7 @@ The packages are also served from a second public endpoint:
 conan remote add tentris https://conan.tentris.io/artifactory/api/conan/tentris
 ```
 
-To use it add `dice-hash/0.5.2` to the `[requires]` section of your conan file.
+To use it add `dice-hash/0.6.0` to the `[requires]` section of your conan file.
 
 You can now add it to your target with:
 ```cmake
