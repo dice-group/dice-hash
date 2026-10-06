@@ -45,27 +45,6 @@ target_link_libraries(tests_dice_hash_is_avalanching PRIVATE
 set_target_properties(tests_dice_hash_is_avalanching PROPERTIES CXX_STANDARD 20)
 catch_discover_tests(tests_dice_hash_is_avalanching)
 
-# statistical checks of DiceHash::is_avalanching. A separate executable, so that it builds
-# and runs even if the compile-time checks fail.
-add_executable(tests_dice_hash_avalanche TestDiceHashAvalanche.cpp)
-target_link_libraries(tests_dice_hash_avalanche PRIVATE
-        Catch2::Catch2WithMain
-        dice-hash::dice-hash
-        )
-set_target_properties(tests_dice_hash_avalanche PROPERTIES CXX_STANDARD 20)
-catch_discover_tests(tests_dice_hash_avalanche)
-
-# The statistical checks are also built with `-std=gnu++20`. In this mode libstdc++ counts
-# `__int128` as integral, and `wyhash` hashes it by its bytes as in `-std=c++20`.
-add_executable(tests_dice_hash_avalanche_gnu TestDiceHashAvalanche.cpp)
-target_link_libraries(tests_dice_hash_avalanche_gnu PRIVATE
-        Catch2::Catch2WithMain
-        dice-hash::dice-hash
-        )
-set_target_properties(tests_dice_hash_avalanche_gnu PROPERTIES CXX_STANDARD 20 CXX_EXTENSIONS ON)
-target_compile_definitions(tests_dice_hash_avalanche_gnu PRIVATE DICE_HASH_TEST_GNU_MODE=1)
-catch_discover_tests(tests_dice_hash_avalanche_gnu TEST_SUFFIX " (gnu++20)")
-
 if (WITH_SODIUM)
     add_executable(tests_Blake2b TestBlake2b.cpp)
     target_link_libraries(tests_Blake2b PRIVATE

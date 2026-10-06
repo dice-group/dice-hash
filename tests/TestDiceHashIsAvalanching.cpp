@@ -20,9 +20,7 @@
 #include <variant>
 #include <vector>
 
-/** Compile-time checks of the member type `is_avalanching` of `DiceHash`.
- * The statistical checks are in TestDiceHashAvalanche.cpp.
- */
+/** Compile-time checks of the member type `is_avalanching` of `DiceHash`. */
 namespace dice::tests::hash::is_avalanching {
 	using dice::hash::DiceHash;
 	using dice::hash::Policies::Martinus;
