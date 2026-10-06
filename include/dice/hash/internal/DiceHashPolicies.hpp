@@ -1,6 +1,7 @@
 #ifndef DICE_HASH_DICEHASHPOLICIES_HPP
 #define DICE_HASH_DICEHASHPOLICIES_HPP
 
+#include <dice/hash/internal/rapidhash/rapidhash.h>
 #include <dice/hash/internal/robinhood/martinus_robinhood_hash.hpp>
 #include <dice/hash/internal/wyhash/wyhash.h>
 // exposes the definition of XXH3_state_t, so the streaming state can be held by
@@ -9,20 +10,16 @@
 #define XXH_STATIC_LINKING_ONLY
 #endif
 #include <xxhash.h>
-#include <rapidhash.h>
 
 #include <bit>
 #include <type_traits>
 
 namespace dice::hash::Policies {
     /** Requirements for a hash policy.
-     * ErrorValue signals that a hash could not be calculated. It must differ from the value the
-     * policy returns for combining nothing, otherwise an empty container looks like an error.
      */
     template<typename T>
     concept HashPolicy =
-    std::is_convertible_v<decltype(T::ErrorValue), std::size_t>
-    &&std::is_nothrow_invocable_r_v<std::size_t, decltype(T::template hash_fundamental<int>), int>
+    std::is_nothrow_invocable_r_v<std::size_t, decltype(T::template hash_fundamental<int>), int>
     &&std::is_nothrow_invocable_r_v<std::size_t, decltype(T::template hash_fundamental<long>), long>
     &&std::is_nothrow_invocable_r_v<std::size_t, decltype(T::template hash_fundamental<std::size_t>), std::size_t>
     &&std::is_nothrow_invocable_r_v<std::size_t, decltype(T::hash_bytes), void const *, std::size_t>
@@ -33,6 +30,11 @@ namespace dice::hash::Policies {
     &&std::is_nothrow_invocable_r_v<std::size_t, decltype(&T::HashState::digest), typename T::HashState &>;
 
 	struct wyhash {
+		/** Every function of this policy gives an avalanching result, so `DiceHash` with this policy
+		 * declares `is_avalanching`.
+		 */
+		using is_avalanching = void;
+
 		inline static constexpr uint64_t kSeed = 0xe17a1465UL;
 		inline static constexpr uint64_t kWyhashSalt[4] = {
 				dice::hash::wyhash::_wyp[0],
@@ -40,14 +42,19 @@ namespace dice::hash::Policies {
 				dice::hash::wyhash::_wyp[2],
 				dice::hash::wyhash::_wyp[3]
 		};
-		inline static constexpr std::size_t ErrorValue = ~static_cast<std::size_t>(kSeed);
 
+		/** Integers of up to 64 bits are hashed with `wyhash64`. All other types are hashed by
+		 * their bytes, also `__int128` and `unsigned __int128`, so that `wyhash64` does not truncate
+		 * them to 64 bits.
+		 */
 		template<typename T>
 		static std::size_t hash_fundamental(T x) noexcept {
-			if constexpr (std::is_integral_v<T>) {
+			static_assert(!std::is_same_v<std::remove_cv_t<T>, long double>, "long double is not supported, it can have padding bytes");
+			if constexpr (std::is_integral_v<T> && sizeof(T) <= sizeof(uint64_t)) {
 				return static_cast<std::size_t>(dice::hash::wyhash::wyhash64(kSeed, x));
+			} else {
+				return static_cast<std::size_t>(dice::hash::wyhash::wyhash(&x, sizeof(T), kSeed, kWyhashSalt));
 			}
-			return static_cast<std::size_t>(dice::hash::wyhash::wyhash(&x, sizeof(T), kSeed, kWyhashSalt));
 		}
 
 		static std::size_t hash_bytes(void const *ptr, std::size_t len) noexcept {
@@ -85,12 +92,17 @@ namespace dice::hash::Policies {
 	};
 
 	struct xxh3 {
+		/** Every function of this policy gives an avalanching result, so `DiceHash` with this policy
+		 * declares `is_avalanching`.
+		 */
+		using is_avalanching = void;
+
 		inline static constexpr std::size_t size_t_bits = 8 * sizeof(std::size_t);
 		inline static constexpr std::size_t seed = std::size_t(0xA24BAED4963EE407UL);
-		inline static constexpr std::size_t ErrorValue = ~seed;
 
 		template<typename T>
 		static std::size_t hash_fundamental(T x) noexcept {
+			static_assert(!std::is_same_v<std::remove_cv_t<T>, long double>, "long double is not supported, it can have padding bytes");
 			return hash_bytes(&x, sizeof(x));
 		}
 		static std::size_t hash_bytes(void const *ptr, std::size_t len) noexcept {
@@ -124,10 +136,14 @@ namespace dice::hash::Policies {
 		};
 	};
 
+	/** Hashes integers with up to 8 bytes, `double` and pointers with a multiplication and a
+	 * rotation, and bytes with MurmurHash64A. It declares no `is_avalanching`: in `hash_int` some
+	 * input bits never change some output bits.
+	 */
 	struct Martinus {
-		static constexpr std::size_t ErrorValue = ~dice::hash::martinus::seed;
 		template<typename T>
 		static std::size_t hash_fundamental(T x) noexcept {
+			static_assert(!std::is_same_v<std::remove_cv_t<T>, long double>, "long double is not supported, it can have padding bytes");
 			if constexpr (sizeof(std::decay_t<T>) == sizeof(size_t)) {
 				return dice::hash::martinus::hash_int(std::bit_cast<size_t>(x));
 			} else if constexpr (sizeof(std::decay_t<T>) > sizeof(size_t) or std::is_floating_point_v<std::decay_t<T>>) {
@@ -164,25 +180,40 @@ namespace dice::hash::Policies {
 		};
 	};
 
+	/** Hashes with rapidhash in its protected mode. dice-hash has its own copy of `rapidhash.h` in
+	 * the namespace `dice::hash::rapidhash` (`internal/rapidhash/rapidhash.h`), with the protected
+	 * mode fixed. No macro changes it, and the original `rapidhash.h` does not either.
+	 * `hash_fundamental` and `hash_bytes` use `rapidhash_withSeed`. `hash_combine` and `HashState`
+	 * mix each input hash into the state with `rapid_mix`. In the protected mode `rapid_mix(a, b)`
+	 * is `a ^ b ^ lo ^ hi`, where `lo` and `hi` are the halves of the 128-bit product of `a` and
+	 * `b`. So an input hash of 0 keeps the state, and a state of 0 keeps the input hash.
+	 * The product of `a` and 1 is `a`, so `rapid_mix(a, 1)` and `rapid_mix(1, a)` are 1 for every
+	 * `a`. An input hash of 1 sets the state to 1, and the state stays 1 for all later input hashes.
+	 */
 	struct rapidhash {
+		/** Every function of this policy gives an avalanching result, so `DiceHash` with this policy
+		 * declares `is_avalanching`.
+		 */
+		using is_avalanching = void;
+
 		// the value rapidhash used as its default seed up to version 1.0, where it was the
 		// macro RAPID_SEED. Version 3.0 no longer defines it.
 		inline static constexpr uint64_t kSeed = 0xbdd89aa982704029ull;
-		inline static constexpr std::size_t ErrorValue = ~static_cast<std::size_t>(kSeed);
 
 		template<typename T>
 		static std::size_t hash_fundamental(T x) noexcept {
-			return static_cast<std::size_t>(rapidhash_withSeed(&x, sizeof(T), kSeed));
+			static_assert(!std::is_same_v<std::remove_cv_t<T>, long double>, "long double is not supported, it can have padding bytes");
+			return static_cast<std::size_t>(dice::hash::rapidhash::rapidhash_withSeed(&x, sizeof(T), kSeed));
 		}
 
 		static std::size_t hash_bytes(void const *ptr, std::size_t len) noexcept {
-			return static_cast<std::size_t>(rapidhash_withSeed(ptr, len, kSeed));
+			return static_cast<std::size_t>(dice::hash::rapidhash::rapidhash_withSeed(ptr, len, kSeed));
 		}
 
 		static std::size_t hash_combine(std::initializer_list<size_t> hashes) noexcept {
 			uint64_t state = kSeed;
 			for (auto hash : hashes) {
-				state = rapid_mix(state, hash);
+				state = dice::hash::rapidhash::rapid_mix(state, hash);
 			}
 			return static_cast<std::size_t>(state);
 		}
@@ -201,7 +232,7 @@ namespace dice::hash::Policies {
 		public:
 			explicit HashState(std::size_t) noexcept {}
 			void add (std::size_t hash) noexcept {
-				state = rapid_mix(state, static_cast<uint64_t>(hash));
+				state = dice::hash::rapidhash::rapid_mix(state, static_cast<uint64_t>(hash));
 			}
 			[[nodiscard]] std::size_t digest() noexcept {
 				return static_cast<std::size_t>(state);

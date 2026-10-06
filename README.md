@@ -4,9 +4,11 @@ dice-hash provides a framework to generate stable hashes. It provides state-of-t
 
 **🔋 batteries included:** dice-hash defines _policies_ to support different hash algorithms. It comes with predefined policies for four state-of-the-art hash functions:
 - [XXH3](https://github.com/Cyan4973/xxHash)
-- [rapidhash](https://github.com/Nicoshev/rapidhash)
-- [wyhash](https://github.com/wangyi-fudan/wyhash)
+- [rapidhash](https://github.com/Nicoshev/rapidhash), in its protected mode
+- [wyhash](https://github.com/wangyi-fudan/wyhash), in its condom 2 mode (`WYHASH_CONDOM 2`)
 - "martinus", the internal hash function from [robin-hood-hashing](https://github.com/martinus/robin-hood-hashing)
+
+dice-hash has its own copies of `wyhash.h` and `rapidhash.h`. They are in their own namespaces, and their macros are pushed and popped. So their configuration does not leak into other copies of these headers that a program uses.
 
 These three, additional, general purpose hash functions are also (optionally) provided
 - [Blake2b](https://www.blake2.net)
@@ -15,6 +17,7 @@ These three, additional, general purpose hash functions are also (optionally) pr
 
 **📦 STL out of the box:** dice-hash supports many common STL types already: 
 arithmetic types like `bool`, `int`, `double`, ... etc.; collections like `std::unordered_map/set`, `std::map/set`, `std::vector`, `std::tuple`, `std::pair`, `std::optional`, `std::variant`, `std::array` and; all combinations of them. 
+`long double` is not supported: with gcc and clang on x86 and x86_64 it has padding bytes with undefined content, so equal values could get different hashes.
 
 **🔩 extensible:** dice-hash supports you with helper functions to define hashes for your own classes. Checkout [usage](#usage).
 
@@ -36,7 +39,7 @@ The packages are also served from a second public endpoint:
 conan remote add tentris https://conan.tentris.io/artifactory/api/conan/tentris
 ```
 
-To use it add `dice-hash/0.5.2` to the `[requires]` section of your conan file.
+To use it add `dice-hash/0.6.0` to the `[requires]` section of your conan file.
 
 You can now add it to your target with:
 ```cmake
@@ -76,6 +79,17 @@ hash(42);
 ```
 [basicUsage](examples/basicUsage.cpp) is a run able example for this use-case.
 
+`DiceHash<T>` uses the policy `dice::hash::Policies::wyhash`. To use another policy, name it as the
+second template argument, or use one of the aliases `DiceHashMartinus`, `DiceHashxxh3`,
+`DiceHashwyhash` and `DiceHashrapidhash`:
+```c++
+dice::hash::DiceHash<int, dice::hash::Policies::Martinus> hash;
+dice::hash::DiceHashMartinus<int> same_hash;
+```
+[policyUsage](examples/policyUsage.cpp) is a runnable example for this.
+If you persist hash values, name the policy explicitly. Then a change of the default policy does
+not change your values.
+
 If you need `DiceHash` to be able to work on your own types, you can specialize the `dice::hash::dice_hash_overload` template:
 ```c++
 struct YourType{};
@@ -89,7 +103,6 @@ namespace dice::hash {
 }
 ```
 [Here](examples/customType.cpp) is an compilable example. 
-
 If you want to combine the hash of two or more objects you can use the
 `hash_combine` or `hash_invertible_combine` function.
 These are part of the Policy, however they can be called via the DiceHash object.
@@ -113,21 +126,22 @@ One simple example can be found [here](examples/customContainer.cpp).
 If you want to use `DiceHash` in a different structure (like `std::unordered_map`), you will need to set `DiceHash` as the correct template parameter.
 [This](examples/usageForUnorderedSet.cpp) is one example.
 
-### The error value
-A `std::variant` which is `valueless_by_exception` holds no alternative, so no hash can be
-calculated for it. In that case `DiceHash` returns the `ErrorValue` of the policy, which
-`is_faulty` reports:
-```c++
-using Hash = dice::hash::DiceHash<std::variant<int, std::string>>;
-Hash::is_faulty(Hash{}(your_variant));
-```
-Every other value gets a regular hash. Types which hold nothing, like `std::monostate`,
-`std::nullopt` and empty containers, are regular values and are never reported as faulty.
+### Avalanching hashes
+A hash is avalanching if every bit of the input changes each bit of the result with a probability
+of about one half. A hash table can then use the lowest bits of the result directly, for example
+with a mask, and needs no extra mixing step. A policy declares the member type `is_avalanching` if
+all its functions are avalanching, and `DiceHash<T, Policy>` then declares `is_avalanching` for every
+`T`. This is the convention of [ankerl::unordered_dense](https://github.com/martinus/unordered_dense).
+A hash table can check it with `requires { typename Hash::is_avalanching; }`.
 
-`ErrorValue` is a sentinel, not a value outside the range of the hash functions. A regular
-value can land on it, so `is_faulty` is a strong hint and not a proof. For unordered
-containers this is easy to trigger on purpose, because their hash is the xor of the hashes of
-their elements.
+`xxh3`, `wyhash` and `rapidhash` declare `is_avalanching`. `Martinus` does not. `DiceHash<T>`
+without a policy uses `wyhash`.
+
+The marker does not depend on the type. The user makes sure that the types keep the avalanche: a
+`dice_hash_overload` must give an avalanching result with an avalanching policy. An overload that
+returns `dice_hash_templates<Policy>::dice_hash(v)` does this. A policy of your own declares
+`using is_avalanching = void;` only if all its functions are avalanching. A policy that derives
+from `wyhash`, `xxh3` or `rapidhash` inherits the declaration.
 
 ## Usage for general data hashing
 **The hash functions mentioned in this section are enabled/disabled using the feature flag `WITH_SODIUM=ON/OFF`.**

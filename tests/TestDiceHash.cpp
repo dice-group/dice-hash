@@ -86,6 +86,17 @@ namespace dice::tests::hash {
 		(void) hasher;
 	}
 
+	TEST_CASE("The default policy is wyhash", "[DiceHash]") {
+		STATIC_REQUIRE(std::is_same_v<dice::hash::DiceHash<int>, dice::hash::DiceHash<int, dice::hash::Policies::wyhash>>);
+	}
+
+	TEST_CASE("Each alias names its policy", "[DiceHash]") {
+		STATIC_REQUIRE(std::is_same_v<dice::hash::DiceHashMartinus<int>, dice::hash::DiceHash<int, dice::hash::Policies::Martinus>>);
+		STATIC_REQUIRE(std::is_same_v<dice::hash::DiceHashxxh3<int>, dice::hash::DiceHash<int, dice::hash::Policies::xxh3>>);
+		STATIC_REQUIRE(std::is_same_v<dice::hash::DiceHashwyhash<int>, dice::hash::DiceHash<int, dice::hash::Policies::wyhash>>);
+		STATIC_REQUIRE(std::is_same_v<dice::hash::DiceHashrapidhash<int>, dice::hash::DiceHash<int, dice::hash::Policies::rapidhash>>);
+	}
+
 	TEMPLATE_TEST_CASE("DiceHash works with different Policies", "[DiceHash]", AllPoliciesToTestForDiceHash) {
 		using CurrentPolicy = TestType;
 		/*
@@ -338,42 +349,23 @@ namespace dice::tests::hash {
 			REQUIRE(getHash<CurrentPolicy>(first) != getHash<CurrentPolicy>(second));
 		}
 
-        SECTION("is_faulty returns true if ErrorValue is tested") {
-			REQUIRE(dice::hash::DiceHash<int, CurrentPolicy>::is_faulty(CurrentPolicy::ErrorValue));
-		}
-
-        SECTION("is_faulty returns false if value tested isn't ErrorValue") {
-            REQUIRE(dice::hash::DiceHash<int, CurrentPolicy>::is_faulty(CurrentPolicy::ErrorValue+1) == false);
-        }
-
-		SECTION("Variant monostate is not an error") {
-			std::variant<std::monostate, int, char> test;
-			auto hashed = getHash<CurrentPolicy>(test);
-            REQUIRE_FALSE(dice::hash::DiceHash<decltype(test), CurrentPolicy>::is_faulty(hashed));
-		}
-
-		SECTION("Values which hold nothing are not errors") {
-			REQUIRE_FALSE(dice::hash::DiceHash<std::monostate, CurrentPolicy>::is_faulty(getHash<CurrentPolicy>(std::monostate{})));
-			REQUIRE_FALSE(dice::hash::DiceHash<std::nullopt_t, CurrentPolicy>::is_faulty(getHash<CurrentPolicy>(std::nullopt)));
-			REQUIRE_FALSE(dice::hash::DiceHash<std::optional<int>, CurrentPolicy>::is_faulty(getHash<CurrentPolicy>(std::optional<int>{})));
-		}
-
-		SECTION("Empty containers are not errors") {
-			REQUIRE_FALSE(dice::hash::DiceHash<std::tuple<>, CurrentPolicy>::is_faulty(getHash<CurrentPolicy>(std::tuple<>{})));
-			REQUIRE_FALSE(dice::hash::DiceHash<std::string, CurrentPolicy>::is_faulty(getHash<CurrentPolicy>(std::string{})));
-			REQUIRE_FALSE(dice::hash::DiceHash<std::vector<int>, CurrentPolicy>::is_faulty(getHash<CurrentPolicy>(std::vector<int>{})));
-			REQUIRE_FALSE(dice::hash::DiceHash<std::set<int>, CurrentPolicy>::is_faulty(getHash<CurrentPolicy>(std::set<int>{})));
-			REQUIRE_FALSE(dice::hash::DiceHash<std::map<int, int>, CurrentPolicy>::is_faulty(getHash<CurrentPolicy>(std::map<int, int>{})));
-		}
-
-		SECTION("Hash of ill-formed variant is the error value") {
+		SECTION("A valueless variant is hashed like the index std::variant_npos with std::monostate") {
 			std::variant<int, ValuelessByException> test;
 			try {
 				test = ValuelessByException();
 			} catch (std::domain_error const &) {}
-			// now test is valueless_by_exception
-            auto hashed = getHash<CurrentPolicy>(test);
-            REQUIRE(dice::hash::DiceHash<decltype(test), CurrentPolicy>::is_faulty(hashed));
+			REQUIRE(test.valueless_by_exception());
+			std::size_t const hashed = getHash<CurrentPolicy>(test);
+			REQUIRE(hashed == getHash<CurrentPolicy>(std::tuple<std::size_t, std::monostate>{std::variant_npos, std::monostate{}}));
+			REQUIRE(hashed != getHash<CurrentPolicy>(std::variant<int, ValuelessByException>{0}));
+			REQUIRE(hashed != getHash<CurrentPolicy>(std::monostate{}));
+
+			std::variant<std::string, ValuelessByException> other{"a"};
+			try {
+				other = ValuelessByException();
+			} catch (std::domain_error const &) {}
+			REQUIRE(other.valueless_by_exception());
+			REQUIRE(getHash<CurrentPolicy>(other) == hashed);
 		}
 
 		SECTION("user-defined types can be used in collections") {
@@ -389,13 +381,13 @@ namespace dice::tests::hash {
 			std::size_t b = 4;
 			std::size_t c = 7;
 			std::size_t d = 42;
-			dice::hash::DiceHash<CurrentPolicy>::hash_invertible_combine({a, b, c, d});
+			dice::hash::DiceHash<std::size_t, CurrentPolicy>::hash_invertible_combine({a, b, c, d});
 		}
 
 		SECTION("dice_hash_invertible_combine is self inverse") {
 			std::size_t a = 3;
 			std::size_t b = 4;
-			REQUIRE(a == dice::hash::DiceHash<CurrentPolicy>::hash_invertible_combine({a, b, a, a, b}));
+			REQUIRE(a == dice::hash::DiceHash<std::size_t, CurrentPolicy>::hash_invertible_combine({a, b, a, a, b}));
 		}
 
 		SECTION("dice_hash_combine can be called with any number of size_t") {
@@ -403,8 +395,48 @@ namespace dice::tests::hash {
 			std::size_t b = 4;
 			std::size_t c = 7;
 			std::size_t d = 42;
-			dice::hash::DiceHash<CurrentPolicy>::hash_combine({a, b, c, d});
+			dice::hash::DiceHash<std::size_t, CurrentPolicy>::hash_combine({a, b, c, d});
 		}
+
+		SECTION("A part that hashes to 0 does not set the hash of a pair or tuple to 0") {
+			using Set = std::unordered_set<std::uint64_t>;
+			// the hash of an empty unordered container is the xor of no hashes
+			REQUIRE(getHash<CurrentPolicy>(Set{}) == 0);
+
+			std::size_t const pair1 = getHash<CurrentPolicy>(std::pair<Set, std::uint64_t>{Set{}, 1});
+			std::size_t const pair2 = getHash<CurrentPolicy>(std::pair<Set, std::uint64_t>{Set{}, 2});
+			CHECK(pair1 != 0);
+			CHECK(pair1 != pair2);
+
+			std::size_t const tuple1 = getHash<CurrentPolicy>(std::tuple<std::uint64_t, Set>{1, Set{}});
+			std::size_t const tuple2 = getHash<CurrentPolicy>(std::tuple<std::uint64_t, Set>{2, Set{}});
+			CHECK(tuple1 != 0);
+			CHECK(tuple1 != tuple2);
+		}
+
+		SECTION("A part that hashes to 0 does not set the hash of a vector to 0") {
+			using Sets = std::vector<std::unordered_set<std::uint64_t>>;
+			std::size_t const vector1 = getHash<CurrentPolicy>(Sets{{1}, {}});
+			std::size_t const vector2 = getHash<CurrentPolicy>(Sets{{2}, {}});
+			CHECK(vector1 != 0);
+			CHECK(vector1 != vector2);
+		}
+	}
+
+	TEST_CASE("long double is not hashed as a fundamental type", "[DiceHash]") {
+		STATIC_REQUIRE_FALSE(dice::hash::internal::is_fundamental<long double>);
+		STATIC_REQUIRE_FALSE(dice::hash::internal::is_fundamental<long double const>);
+		STATIC_REQUIRE(dice::hash::internal::is_fundamental<float>);
+		STATIC_REQUIRE(dice::hash::internal::is_fundamental<double>);
+	}
+
+	TEST_CASE("rapidhash runs in its protected mode", "[DiceHash]") {
+		using Policy = dice::hash::Policies::rapidhash;
+		// In the protected mode `rapid_mix` xors the 128-bit product into its operands, so mixing
+		// in 0 keeps the other operand. In the fast mode the product replaces the operands, and
+		// the product with 0 is 0.
+		CHECK(dice::hash::rapidhash::rapid_mix(Policy::kSeed, 0) == Policy::kSeed);
+		CHECK(dice::hash::rapidhash::rapid_mix(0, 42) == 42);
 	}
 }// namespace dice::tests::hash
 

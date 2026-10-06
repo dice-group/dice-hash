@@ -2,10 +2,10 @@ cmake_minimum_required(VERSION 3.24)
 
 project(
         dice-hash
-        VERSION 0.5.2
+        VERSION 0.6.0
         DESCRIPTION "dice-hash provides a framework to generate stable hashes. It provides state-of-the-art hash functions, supports STL containers out of the box and helps you to defines stable hashes for your own structs and classes."
         HOMEPAGE_URL "https://dice-group.github.io/dice-hash/")
-set(POBR_VERSION 2)  # Persisted Object Binary Representation Version
+set(POBR_VERSION 3)  # Persisted Object Binary Representation Version
 
 include(cmake/boilerplate_init.cmake)
 boilerplate_init()
@@ -49,24 +49,6 @@ if (WITH_SODIUM)
     find_package(highway REQUIRED)
 endif ()
 
-# rapidhash consists of a single header and ships no CMakeLists.txt, so fetch it
-# ourselves. An enclosing project may provide rapidhash itself, in which case its
-# target wins and that project is also responsible for exporting it.
-if (NOT TARGET rapidhash AND NOT TARGET rapidhash::rapidhash)
-    add_subdirectory(include/dice/hash/internal/rapidhash)
-endif ()
-
-# link against the namespaced name regardless of who provides the target
-if (NOT TARGET rapidhash::rapidhash)
-    get_target_property(rapidhash_alias rapidhash ALIASED_TARGET)
-    if (rapidhash_alias)
-        add_library(rapidhash::rapidhash ALIAS ${rapidhash_alias})
-    else ()
-        add_library(rapidhash::rapidhash ALIAS rapidhash)
-    endif ()
-    unset(rapidhash_alias)
-endif ()
-
 find_package(xxHash REQUIRED)
 
 # the official Blake3 implementation ships no usable CMakeLists.txt, so build it
@@ -91,6 +73,7 @@ endif ()
 
 # install rules for the licenses of the header-only vendored dependencies
 add_subdirectory(include/dice/hash/internal/wyhash)
+add_subdirectory(include/dice/hash/internal/rapidhash)
 add_subdirectory(include/dice/hash/internal/robinhood)
 
 if (WITH_SODIUM)
@@ -107,7 +90,6 @@ if (WITH_SODIUM)
             PUBLIC
             libsodium::libsodium
             BLAKE3::blake3
-            rapidhash::rapidhash
             xxHash::xxhash
             PRIVATE
             highway::highway
@@ -123,7 +105,6 @@ else()
     target_link_libraries(${PROJECT_NAME}
             INTERFACE
             BLAKE3::blake3
-            rapidhash::rapidhash
             xxHash::xxhash
     )
 endif()
