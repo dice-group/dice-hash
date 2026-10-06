@@ -122,9 +122,9 @@ namespace dice::tests::hash::is_avalanching {
 	}
 
 	TEST_CASE("DiceHash keeps the combine functions of the policy", "[DiceHash][is_avalanching]") {
-		CHECK(DiceHash<int, wyhash>::hash_combine({1, 2}) == wyhash::hash_combine({1, 2}));
-		CHECK(DiceHash<int, Martinus>::hash_combine({1, 2}) == Martinus::hash_combine({1, 2}));
-		CHECK(DiceHash<int, xxh3>::hash_invertible_combine({1, 2}) == xxh3::hash_invertible_combine({1, 2}));
+		CHECK(DiceHash<int, wyhash>::hash_combine({2, 3}) == wyhash::hash_combine({2, 3}));
+		CHECK(DiceHash<int, Martinus>::hash_combine({2, 3}) == Martinus::hash_combine({2, 3}));
+		CHECK(DiceHash<int, xxh3>::hash_invertible_combine({2, 3}) == xxh3::hash_invertible_combine({2, 3}));
 	}
 }// namespace dice::tests::hash::is_avalanching
 
