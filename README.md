@@ -135,8 +135,9 @@ is the convention of [ankerl::unordered_dense](https://github.com/martinus/unord
 table can check it with `requires { typename Hash::is_avalanching; }`.
 
 `xxh3`, `wyhash` and `rapidhash` are avalanching. `DiceHash<T>` without a policy uses `wyhash`.
-`Martinus` is not avalanching for most fundamental types and for strings. The doc comment of
-`DiceHash` lists the details.
+`Martinus` is not avalanching, so with it `DiceHash` declares `is_avalanching` only for
+`std::monostate`, `std::nullopt_t`, `std::nullptr_t` and the types with a true
+`dice_hash_is_avalanching`.
 
 These types are not avalanching, also with `xxh3`, `wyhash` and `rapidhash`:
 - Unordered containers (`std::unordered_map`, `std::unordered_set` and the types of

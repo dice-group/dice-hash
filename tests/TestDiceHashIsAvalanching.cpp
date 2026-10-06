@@ -30,16 +30,6 @@ namespace dice::tests::hash::is_avalanching {
 	template<typename T>
 	inline constexpr bool marked_default = requires { typename DiceHash<T>::is_avalanching; };
 
-	/** With `Martinus`, `hash_bytes` does not avalanche and `HashState` does. So a vector, array or
-	 * span of `T` is marked exactly if `dice_hash_templates` hashes it value by value, that is if
-	 * `hash_range_as_bytes<T>` is false.
-	 */
-	template<typename T>
-	inline constexpr bool ranges_marked_as_hashed =
-			marked<std::vector<T>, Martinus> == !dice::hash::internal::hash_range_as_bytes<T>
-			&& marked<std::array<T, 2>, Martinus> == !dice::hash::internal::hash_range_as_bytes<T>
-			&& marked<std::span<T const>, Martinus> == !dice::hash::internal::hash_range_as_bytes<T>;
-
 	/** A type with its own `dice_hash_overload`. */
 	struct Custom {
 		int a;
@@ -173,8 +163,8 @@ namespace dice::tests::hash::is_avalanching {
 #endif
 	}
 
-	TEMPLATE_TEST_CASE("is_avalanching is the same for every policy", "[DiceHash][is_avalanching]",
-					   Martinus, xxh3, wyhash, rapidhash) {
+	TEMPLATE_TEST_CASE("is_avalanching is the same for xxh3, wyhash and rapidhash", "[DiceHash][is_avalanching]",
+					   xxh3, wyhash, rapidhash) {
 		using Policy = TestType;
 
 		SECTION("the member type is void") {
@@ -244,8 +234,8 @@ namespace dice::tests::hash::is_avalanching {
 		}
 	}
 
-	TEST_CASE("is_avalanching with a policy of your own", "[DiceHash][is_avalanching]") {
-		using Policy = OwnPolicy;
+	TEMPLATE_TEST_CASE("is_avalanching with Martinus and a policy of your own", "[DiceHash][is_avalanching]", Martinus, OwnPolicy) {
+		using Policy = TestType;
 
 		SECTION("std::monostate, std::nullopt_t and std::nullptr_t are marked") {
 			STATIC_REQUIRE(marked<std::monostate, Policy>);
@@ -255,108 +245,28 @@ namespace dice::tests::hash::is_avalanching {
 
 		SECTION("a type with a true dice_hash_is_avalanching is marked") {
 			STATIC_REQUIRE(marked<CustomAvalanching, Policy>);
-			STATIC_REQUIRE(marked<CustomPerPolicy, Policy>);
+			STATIC_REQUIRE(marked<CustomPerPolicy, Policy> == !std::is_same_v<Policy, Martinus>);
 		}
 
-		SECTION("the types that contain it are not marked, because the combine of the policy is not known") {
+		SECTION("the types that contain it are not marked, because the combine of the policy promises nothing") {
 			STATIC_REQUIRE_FALSE(marked<std::pair<CustomAvalanching, CustomAvalanching>, Policy>);
 			STATIC_REQUIRE_FALSE(marked<std::vector<CustomAvalanching>, Policy>);
 		}
 
-		SECTION("an overload type with avalanching_like of std::pair<int, int> is not marked") {
+		SECTION("an overload type with avalanching_like is not marked") {
 			STATIC_REQUIRE_FALSE(marked<CustomLikePair, Policy>);
-		}
-
-		SECTION("int and std::string are not marked") {
-			STATIC_REQUIRE_FALSE(marked<int, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::string, Policy>);
-		}
-	}
-
-	TEST_CASE("is_avalanching with Martinus", "[DiceHash][is_avalanching]") {
-		using Policy = Martinus;
-
-		SECTION("hash_int is not avalanching") {
-			STATIC_REQUIRE_FALSE(marked<bool, Policy>);
-			STATIC_REQUIRE_FALSE(marked<char, Policy>);
-			STATIC_REQUIRE_FALSE(marked<char32_t, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::byte, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::int8_t, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::uint16_t, Policy>);
-			STATIC_REQUIRE_FALSE(marked<int, Policy>);
-			STATIC_REQUIRE_FALSE(marked<long, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::size_t, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::uint64_t, Policy>);
-			STATIC_REQUIRE_FALSE(marked<double, Policy>);
-			STATIC_REQUIRE_FALSE(marked<int *, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::string const *, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::unique_ptr<int>, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::shared_ptr<int>, Policy>);
-		}
-
-		SECTION("hash_bytes is not avalanching") {
-			STATIC_REQUIRE_FALSE(marked<float, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::string, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::string_view, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::u16string, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::vector<int>, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::array<char, 4>, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::span<std::uint64_t const>, Policy>);
-		}
-
-		SECTION("hash_bytes over a multiple of 8 bytes is avalanching") {
-			STATIC_REQUIRE(marked<__int128, Policy>);
-			STATIC_REQUIRE(marked<unsigned __int128, Policy>);
-		}
-
-		SECTION("long double is avalanching where it is larger than double") {
-			// x87 extended precision has 10 value bytes, IEEE binary128 and double-double have 16.
-			// hash_bytes over them leaves a rest of 2 or 0 bytes. A long double of 8 bytes is hashed
-			// like a double, with hash_int.
-			STATIC_REQUIRE(marked<long double, Policy> == (sizeof(long double) > sizeof(double)));
-		}
-
-		SECTION("ranges of float and double are hashed as bytes and are not avalanching") {
-			STATIC_REQUIRE_FALSE(marked<std::vector<float>, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::vector<double>, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::array<double, 2>, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::span<float const>, Policy>);
-		}
-
-		SECTION("ranges of long double in x87 extended precision are hashed with HashState and are avalanching") {
-			using dice::hash::internal::FloatFormat;
-			constexpr bool x87 = dice::hash::internal::float_format<long double> == FloatFormat::x87_extended;
-			STATIC_REQUIRE(marked<std::vector<long double>, Policy> == x87);
-			STATIC_REQUIRE(marked<std::array<long double, 2>, Policy> == x87);
-			STATIC_REQUIRE(marked<std::span<long double const>, Policy> == x87);
-		}
-
-		SECTION("hash_combine and HashState are avalanching") {
-			STATIC_REQUIRE(marked<std::pair<int, int>, Policy>);
-			STATIC_REQUIRE(marked<std::pair<std::string, int>, Policy>);
-			STATIC_REQUIRE(marked<std::tuple<int, long, char>, Policy>);
-			STATIC_REQUIRE(marked<std::tuple<std::string>, Policy>);
-			STATIC_REQUIRE(marked<std::optional<int>, Policy>);
-			STATIC_REQUIRE(marked<std::optional<std::string>, Policy>);
-			STATIC_REQUIRE(marked<std::variant<int, std::string>, Policy>);
-			STATIC_REQUIRE(marked<std::variant<std::monostate, int>, Policy>);
-			STATIC_REQUIRE(marked<std::set<int>, Policy>);
-			STATIC_REQUIRE(marked<std::map<int, std::string>, Policy>);
-			STATIC_REQUIRE(marked<OrderedInts, Policy>);
-			STATIC_REQUIRE(marked<std::vector<std::string>, Policy>);
-			STATIC_REQUIRE(marked<std::vector<std::pair<int, int>>, Policy>);
-			STATIC_REQUIRE(marked<std::vector<int *>, Policy>);
-			STATIC_REQUIRE(marked<std::array<std::string, 2>, Policy>);
-			STATIC_REQUIRE(marked<std::span<std::string const>, Policy>);
-			STATIC_REQUIRE(marked<std::pair<std::unordered_set<int>, int>, Policy>);
-			STATIC_REQUIRE(marked<std::vector<std::unordered_set<int>>, Policy>);
-			STATIC_REQUIRE(marked<std::pair<CustomAvalanching, std::unordered_set<int>>, Policy>);
-		}
-
-		SECTION("an overload type whose dice_hash_is_avalanching is false is not marked") {
-			STATIC_REQUIRE_FALSE(marked<CustomPerPolicy, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::pair<CustomPerPolicy, int>, Policy>);
 			STATIC_REQUIRE_FALSE(marked<CustomLikeInt, Policy>);
+		}
+
+		SECTION("values, strings, ranges and combined types are not marked") {
+			STATIC_REQUIRE_FALSE(marked<int, Policy>);
+			STATIC_REQUIRE_FALSE(marked<std::uint64_t, Policy>);
+			STATIC_REQUIRE_FALSE(marked<__int128, Policy>);
+			STATIC_REQUIRE_FALSE(marked<long double, Policy>);
+			STATIC_REQUIRE_FALSE(marked<std::string, Policy>);
+			STATIC_REQUIRE_FALSE(marked<std::vector<long double>, Policy>);
+			STATIC_REQUIRE_FALSE(marked<std::pair<std::string, int>, Policy>);
+			STATIC_REQUIRE_FALSE(marked<std::set<int>, Policy>);
 		}
 	}
 
@@ -493,70 +403,13 @@ namespace dice::tests::hash::is_avalanching {
 	}
 
 	TEMPLATE_TEST_CASE("Integers with 128 bits are marked in every -std mode", "[DiceHash][is_avalanching]",
-					   Martinus, xxh3, wyhash, rapidhash) {
+					   xxh3, wyhash, rapidhash) {
 		using Policy = TestType;
 		// `wyhash` hashes integers with more than 64 bits by their bytes, also where
 		// `std::is_integral_v<__int128>` is true.
 		STATIC_REQUIRE(marked<__int128, Policy>);
 		STATIC_REQUIRE(marked<unsigned __int128, Policy>);
 		STATIC_REQUIRE(marked<std::pair<__int128, int>, Policy>);
-	}
-
-	TEST_CASE("The marker of a range follows hash_range_as_bytes", "[DiceHash][is_avalanching]") {
-		STATIC_REQUIRE(ranges_marked_as_hashed<char>);
-		STATIC_REQUIRE(ranges_marked_as_hashed<std::byte>);
-		STATIC_REQUIRE(ranges_marked_as_hashed<int>);
-		STATIC_REQUIRE(ranges_marked_as_hashed<std::uint64_t>);
-		STATIC_REQUIRE(ranges_marked_as_hashed<__int128>);
-		STATIC_REQUIRE(ranges_marked_as_hashed<int *>);
-		STATIC_REQUIRE(ranges_marked_as_hashed<float>);
-		STATIC_REQUIRE(ranges_marked_as_hashed<double>);
-		STATIC_REQUIRE(ranges_marked_as_hashed<long double>);
-		STATIC_REQUIRE(ranges_marked_as_hashed<std::string>);
-#if defined(DICE_HASH_TEST_GNU_MODE) && defined(__GLIBCXX__) && defined(_GLIBCXX_USE_FLOAT128)
-		// libstdc++ counts `__float128` as a floating point type in the GNU modes.
-		STATIC_REQUIRE(ranges_marked_as_hashed<__float128>);
-		STATIC_REQUIRE_FALSE(marked<std::vector<__float128>, Martinus>);
-#endif
-		// ranges of `double` and `int` are hashed as bytes
-		STATIC_REQUIRE_FALSE(marked<std::vector<double>, Martinus>);
-		STATIC_REQUIRE_FALSE(marked<std::vector<int>, Martinus>);
-
-		// The checks above compare the marker with the trait that `dice_hash_templates` reads. The checks
-		// below run the hash: a range is marked exactly if its hash differs from `Martinus::hash_bytes`
-		// over its block of bytes.
-		auto const marker_follows_path = []<typename T>(T const &x, T const &y) {
-			std::vector<T> vec(2);
-			std::array<T, 2> arr{};
-			// Fill the bytes first, so that the padding bytes of `long double` have a value.
-			for (std::size_t i = 0; i < sizeof(T) * 2; ++i) {
-				reinterpret_cast<unsigned char *>(vec.data())[i] = 0x5a;
-				reinterpret_cast<unsigned char *>(arr.data())[i] = 0x5a;
-			}
-			vec[0] = x;
-			vec[1] = y;
-			arr[0] = x;
-			arr[1] = y;
-			std::span<T const> const span{vec};
-			auto const block = [](T const *data) { return Martinus::hash_bytes(data, sizeof(T) * 2); };
-			return marked<std::vector<T>, Martinus> == (DiceHash<std::vector<T>, Martinus>{}(vec) != block(vec.data()))
-				   && marked<std::array<T, 2>, Martinus> == (DiceHash<std::array<T, 2>, Martinus>{}(arr) != block(arr.data()))
-				   && marked<std::span<T const>, Martinus> == (DiceHash<std::span<T const>, Martinus>{}(span) != block(vec.data()));
-		};
-		int a = 1;
-		int b = 2;
-		CHECK(marker_follows_path('a', 'b'));
-		CHECK(marker_follows_path(std::byte{3}, std::byte{200}));
-		CHECK(marker_follows_path(3, -7));
-		CHECK(marker_follows_path(std::uint64_t{3}, std::uint64_t{1} << 40));
-		CHECK(marker_follows_path(__int128{3}, __int128{1} << 100));
-		CHECK(marker_follows_path(&a, &b));
-		CHECK(marker_follows_path(1.5f, -0.25f));
-		CHECK(marker_follows_path(1.5, -0.25));
-		CHECK(marker_follows_path(1.5L, -0.25L));
-#if defined(DICE_HASH_TEST_GNU_MODE) && defined(__GLIBCXX__) && defined(_GLIBCXX_USE_FLOAT128)
-		CHECK(marker_follows_path(static_cast<__float128>(1.5), static_cast<__float128>(-0.25)));
-#endif
 	}
 
 	TEST_CASE("DiceHash without a policy is marked as with wyhash", "[DiceHash][is_avalanching]") {

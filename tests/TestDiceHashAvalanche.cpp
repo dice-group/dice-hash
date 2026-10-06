@@ -293,7 +293,7 @@ namespace dice::tests::hash::avalanche {
 	}
 
 	TEMPLATE_TEST_CASE("hash_combine and HashState avalanche for plain inputs exactly if the policy says so", "[DiceHash][is_avalanching][avalanche]",
-					   Martinus, xxh3, wyhash, rapidhash) {
+					   xxh3, wyhash, rapidhash) {
 		using Policy = TestType;
 		using u64 = std::uint64_t;
 		constexpr bool combine = dice::hash::internal::avalanching_functions<Policy>::combine;

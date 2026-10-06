@@ -414,7 +414,8 @@ namespace dice::hash {
 		 * when all input hashes are avalanching.
 		 * A policy without a specialization promises nothing, so `DiceHash` never declares
 		 * `is_avalanching` for it, except for `std::monostate`, `std::nullopt_t`, `std::nullptr_t`
-		 * and the types with a true `dice_hash_is_avalanching`.
+		 * and the types with a true `dice_hash_is_avalanching`. `Martinus` has no specialization:
+		 * its `hash_int` multiplies and rotates, so some input bits never change some output bits.
 		 * @tparam Policy The policy.
 		 */
 		template<typename Policy>
@@ -424,40 +425,6 @@ namespace dice::hash {
 			static constexpr bool bytes = false;
 			static constexpr bool combine = false;
 			static constexpr bool combine_keeps = false;
-		};
-
-		/** The number of bytes that the policies of dice-hash hash for a value of the fundamental type
-		 * `T`: the value bytes of a floating point type (`float_value_size`), `sizeof(T)` for the
-		 * other types.
-		 */
-		template<typename T>
-		constexpr std::size_t fundamental_hashed_size() noexcept {
-			if constexpr (std::is_floating_point_v<T>) {
-				return float_value_size<T>;
-			} else {
-				return sizeof(T);
-			}
-		}
-
-		/** `hash_fundamental` uses `hash_int` for the types with up to 8 bytes, except the floating
-		 * point types, and for the floating point types with 8 value bytes (`double`). The other
-		 * floating point types (`float`, `long double` where it is larger than `double`) and the
-		 * types with more than 8 bytes go through `hash_bytes` over their value bytes.
-		 * `hash_int` multiplies and rotates, so some input bits never change some output bits.
-		 * `hash_bytes` is MurmurHash64A. When 4 to 7 bytes follow the last full block of 8 bytes,
-		 * some output bits flip with a probability of 0.44 instead of 0.5. This affects `float`
-		 * and every string whose length leaves such a rest.
-		 * `hash_combine` and `HashState` mix each input hash and mix the result again at the end.
-		 */
-		template<>
-		struct avalanching_functions<Policies::Martinus> {
-			template<typename T>
-			static constexpr bool fundamental = fundamental_hashed_size<T>() != sizeof(std::size_t)
-												&& (fundamental_hashed_size<T>() > sizeof(std::size_t) || std::is_floating_point_v<T>)
-												&& fundamental_hashed_size<T>() % 8 < 4;
-			static constexpr bool bytes = false;
-			static constexpr bool combine = true;
-			static constexpr bool combine_keeps = true;
 		};
 
 		/** Every function hashes the bytes with XXH3.
@@ -723,12 +690,7 @@ namespace dice::hash {
      * - `wyhash` and `rapidhash`: fundamental types, pointers, smart pointers, strings, string
      *   views, and vectors, arrays and spans of fundamental types. Pairs, tuples, optionals,
      *   variants and the other containers only if all their parts are avalanching.
-     * - `Martinus`: pairs, tuples, optionals, variants, ordered containers, and vectors, arrays and
-     *   spans of `long double` in x87 extended precision and of types that are not fundamental.
-     *   `__int128`, `unsigned __int128`, and `long double` where it is larger than `double`. Not
-     *   avalanching are the other fundamental types, pointers, smart pointers, strings, string
-     *   views, and vectors, arrays and spans of the other fundamental types.
-     * - A policy of your own: no other type.
+     * - `Martinus` and a policy of your own: no other type.
      * `DiceHash<T>` without a policy uses `wyhash`. The README explains the reasons.
      * @tparam T The type to define the hash for.
      * @tparam Policy The Policy defines how the hash works on a basic level. The default is `Policies::wyhash`.
