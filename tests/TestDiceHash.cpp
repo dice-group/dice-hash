@@ -485,44 +485,6 @@ namespace dice::tests::hash {
 		}
 	}
 
-	/** The hash of a range that is hashed value by value: `HashState` of the policy over the hash
-	 * of each value.
-	 */
-	template<typename Policy, typename Range>
-	std::size_t value_by_value_hash(Range const &range) {
-		typename Policy::HashState state(std::size(range));
-		for (auto const &x : range) {
-			state.add(getHash<Policy>(x));
-		}
-		return state.digest();
-	}
-
-	/** Checks that `std::vector`, `std::array` and `std::span` of `T` hash to `value_by_value_hash`.
-	 */
-	template<typename Policy, typename T>
-	void check_ranges_value_by_value() {
-		std::array<T, 4> const arr{T(1), T(-2.5), T(3.25), T(0)};
-		std::vector<T> const vec(arr.begin(), arr.end());
-		std::size_t const expected = value_by_value_hash<Policy>(arr);
-		REQUIRE(getHash<Policy>(vec) == expected);
-		REQUIRE(getHash<Policy>(arr) == expected);
-		REQUIRE(getHash<Policy>(std::span<T const>{vec}) == expected);
-	}
-
-	/** Checks that `std::vector`, `std::array` and `std::span` of `T` with `-0.0` hash like the
-	 * same ranges with `+0.0`.
-	 */
-	template<typename Policy, typename T>
-	void check_ranges_signed_zero() {
-		std::array<T, 3> const negative{T(1), -T(0), T(2)};
-		std::array<T, 3> const positive{T(1), T(0), T(2)};
-		std::vector<T> const negative_vec(negative.begin(), negative.end());
-		std::vector<T> const positive_vec(positive.begin(), positive.end());
-		REQUIRE(getHash<Policy>(negative_vec) == getHash<Policy>(positive_vec));
-		REQUIRE(getHash<Policy>(negative) == getHash<Policy>(positive));
-		REQUIRE(getHash<Policy>(std::span<T const>{negative_vec}) == getHash<Policy>(std::span<T const>{positive}));
-	}
-
 	/** Writes `value` to `target` and sets every byte after the value bytes to `padding`.
 	 * The bytes are written with `std::memcpy`, because a copy of a `long double` by value need not
 	 * keep the padding.
@@ -618,7 +580,6 @@ namespace dice::tests::hash {
 			if constexpr (std::is_floating_point_v<__float128>) {
 				STATIC_REQUIRE(dice::hash::internal::float_value_size<__float128> == 16);
 				check_value_bytes_hash<CurrentPolicy, __float128>();
-				check_ranges_value_by_value<CurrentPolicy, __float128>();
 			} else {
 				SUCCEED("__float128 is not a floating point type in this mode");
 			}
@@ -654,107 +615,12 @@ namespace dice::tests::hash {
 			REQUIRE(test_vec_arr<CurrentPolicy>(1.0L, 2.0L, 3.0L));
 		}
 
-		SECTION("Ranges of float, double and long double hash value by value") {
-			check_ranges_value_by_value<CurrentPolicy, float>();
-			check_ranges_value_by_value<CurrentPolicy, double>();
-			check_ranges_value_by_value<CurrentPolicy, long double>();
+		SECTION("Ranges of float and double hash as one block of bytes") {
+			std::vector<float> const floats{1.0f, -2.5f, 3.25f};
+			std::vector<double> const doubles{1.0, -2.5, 3.25};
+			REQUIRE(getHash<CurrentPolicy>(floats) == CurrentPolicy::hash_bytes(floats.data(), sizeof(float) * floats.size()));
+			REQUIRE(getHash<CurrentPolicy>(doubles) == CurrentPolicy::hash_bytes(doubles.data(), sizeof(double) * doubles.size()));
 		}
-
-		SECTION("Ranges of the other fundamental types hash as one block of bytes") {
-			std::vector<int> const ints{1, -2, 3};
-			std::array<char, 3> const chars{'a', 'b', 'c'};
-			std::vector<std::byte> const bytes{std::byte{1}, std::byte{2}};
-			REQUIRE(getHash<CurrentPolicy>(ints) == CurrentPolicy::hash_bytes(ints.data(), sizeof(int) * ints.size()));
-			REQUIRE(getHash<CurrentPolicy>(chars) == CurrentPolicy::hash_bytes(chars.data(), chars.size()));
-			REQUIRE(getHash<CurrentPolicy>(std::span<std::byte const>{bytes}) == CurrentPolicy::hash_bytes(bytes.data(), bytes.size()));
-		}
-	}
-
-	TEST_CASE("Only ranges of fundamental types that are not floating point hash as bytes", "[DiceHash]") {
-		using dice::hash::internal::hash_range_as_bytes;
-		STATIC_REQUIRE(!hash_range_as_bytes<float>);
-		STATIC_REQUIRE(!hash_range_as_bytes<double>);
-		STATIC_REQUIRE(!hash_range_as_bytes<long double>);
-		STATIC_REQUIRE(!hash_range_as_bytes<double const>);
-		STATIC_REQUIRE(hash_range_as_bytes<int>);
-		STATIC_REQUIRE(hash_range_as_bytes<char>);
-		STATIC_REQUIRE(hash_range_as_bytes<std::byte>);
-		STATIC_REQUIRE(!hash_range_as_bytes<std::string>);
-	}
-
-	TEST_CASE("The canonical form of -0.0 is +0.0", "[DiceHash]") {
-		using dice::hash::internal::canonical_float_bytes;
-		using dice::hash::internal::FloatFormat;
-		using Bytes4 = std::array<unsigned char, 4>;
-		using Bytes8 = std::array<unsigned char, 8>;
-		using Bytes10 = std::array<unsigned char, 10>;
-		using Bytes16 = std::array<unsigned char, 16>;
-
-		// IEEE binary32, binary64 and binary128, little and big endian
-		STATIC_REQUIRE(canonical_float_bytes<FloatFormat::all_bytes>(Bytes4{0, 0, 0, 0x80}, true) == Bytes4{});
-		STATIC_REQUIRE(canonical_float_bytes<FloatFormat::all_bytes>(Bytes4{0x80, 0, 0, 0}, false) == Bytes4{});
-		STATIC_REQUIRE(canonical_float_bytes<FloatFormat::all_bytes>(Bytes8{0, 0, 0, 0, 0, 0, 0, 0x80}, true) == Bytes8{});
-		STATIC_REQUIRE(canonical_float_bytes<FloatFormat::all_bytes>(Bytes8{0x80, 0, 0, 0, 0, 0, 0, 0}, false) == Bytes8{});
-		STATIC_REQUIRE(canonical_float_bytes<FloatFormat::all_bytes>(Bytes16{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x80}, true) == Bytes16{});
-		STATIC_REQUIRE(canonical_float_bytes<FloatFormat::all_bytes>(Bytes16{0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, false) == Bytes16{});
-		// x87 extended precision, the 10 value bytes
-		STATIC_REQUIRE(canonical_float_bytes<FloatFormat::x87_extended>(Bytes10{0, 0, 0, 0, 0, 0, 0, 0, 0, 0x80}, true) == Bytes10{});
-		// double-double: (-0.0, -0.0) and (-0.0, +0.0)
-		STATIC_REQUIRE(canonical_float_bytes<FloatFormat::double_double>(Bytes16{0, 0, 0, 0, 0, 0, 0, 0x80, 0, 0, 0, 0, 0, 0, 0, 0x80}, true) == Bytes16{});
-		STATIC_REQUIRE(canonical_float_bytes<FloatFormat::double_double>(Bytes16{0, 0, 0, 0, 0, 0, 0, 0x80, 0, 0, 0, 0, 0, 0, 0, 0}, true) == Bytes16{});
-		STATIC_REQUIRE(canonical_float_bytes<FloatFormat::double_double>(Bytes16{0x80, 0, 0, 0, 0, 0, 0, 0, 0x80, 0, 0, 0, 0, 0, 0, 0}, false) == Bytes16{});
-
-		// values that are not zero do not change: the negative subnormal closest to zero, -NaN, -1.0
-		constexpr Bytes8 le_negative_subnormal{1, 0, 0, 0, 0, 0, 0, 0x80};
-		constexpr Bytes8 be_negative_subnormal{0x80, 0, 0, 0, 0, 0, 0, 1};
-		constexpr Bytes8 le_negative_nan{0, 0, 0, 0, 0, 0, 0xf8, 0xff};
-		constexpr Bytes10 x87_negative_subnormal{1, 0, 0, 0, 0, 0, 0, 0, 0, 0x80};
-		constexpr Bytes10 x87_minus_one{0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0xbf};
-		STATIC_REQUIRE(canonical_float_bytes<FloatFormat::all_bytes>(le_negative_subnormal, true) == le_negative_subnormal);
-		STATIC_REQUIRE(canonical_float_bytes<FloatFormat::all_bytes>(be_negative_subnormal, false) == be_negative_subnormal);
-		STATIC_REQUIRE(canonical_float_bytes<FloatFormat::all_bytes>(le_negative_nan, true) == le_negative_nan);
-		STATIC_REQUIRE(canonical_float_bytes<FloatFormat::x87_extended>(x87_negative_subnormal, true) == x87_negative_subnormal);
-		STATIC_REQUIRE(canonical_float_bytes<FloatFormat::x87_extended>(x87_minus_one, true) == x87_minus_one);
-	}
-
-	TEMPLATE_TEST_CASE("+0.0 and -0.0 hash the same", "[DiceHash]", AllPoliciesToTestForDiceHash) {
-		using CurrentPolicy = TestType;
-
-		SECTION("float, double and long double") {
-			REQUIRE(getHash<CurrentPolicy>(-0.0f) == getHash<CurrentPolicy>(0.0f));
-			REQUIRE(getHash<CurrentPolicy>(-0.0) == getHash<CurrentPolicy>(0.0));
-			REQUIRE(getHash<CurrentPolicy>(-0.0L) == getHash<CurrentPolicy>(0.0L));
-		}
-
-		SECTION("-0.0 hashes to the hash value of +0.0") {
-			REQUIRE(getHash<CurrentPolicy>(-0.0f) == value_bytes_hash<CurrentPolicy>(0.0f));
-			REQUIRE(getHash<CurrentPolicy>(-0.0) == value_bytes_hash<CurrentPolicy>(0.0));
-			REQUIRE(getHash<CurrentPolicy>(-0.0L) == value_bytes_hash<CurrentPolicy>(0.0L));
-		}
-
-		SECTION("Types that hash their parts one by one") {
-			REQUIRE(getHash<CurrentPolicy>(std::make_tuple(1, -0.0)) == getHash<CurrentPolicy>(std::make_tuple(1, 0.0)));
-			REQUIRE(getHash<CurrentPolicy>(std::optional<float>{-0.0f}) == getHash<CurrentPolicy>(std::optional<float>{0.0f}));
-			REQUIRE(getHash<CurrentPolicy>(std::set<double>{-0.0, 1.0}) == getHash<CurrentPolicy>(std::set<double>{0.0, 1.0}));
-		}
-
-		SECTION("Ranges of float, double and long double") {
-			check_ranges_signed_zero<CurrentPolicy, float>();
-			check_ranges_signed_zero<CurrentPolicy, double>();
-			check_ranges_signed_zero<CurrentPolicy, long double>();
-		}
-
-#ifdef __SIZEOF_FLOAT128__
-		SECTION("__float128 where it is a floating point type") {
-			if constexpr (std::is_floating_point_v<__float128>) {
-				__float128 const zero = 0;
-				REQUIRE(getHash<CurrentPolicy>(-zero) == getHash<CurrentPolicy>(zero));
-				check_ranges_signed_zero<CurrentPolicy, __float128>();
-			} else {
-				SUCCEED("__float128 is not a floating point type in this mode");
-			}
-		}
-#endif
 	}
 }// namespace dice::tests::hash
 

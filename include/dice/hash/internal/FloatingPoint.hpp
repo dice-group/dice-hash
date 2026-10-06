@@ -11,18 +11,13 @@
  * - double-double (`long double` on PowerPC with the IBM format): the value is the sum of two
  *   `double`s, the high part at the lower address. Negation flips the sign of both parts, so the
  *   low part of a value can be `+0.0` or `-0.0`.
- * In every format, `+0.0` and `-0.0` compare equal and differ in the sign bit.
- * `float_value_bytes` gives the bytes of a value without the padding and turns `-0.0` into `+0.0`,
- * for double-double in both parts. Then equal values have equal bytes, except for encodings that
- * arithmetic does not produce (for example x87 pseudo-denormals). NaN is not equal to anything, so
- * its bytes do not change.
+ * `float_value_bytes` gives the bytes of a value without the padding, and turns a low part of `-0.0`
+ * into `+0.0`.
  */
 
-#include <algorithm>
 #include <array>
 #include <bit>
 #include <cstddef>
-#include <cstdint>
 #include <cstring>
 #include <limits>
 #include <span>
@@ -92,8 +87,6 @@ namespace dice::hash::internal {
 	 * A value is zero if all bits except the sign bit are zero. The sign bit is the highest bit of
 	 * the last byte (little endian) or of the first byte (big endian). This holds for the binary
 	 * formats of IEEE 754 and for x87 extended precision. Other values do not change.
-	 * Values of 2, 4 or 8 bytes are checked as one integer, so this costs one compare for `float`
-	 * and `double`.
 	 * @tparam N The number of bytes of the value.
 	 * @param bytes The bytes of the value.
 	 * @param little_endian true if the value is stored little endian.
@@ -101,32 +94,21 @@ namespace dice::hash::internal {
 	template<std::size_t N>
 	constexpr void fold_signed_zero(std::span<unsigned char, N> bytes, bool little_endian) noexcept {
 		std::size_t const sign_byte = little_endian ? N - 1 : 0;
-		bool is_zero = true;
-		if constexpr (N == 2 || N == 4 || N == 8) {
-			using Word = std::conditional_t<N == 2, std::uint16_t, std::conditional_t<N == 4, std::uint32_t, std::uint64_t>>;
-			std::array<unsigned char, N> copy;
-			std::copy(bytes.begin(), bytes.end(), copy.begin());
-			auto const word = std::bit_cast<Word>(copy);
-			// the position of the sign byte in `word` depends on the byte order of the platform
-			std::size_t const sign_shift = 8 * (std::endian::native == std::endian::little ? sign_byte : N - 1 - sign_byte) + 7;
-			is_zero = (word & static_cast<Word>(~(Word{1} << sign_shift))) == 0;
-		} else {
-			is_zero = (bytes[sign_byte] & 0x7fU) == 0;
-			for (std::size_t i = 0; i < N; ++i) {
-				if (i != sign_byte && bytes[i] != 0) {
-					is_zero = false;
-				}
+		unsigned rest = bytes[sign_byte] & 0x7fU;
+		for (std::size_t i = 0; i < N; ++i) {
+			if (i != sign_byte) {
+				rest |= bytes[i];
 			}
 		}
-		if (is_zero) {
+		if (rest == 0) {
 			bytes[sign_byte] = 0;
 		}
 	}
 
-	/** Brings the value bytes of a floating point value into a form in which equal values have
-	 * equal bytes.
-	 * `-0.0` becomes `+0.0`. For double-double, this is done for both parts. Other values, NaN
-	 * included, do not change.
+	/** Brings the value bytes of a floating point value into a form in which equal nonzero values
+	 * have equal bytes.
+	 * For double-double, a low part of `-0.0` becomes `+0.0`. The bytes of the other formats do not
+	 * change.
 	 * @tparam format The format of the value.
 	 * @tparam N The number of value bytes.
 	 * @param bytes The value bytes.
@@ -137,10 +119,7 @@ namespace dice::hash::internal {
 	constexpr std::array<unsigned char, N> canonical_float_bytes(std::array<unsigned char, N> bytes, bool little_endian) noexcept {
 		if constexpr (format == FloatFormat::double_double) {
 			static_assert(N == 16, "double-double has two parts of 8 bytes");
-			fold_signed_zero(std::span<unsigned char, 8>{bytes.data(), 8}, little_endian);
 			fold_signed_zero(std::span<unsigned char, 8>{bytes.data() + 8, 8}, little_endian);
-		} else {
-			fold_signed_zero(std::span<unsigned char, N>{bytes}, little_endian);
 		}
 		return bytes;
 	}
