@@ -43,9 +43,8 @@ namespace dice::hash::Policies {
 		inline static constexpr std::size_t ErrorValue = ~static_cast<std::size_t>(kSeed);
 
 		/** Integers of up to 64 bits are hashed with `wyhash64`. All other types are hashed by
-		 * their bytes, also `__int128` and `unsigned __int128`. `std::is_integral_v<__int128>`
-		 * depends on the standard library and the `-std` mode. The size check makes the hash of a
-		 * 128-bit integer the same in every mode.
+		 * their bytes, also `__int128` and `unsigned __int128`, so that `wyhash64` does not truncate
+		 * them to 64 bits.
 		 */
 		template<typename T>
 		static std::size_t hash_fundamental(T x) noexcept {

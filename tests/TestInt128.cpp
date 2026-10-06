@@ -1,8 +1,7 @@
 /** Tests for the hash of 128-bit integers.
  * This file is built twice: once with `-std=c++20` and once with `-std=gnu++20`
  * (see `tests/CMakeLists.txt`). `DICE_HASH_TEST_STRICT_MODE` is 1 in the first build and 0 in the second.
- * Whether `std::is_integral_v<__int128>` is true depends on the standard library, its version and the mode.
- * The hash of a 128-bit integer must not depend on this.
+ * The hash of a 128-bit integer must use all 128 bits in both builds.
  */
 
 #include <catch2/catch_all.hpp>
