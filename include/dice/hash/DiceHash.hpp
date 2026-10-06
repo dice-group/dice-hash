@@ -11,11 +11,7 @@
 
 #include "dice/hash/internal/Container_trait.hpp"
 #include "dice/hash/internal/DiceHashPolicies.hpp"
-#include <array>
-#include <cstddef>
-#include <cstdint>
 #include <cstring>
-#include <iterator>
 #include <map>
 #include <memory>
 #include <optional>
@@ -24,7 +20,6 @@
 #include <string>
 #include <string_view>
 #include <tuple>
-#include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -38,8 +33,8 @@ namespace dice::hash {
 
 	/** Helper struct for defining the hash for custom structs.
 	 * Because of partial specialization problems with functions, this struct must be specialized to define the hash for a custom type.
-	 * A specialization must be declared before the first call of `DiceHash` for `T`. To mark its result as avalanching,
-	 * specialize `dice_hash_is_avalanching`.
+	 * If `Policy` declares `is_avalanching`, the result of `dice_hash` must be avalanching too. dice-hash does not check
+	 * this. A `dice_hash` that returns `dice_hash_templates<Policy>::dice_hash(v)` keeps the avalanche of the policy.
 	 * @tparam Policy The policy to use.
 	 * @tparam T The custom type.
 	 */
@@ -65,25 +60,6 @@ namespace dice::hash {
 			return 0;
 		}
 	};
-
-	/** Promise that the `dice_hash_overload` of `T` gives an avalanching result with `Policy`.
-	 * If `value` is true, `DiceHash<T, Policy>` declares the member type `is_avalanching`. The primary template is
-	 * `std::false_type`, so a type with a `dice_hash_overload` is not marked. dice-hash does not check the promise.
-	 *
-	 * If `dice_hash` returns `dice_hash_templates<Policy>::dice_hash(u)` for a `u` of the type `U`, derive the
-	 * specialization from `avalanching_like<U, Policy>`. Then the promise holds exactly for the policies for which
-	 * `DiceHash<U, Policy>` declares `is_avalanching`. Derive it from `std::true_type` only if the result is
-	 * avalanching for every policy, also for a policy of your own.
-	 *
-	 * `DiceHash<T, Policy>`, and a `DiceHash` of a type that contains `T`, reads this trait when it is instantiated as
-	 * a class. So declare the specialization before that point. It does not need a complete `T`, so it can follow a
-	 * forward declaration of `T`. This trait is separate from `dice_hash_overload`, so that `DiceHash` does not
-	 * instantiate `dice_hash_overload` before it is called.
-	 * @tparam Policy The policy.
-	 * @tparam T The custom type.
-	 */
-	template<Policies::HashPolicy Policy, typename T>
-	struct dice_hash_is_avalanching : std::false_type {};
 
 	/** Type traits and constants used by dice_hash_templates.
 	 * The traits sit outside of the class because gcc 15 crashes with an internal compiler
@@ -400,304 +376,33 @@ namespace dice::hash {
 		}
 	};
 
-	/** Traits that decide which `DiceHash` declares the member type `is_avalanching`.
-	 * A result is avalanching if every bit of the input changes each bit of the result with a
-	 * probability of about one half.
-	 */
 	namespace internal {
-		/** Tells which functions of a policy give avalanching results.
-		 * `fundamental<T>`: `hash_fundamental` for the type `T`.
-		 * `bytes`: `hash_bytes`, for every length.
-		 * `combine`: `hash_combine` and `HashState`. True if they give an avalanching result also
-		 * for input hashes from the paths of `dice_hash_templates` that do not avalanche.
-		 * `combine_keeps`: `hash_combine` and `HashState`. True if they give an avalanching result
-		 * when all input hashes are avalanching.
-		 * A policy without a specialization promises nothing, so `DiceHash` never declares
-		 * `is_avalanching` for it, except for `std::monostate`, `std::nullopt_t`, `std::nullptr_t`
-		 * and the types with a true `dice_hash_is_avalanching`. `Martinus` has no specialization:
-		 * its `hash_int` multiplies and rotates, so some input bits never change some output bits.
-		 * @tparam Policy The policy.
+		/** Base of `DiceHash`. It holds the policy as a protected base, so that `DiceHash` can use its
+		 * functions, and declares `is_avalanching` publicly if the policy declares it.
 		 */
-		template<typename Policy>
-		struct avalanching_functions {
-			template<typename T>
-			static constexpr bool fundamental = false;
-			static constexpr bool bytes = false;
-			static constexpr bool combine = false;
-			static constexpr bool combine_keeps = false;
-		};
-
-		/** Every function hashes the bytes with XXH3.
-		 */
-		template<>
-		struct avalanching_functions<Policies::xxh3> {
-			template<typename T>
-			static constexpr bool fundamental = true;
-			static constexpr bool bytes = true;
-			static constexpr bool combine = true;
-			static constexpr bool combine_keeps = true;
-		};
-
-		/** `hash_fundamental` uses `wyhash64` for the integer types with up to 64 bits, and `wyhash`
-		 * over the bytes for the other types: floating point values (their value bytes), pointers,
-		 * `__int128` and `unsigned __int128`. Both avalanche, in every `-std` mode.
-		 * `hash_combine` and `HashState` call `_wymix` once per input hash. `_wymix` with a fixed
-		 * first argument does not mix every bit of the second argument. So they keep the avalanche
-		 * of avalanching input hashes, but they do not create it.
-		 */
-		template<>
-		struct avalanching_functions<Policies::wyhash> {
-			template<typename T>
-			static constexpr bool fundamental = true;
-			static constexpr bool bytes = true;
-			static constexpr bool combine = false;
-			static constexpr bool combine_keeps = true;
-		};
-
-		/** `hash_fundamental` and `hash_bytes` use `rapidhash_withSeed`.
-		 * `hash_combine` and `HashState` call `rapid_mix` once per input hash. rapidhash runs in its
-		 * protected mode, so `rapid_mix(a, b)` is `a ^ b` xor the two halves of the 128-bit product of
-		 * `a` and `b`. With a fixed first argument it does not mix every bit of the second argument.
-		 * So they keep the avalanche of avalanching input hashes, but they do not create it.
-		 */
-		template<>
-		struct avalanching_functions<Policies::rapidhash> {
-			template<typename T>
-			static constexpr bool fundamental = true;
-			static constexpr bool bytes = true;
-			static constexpr bool combine = false;
-			static constexpr bool combine_keeps = true;
-		};
-
-		/** How well `dice_hash_templates<Policy>::dice_hash` mixes the result for a type.
-		 */
-		enum class mixing {
-			/** Nothing is known. Types with a `dice_hash_overload` without a true
-			 * `dice_hash_is_avalanching`, and results of a combine that does not avalanche over parts that do
-			 * not avalanche.
-			 */
-			unknown,
-			/** A path of `dice_hash_templates` whose result does not avalanche. */
-			plain,
-			/** Every input bit changes each bit of the result with a probability of about one half.
-			 * Types with only one value are avalanching, because they have no input bit. Types with a
-			 * true `dice_hash_is_avalanching` are avalanching by the promise of the user.
-			 */
-			avalanching
-		};
-
-		/** The mixing of a type with its cv-qualifiers and references removed. The specializations
-		 * below follow the overloads of `dice_hash_templates`.
-		 * @tparam Policy The policy.
-		 * @tparam T The type to hash, without cv-qualifiers and references.
-		 */
-		template<typename Policy, typename T>
-		struct mixing_of;
-
-		template<typename Policy, typename T>
-		inline constexpr mixing mixing_v = mixing_of<Policy, std::remove_cvref_t<T>>::value;
-
-		/** Mixing of `hash_fundamental`. */
-		template<typename Policy, typename T>
-		constexpr mixing fundamental_mixing() noexcept {
-			if constexpr (std::is_null_pointer_v<T>) {
-				return mixing::avalanching;
-			} else {
-				return avalanching_functions<Policy>::template fundamental<T> ? mixing::avalanching : mixing::plain;
-			}
-		}
-
-		/** Mixing of `hash_bytes`. */
-		template<typename Policy>
-		constexpr mixing bytes_mixing() noexcept {
-			return avalanching_functions<Policy>::bytes ? mixing::avalanching : mixing::plain;
-		}
-
-		/** Mixing of `hash_combine` or `HashState` over the hashes of values of the types `Parts`. */
-		template<typename Policy, typename... Parts>
-		constexpr mixing combine_mixing() noexcept {
-			if constexpr (((mixing_v<Policy, Parts> == mixing::unknown) || ...)) {
-				return mixing::unknown;
-			} else if constexpr (avalanching_functions<Policy>::combine) {
-				return mixing::avalanching;
-			} else if constexpr (avalanching_functions<Policy>::combine_keeps
-								 && ((mixing_v<Policy, Parts> == mixing::avalanching) && ...)) {
-				return mixing::avalanching;
-			} else {
-				return mixing::unknown;
-			}
-		}
-
-		/** Mixing of a type that `dice_hash_templates` hashes with `dice_hash_overload<Policy, T>`.
-		 * The result is avalanching if `dice_hash_is_avalanching<Policy, T>` is true. This does not
-		 * instantiate `dice_hash_overload<Policy, T>`.
-		 */
-		template<typename Policy, typename T>
-		constexpr mixing overload_mixing() noexcept {
-			return dice_hash_is_avalanching<Policy, T>::value ? mixing::avalanching : mixing::unknown;
-		}
-
-		/** Mixing of a `std::vector`, `std::array` or `std::span` that holds values of the type `T`.
-		 * `dice_hash_templates` hashes it as one block with `hash_bytes` if `hash_range_as_bytes<T>`
-		 * is true, otherwise value by value with `HashState` over the hashes of the values. Ranges of
-		 * `long double` in x87 extended precision are hashed value by value.
-		 */
-		template<typename Policy, typename T>
-		constexpr mixing sequence_mixing() noexcept {
-			if constexpr (hash_range_as_bytes<T>) {
-				return bytes_mixing<Policy>();
-			} else {
-				return combine_mixing<Policy, T>();
-			}
-		}
-
-		/** The type of the elements that a range-based for loop over a `Container const &` gives. */
-		template<typename Container>
-		using element_t = std::remove_cvref_t<decltype(*std::begin(std::declval<Container const &>()))>;
-
-		/** Fundamental types, the containers of `is_ordered_container` and `is_unordered_container`,
-		 * and types with a `dice_hash_overload`.
-		 * The hash of an unordered container is the xor of the hashes of its elements. This keeps
-		 * relations between results, for example `h({a, b}) ^ h({a, c}) == h({b, c})`. So it is
-		 * never avalanching.
-		 */
-		template<typename Policy, typename T>
-		struct mixing_of {
-			static constexpr mixing value = [] {
-				if constexpr (is_fundamental<T>) {
-					return fundamental_mixing<Policy, T>();
-				} else if constexpr (is_ordered_container_v<T>) {
-					return combine_mixing<Policy, element_t<T>>();
-				} else if constexpr (is_unordered_container_v<T>) {
-					return mixing_v<Policy, element_t<T>> == mixing::unknown ? mixing::unknown : mixing::plain;
-				} else {
-					return overload_mixing<Policy, T>();
-				}
-			}();
-		};
-
-		template<typename Policy, typename CharT>
-		struct mixing_of<Policy, std::basic_string<CharT>> {
-			static constexpr mixing value = bytes_mixing<Policy>();
-		};
-
-		template<typename Policy, typename CharT>
-		struct mixing_of<Policy, std::basic_string_view<CharT>> {
-			static constexpr mixing value = bytes_mixing<Policy>();
-		};
-
-		template<typename Policy, typename T>
-		struct mixing_of<Policy, T *> {
-			static constexpr mixing value = fundamental_mixing<Policy, T *>();
-		};
-
-		template<typename Policy, typename T>
-		struct mixing_of<Policy, std::unique_ptr<T>> {
-			static constexpr mixing value = mixing_v<Policy, typename std::unique_ptr<T>::pointer>;
-		};
-
-		template<typename Policy, typename T>
-		struct mixing_of<Policy, std::shared_ptr<T>> {
-			static constexpr mixing value = mixing_v<Policy, typename std::shared_ptr<T>::element_type *>;
-		};
-
-		template<typename Policy, typename T, std::size_t N>
-		struct mixing_of<Policy, std::array<T, N>> {
-			static constexpr mixing value = sequence_mixing<Policy, T>();
-		};
-
-		/** `std::vector<bool>` has no hash, its `dice_hash` does not compile. */
-		template<typename Policy, typename T>
-		struct mixing_of<Policy, std::vector<T>> {
-			static constexpr mixing value = std::is_same_v<std::remove_cv_t<T>, bool> ? mixing::unknown : sequence_mixing<Policy, T>();
-		};
-
-		template<typename Policy, typename T, std::size_t Extent>
-		struct mixing_of<Policy, std::span<T, Extent>> {
-			static constexpr mixing value = sequence_mixing<Policy, T>();
-		};
-
-		template<typename Policy, typename... Ts>
-		struct mixing_of<Policy, std::tuple<Ts...>> {
-			static constexpr mixing value = combine_mixing<Policy, Ts...>();
-		};
-
-		template<typename Policy, typename T, typename V>
-		struct mixing_of<Policy, std::pair<T, V>> {
-			static constexpr mixing value = combine_mixing<Policy, T, V>();
-		};
+		template<typename Policy, bool = requires { typename Policy::is_avalanching; }>
+		struct policy_base : protected Policy {};
 
 		template<typename Policy>
-		struct mixing_of<Policy, std::monostate> {
-			static constexpr mixing value = mixing::avalanching;
-		};
-
-		template<typename Policy>
-		struct mixing_of<Policy, std::nullopt_t> {
-			static constexpr mixing value = mixing::avalanching;
-		};
-
-		/** An optional combines its index with its value, or with `std::nullopt` if it is empty.
-		 * `std::nullopt_t` is avalanching, so it is left out.
-		 */
-		template<typename Policy, typename T>
-		struct mixing_of<Policy, std::optional<T>> {
-			static constexpr mixing value = combine_mixing<Policy, std::size_t, T>();
-		};
-
-		/** A variant combines its index with the value of the active alternative. */
-		template<typename Policy, typename... Ts>
-		struct mixing_of<Policy, std::variant<Ts...>> {
-			static constexpr mixing value = combine_mixing<Policy, std::size_t, Ts...>();
-		};
-
-		/** Base of `DiceHash` that declares `is_avalanching` if `avalanching` is true. */
-		template<bool avalanching>
-		struct avalanching_marker {};
-
-		template<>
-		struct avalanching_marker<true> {
-			using is_avalanching = void;
+		struct policy_base<Policy, true> : protected Policy {
+			using typename Policy::is_avalanching;
 		};
 	}// namespace internal
-
-	/** `std::true_type` if `DiceHash<T, Policy>` declares `is_avalanching`, otherwise `std::false_type`.
-	 * If the `dice_hash_overload<Policy, X>` of a type `X` returns `dice_hash_templates<Policy>::dice_hash(t)`
-	 * for a `t` of the type `T`, `dice_hash_is_avalanching<Policy, X>` can derive from
-	 * `avalanching_like<T, Policy>`. `T` is the type that the overload hashes, not `X` or a type that
-	 * contains `X`.
-	 * @tparam T The type that the overload passes to `dice_hash_templates<Policy>::dice_hash`.
-	 * @tparam Policy The policy.
-	 */
-	template<typename T, Policies::HashPolicy Policy>
-	using avalanching_like = std::bool_constant<internal::mixing_v<Policy, T> == internal::mixing::avalanching>;
 
 	/** Wrapper class for the dice::hash::dice_hash function.
      * It is a typical hash interface.
      *
-     * `DiceHash` declares the member type `is_avalanching` (as `void`) exactly if its result is
-     * avalanching: every bit of the input changes each bit of the result with a probability of
-     * about one half. A hash table can then use the lowest bits of the result directly, for example
-     * with a mask. This is the convention of ankerl::unordered_dense. On a 64-bit platform:
-     * - Never avalanching: unordered containers, because their hash is the xor of the hashes of
-     *   their elements. Types with a `dice_hash_overload` without a true
-     *   `dice_hash_is_avalanching`, and every type that contains one.
-     * - Always avalanching: `std::monostate`, `std::nullopt_t` and `std::nullptr_t`, because they
-     *   have only one value.
-     * - Avalanching by the promise of the user: types with a true `dice_hash_is_avalanching` for
-     *   the policy. The types that contain them follow the rules below.
-     * - `xxh3`: every other type.
-     * - `wyhash` and `rapidhash`: fundamental types, pointers, smart pointers, strings, string
-     *   views, and vectors, arrays and spans of fundamental types. Pairs, tuples, optionals,
-     *   variants and the other containers only if all their parts are avalanching.
-     * - `Martinus` and a policy of your own: no other type.
-     * `DiceHash<T>` without a policy uses `wyhash`. The README explains the reasons.
+     * `DiceHash` declares the member type `is_avalanching` (as `void`) exactly if `Policy` declares it:
+     * every bit of the input changes each bit of the result with a probability of about one half. A
+     * hash table can then use the lowest bits of the result directly, for example with a mask. This
+     * is the convention of ankerl::unordered_dense. `xxh3`, `wyhash` and `rapidhash` declare it,
+     * `Martinus` does not. The marker does not depend on `T`: a `dice_hash_overload` must keep the
+     * avalanche of the policy.
      * @tparam T The type to define the hash for.
      * @tparam Policy The Policy defines how the hash works on a basic level. The default is `Policies::wyhash`.
      */
 	template<typename T, Policies::HashPolicy Policy = Policies::wyhash>
-	struct DiceHash : private Policy,
-					  public internal::avalanching_marker<internal::mixing_v<Policy, T> == internal::mixing::avalanching> {
+	struct DiceHash : public internal::policy_base<Policy> {
 		/** Policy function for combining already hashed values.
 		 * This using declaration is equal to a handwritten wrapper function.
 		 *@param list Initializer list of std::size_t hashes.

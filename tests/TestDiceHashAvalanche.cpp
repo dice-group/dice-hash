@@ -30,13 +30,9 @@ namespace dice::tests::hash::avalanche {
 }// namespace dice::tests::hash::avalanche
 
 namespace dice::hash {
-	/** The result is the hash of a `std::uint64_t`. So `dice_hash_is_avalanching` derives from
-	 * `avalanching_like<std::uint64_t, Policy>`, which is true exactly for the policies that mark
-	 * `DiceHash<std::uint64_t, Policy>`.
+	/** The result is `dice_hash_templates<Policy>::dice_hash` of the member, so it keeps the avalanche of
+	 * the policy.
 	 */
-	template<typename Policy>
-	struct dice_hash_is_avalanching<Policy, dice::tests::hash::avalanche::Id> : avalanching_like<std::uint64_t, Policy> {};
-
 	template<typename Policy>
 	struct dice_hash_overload<Policy, dice::tests::hash::avalanche::Id> {
 		static std::size_t dice_hash(dice::tests::hash::avalanche::Id const &id) noexcept {
@@ -160,19 +156,18 @@ namespace dice::tests::hash::avalanche {
 		return flip_bits(n_bytes, make, hasher);
 	}
 
-	/** Checks that the hash of `T` avalanches if `DiceHash<T, Policy>` is marked.
+	/** Checks that `DiceHash<T, Policy>` is marked and that its hash avalanches.
 	 * @param name Name of the input, for the report.
 	 * @param n_bytes Size of the input in bytes.
 	 * @param make Makes the value to hash from `n_bytes` bytes.
 	 */
 	template<typename T, typename Policy, typename Make>
-	void check_if_marked(std::string_view name, std::size_t n_bytes, Make const &make) {
-		if constexpr (marked<T, Policy>) {
-			Worst const worst = flip_bits_of<T, Policy>(n_bytes, make);
-			INFO(name << ": input bit " << worst.input_bit << " flips output bit " << worst.output_bit
-					  << " with probability " << worst.probability << ", bound " << worst.bound);
-			CHECK(worst.distance <= worst.bound);
-		}
+	void check_avalanching(std::string_view name, std::size_t n_bytes, Make const &make) {
+		CHECK(marked<T, Policy>);
+		Worst const worst = flip_bits_of<T, Policy>(n_bytes, make);
+		INFO(name << ": input bit " << worst.input_bit << " flips output bit " << worst.output_bit
+				  << " with probability " << worst.probability << ", bound " << worst.bound);
+		CHECK(worst.distance <= worst.bound);
 	}
 
 	/** Checks that the hash of `T` does not avalanche and that `DiceHash<T, Policy>` is not marked. */
@@ -185,8 +180,8 @@ namespace dice::tests::hash::avalanche {
 		CHECK(worst.distance > worst.bound);
 	}
 
-	TEMPLATE_TEST_CASE("Every marked DiceHash avalanches", "[DiceHash][is_avalanching][avalanche]",
-					   Martinus, xxh3, wyhash, rapidhash) {
+	TEMPLATE_TEST_CASE("DiceHash with an avalanching policy avalanches", "[DiceHash][is_avalanching][avalanche]",
+					   xxh3, wyhash, rapidhash) {
 		using Policy = TestType;
 		using u8 = std::uint8_t;
 		using u16 = std::uint16_t;
@@ -194,84 +189,87 @@ namespace dice::tests::hash::avalanche {
 		using u64 = std::uint64_t;
 		using u128 = unsigned __int128;
 
-		check_if_marked<u8, Policy>("std::uint8_t", 1, &load<u8>);
-		check_if_marked<std::int8_t, Policy>("std::int8_t", 1, &load<std::int8_t>);
-		check_if_marked<u16, Policy>("std::uint16_t", 2, &load<u16>);
-		check_if_marked<std::int32_t, Policy>("std::int32_t", 4, &load<std::int32_t>);
-		check_if_marked<u64, Policy>("std::uint64_t", 8, &load<u64>);
-		check_if_marked<u128, Policy>("unsigned __int128", 16, &load<u128>);
-		check_if_marked<float, Policy>("float", 4, &load<float>);
-		check_if_marked<double, Policy>("double", 8, &load<double>);
+		check_avalanching<u8, Policy>("std::uint8_t", 1, &load<u8>);
+		check_avalanching<std::int8_t, Policy>("std::int8_t", 1, &load<std::int8_t>);
+		check_avalanching<u16, Policy>("std::uint16_t", 2, &load<u16>);
+		check_avalanching<std::int32_t, Policy>("std::int32_t", 4, &load<std::int32_t>);
+		check_avalanching<u64, Policy>("std::uint64_t", 8, &load<u64>);
+		check_avalanching<u128, Policy>("unsigned __int128", 16, &load<u128>);
+		check_avalanching<float, Policy>("float", 4, &load<float>);
+		check_avalanching<double, Policy>("double", 8, &load<double>);
 		constexpr std::size_t long_double_bytes = dice::hash::internal::float_value_size<long double>;
-		check_if_marked<long double, Policy>("long double", long_double_bytes, [](unsigned char const *b) {
+		check_avalanching<long double, Policy>("long double", long_double_bytes, [](unsigned char const *b) {
 			long double value{};
 			std::memcpy(&value, b, long_double_bytes);
 			return value;
 		});
-		check_if_marked<u64 *, Policy>("std::uint64_t *", 8, &load<u64 *>);
-		check_if_marked<Id, Policy>("Id, a std::uint64_t through its dice_hash_overload", 8, [](unsigned char const *b) {
+		check_avalanching<u64 *, Policy>("std::uint64_t *", 8, &load<u64 *>);
+		check_avalanching<Id, Policy>("Id, a std::uint64_t through its dice_hash_overload", 8, [](unsigned char const *b) {
 			return Id{load<u64>(b)};
 		});
 
 		for (std::size_t const length : std::array<std::size_t, 5>{3, 7, 12, 16, 17}) {
-			check_if_marked<std::string, Policy>("std::string of length " + std::to_string(length), length,
+			check_avalanching<std::string, Policy>("std::string of length " + std::to_string(length), length,
 												 [length](unsigned char const *b) { return load_string(b, length); });
 		}
-		check_if_marked<std::u16string, Policy>("std::u16string of length 3", 6, [](unsigned char const *b) {
+		check_avalanching<std::u16string, Policy>("std::u16string of length 3", 6, [](unsigned char const *b) {
 			return std::u16string{load<char16_t>(b), load<char16_t>(b + 2), load<char16_t>(b + 4)};
 		});
-		check_if_marked<std::vector<u32>, Policy>("std::vector<std::uint32_t> of 3 elements", 12, [](unsigned char const *b) {
+		check_avalanching<std::vector<u32>, Policy>("std::vector<std::uint32_t> of 3 elements", 12, [](unsigned char const *b) {
 			return std::vector<u32>{load<u32>(b), load<u32>(b + 4), load<u32>(b + 8)};
 		});
-		check_if_marked<std::vector<float>, Policy>("std::vector<float> of 3 elements", 12, [](unsigned char const *b) {
+		check_avalanching<std::vector<float>, Policy>("std::vector<float> of 3 elements", 12, [](unsigned char const *b) {
 			return std::vector<float>{load<float>(b), load<float>(b + 4), load<float>(b + 8)};
 		});
-		check_if_marked<std::vector<double>, Policy>("std::vector<double> of 2 elements", 16, [](unsigned char const *b) {
+		check_avalanching<std::vector<double>, Policy>("std::vector<double> of 2 elements", 16, [](unsigned char const *b) {
 			return std::vector<double>{load<double>(b), load<double>(b + 8)};
 		});
-		check_if_marked<std::array<double, 2>, Policy>("std::array<double, 2>", 16, [](unsigned char const *b) {
+		check_avalanching<std::array<double, 2>, Policy>("std::array<double, 2>", 16, [](unsigned char const *b) {
 			return std::array<double, 2>{load<double>(b), load<double>(b + 8)};
 		});
 
-		check_if_marked<std::pair<u64, u64>, Policy>("std::pair<std::uint64_t, std::uint64_t>", 16, [](unsigned char const *b) {
+		check_avalanching<std::pair<u64, u64>, Policy>("std::pair<std::uint64_t, std::uint64_t>", 16, [](unsigned char const *b) {
 			return std::pair{load<u64>(b), load<u64>(b + 8)};
 		});
-		check_if_marked<std::pair<u32, u8>, Policy>("std::pair<std::uint32_t, std::uint8_t>", 5, [](unsigned char const *b) {
+		check_avalanching<std::pair<u32, u8>, Policy>("std::pair<std::uint32_t, std::uint8_t>", 5, [](unsigned char const *b) {
 			return std::pair{load<u32>(b), load<u8>(b + 4)};
 		});
-		check_if_marked<std::tuple<u8, u16, u32>, Policy>("std::tuple<std::uint8_t, std::uint16_t, std::uint32_t>", 7, [](unsigned char const *b) {
+		check_avalanching<std::tuple<u8, u16, u32>, Policy>("std::tuple<std::uint8_t, std::uint16_t, std::uint32_t>", 7, [](unsigned char const *b) {
 			return std::tuple{load<u8>(b), load<u16>(b + 1), load<u32>(b + 3)};
 		});
-		check_if_marked<std::pair<std::string, u32>, Policy>("std::pair<std::string, std::uint32_t> with a string of length 7", 11, [](unsigned char const *b) {
+		check_avalanching<std::pair<std::string, u32>, Policy>("std::pair<std::string, std::uint32_t> with a string of length 7", 11, [](unsigned char const *b) {
 			return std::pair{load_string(b, 7), load<u32>(b + 7)};
 		});
-		check_if_marked<std::optional<u64>, Policy>("std::optional<std::uint64_t> with a value", 8, [](unsigned char const *b) {
+		check_avalanching<std::optional<u64>, Policy>("std::optional<std::uint64_t> with a value", 8, [](unsigned char const *b) {
 			return std::optional{load<u64>(b)};
 		});
-		check_if_marked<std::variant<u32, std::string>, Policy>("std::variant<std::uint32_t, std::string> with a string of length 5", 5, [](unsigned char const *b) {
+		check_avalanching<std::variant<u32, std::string>, Policy>("std::variant<std::uint32_t, std::string> with a string of length 5", 5, [](unsigned char const *b) {
 			return std::variant<u32, std::string>{load_string(b, 5)};
 		});
-		check_if_marked<std::set<u64>, Policy>("std::set<std::uint64_t> of 3 elements", 24, [](unsigned char const *b) {
+		check_avalanching<std::set<u64>, Policy>("std::set<std::uint64_t> of 3 elements", 24, [](unsigned char const *b) {
 			return std::set<u64>{load<u64>(b), load<u64>(b + 8), load<u64>(b + 16)};
 		});
-		check_if_marked<std::map<u32, u32>, Policy>("std::map<std::uint32_t, std::uint32_t> of 2 elements", 16, [](unsigned char const *b) {
+		check_avalanching<std::map<u32, u32>, Policy>("std::map<std::uint32_t, std::uint32_t> of 2 elements", 16, [](unsigned char const *b) {
 			return std::map<u32, u32>{{load<u32>(b), load<u32>(b + 4)}, {load<u32>(b + 8), load<u32>(b + 12)}};
 		});
-		check_if_marked<std::vector<std::pair<u32, u32>>, Policy>("std::vector<std::pair<std::uint32_t, std::uint32_t>> of 1 element", 8, [](unsigned char const *b) {
+		check_avalanching<std::vector<std::pair<u32, u32>>, Policy>("std::vector<std::pair<std::uint32_t, std::uint32_t>> of 1 element", 8, [](unsigned char const *b) {
 			return std::vector{std::pair{load<u32>(b), load<u32>(b + 4)}};
 		});
-		check_if_marked<std::vector<std::string>, Policy>("std::vector<std::string> of 2 strings of length 5", 10, [](unsigned char const *b) {
+		check_avalanching<std::vector<std::string>, Policy>("std::vector<std::string> of 2 strings of length 5", 10, [](unsigned char const *b) {
 			return std::vector{load_string(b, 5), load_string(b + 5, 5)};
 		});
-		check_if_marked<std::vector<u64 *>, Policy>("std::vector<std::uint64_t *> of 1 element", 8, [](unsigned char const *b) {
+		check_avalanching<std::vector<u64 *>, Policy>("std::vector<std::uint64_t *> of 1 element", 8, [](unsigned char const *b) {
 			return std::vector{load<u64 *>(b)};
 		});
-		check_if_marked<std::pair<std::unordered_set<u64>, u64>, Policy>("std::pair<std::unordered_set<std::uint64_t>, std::uint64_t> with a set of 2 elements", 24, [](unsigned char const *b) {
+		check_avalanching<std::unordered_set<u64>, Policy>("std::unordered_set<std::uint64_t> of 2 elements", 16, [](unsigned char const *b) {
+			return std::unordered_set<u64>{load<u64>(b), load<u64>(b + 8)};
+		});
+		check_avalanching<std::pair<std::unordered_set<u64>, u64>, Policy>("std::pair<std::unordered_set<std::uint64_t>, std::uint64_t> with a set of 2 elements", 24, [](unsigned char const *b) {
 			return std::pair{std::unordered_set<u64>{load<u64>(b), load<u64>(b + 8)}, load<u64>(b + 16)};
 		});
 	}
 
-	TEST_CASE("The paths of Martinus that are not marked do not avalanche", "[DiceHash][is_avalanching][avalanche]") {
+	TEST_CASE("Martinus is not marked and does not avalanche", "[DiceHash][is_avalanching][avalanche]") {
 		using Policy = Martinus;
 		using u32 = std::uint32_t;
 		using u64 = std::uint64_t;
@@ -290,52 +288,5 @@ namespace dice::tests::hash::avalanche {
 		check_not_avalanching<std::vector<u32>, Policy>("std::vector<std::uint32_t> of 3 elements", 12, [](unsigned char const *b) {
 			return std::vector<u32>{load<u32>(b), load<u32>(b + 4), load<u32>(b + 8)};
 		});
-	}
-
-	TEMPLATE_TEST_CASE("hash_combine and HashState avalanche for plain inputs exactly if the policy says so", "[DiceHash][is_avalanching][avalanche]",
-					   xxh3, wyhash, rapidhash) {
-		using Policy = TestType;
-		using u64 = std::uint64_t;
-		constexpr bool combine = dice::hash::internal::avalanching_functions<Policy>::combine;
-
-		auto const check = [](std::string_view name, Worst const &worst) {
-			INFO(name << ": input bit " << worst.input_bit << " flips output bit " << worst.output_bit
-					  << " with probability " << worst.probability << ", bound " << worst.bound);
-			if constexpr (combine) {
-				CHECK(worst.distance <= worst.bound);
-			} else {
-				CHECK(worst.distance > worst.bound);
-			}
-		};
-		auto const one_word = [](unsigned char const *b) { return load<u64>(b); };
-		auto const two_words = [](unsigned char const *b) { return std::array{load<u64>(b), load<u64>(b + 8)}; };
-
-		check("hash_combine of 1 word", flip_bits(8, one_word, [](u64 x) { return Policy::hash_combine({x}); }));
-		check("hash_combine of 2 words", flip_bits(16, two_words, [](std::array<u64, 2> const &x) { return Policy::hash_combine({x[0], x[1]}); }));
-		check("HashState of 1 word", flip_bits(8, one_word, [](u64 x) {
-				  typename Policy::HashState state{1};
-				  state.add(x);
-				  return state.digest();
-			  }));
-		check("HashState of 2 words", flip_bits(16, two_words, [](std::array<u64, 2> const &x) {
-				  typename Policy::HashState state{2};
-				  state.add(x[0]);
-				  state.add(x[1]);
-				  return state.digest();
-			  }));
-	}
-
-	TEMPLATE_TEST_CASE("The hash of an unordered container keeps the relations of xor", "[DiceHash][is_avalanching]",
-					   Martinus, xxh3, wyhash, rapidhash) {
-		using Policy = TestType;
-		DiceHash<std::unordered_set<std::uint64_t>, Policy> const hasher{};
-		std::mt19937_64 random{seed};
-		for (int i = 0; i < 100; ++i) {
-			std::uint64_t const a = random();
-			std::uint64_t const b = random();
-			std::uint64_t const c = random();
-			REQUIRE((hasher({a, b}) ^ hasher({a, c})) == hasher({b, c}));
-		}
-		REQUIRE(hasher({}) == 0);
 	}
 }// namespace dice::tests::hash::avalanche

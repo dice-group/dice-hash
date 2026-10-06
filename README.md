@@ -129,56 +129,19 @@ If you want to use `DiceHash` in a different structure (like `std::unordered_map
 ### Avalanching hashes
 A hash is avalanching if every bit of the input changes each bit of the result with a probability
 of about one half. A hash table can then use the lowest bits of the result directly, for example
-with a mask, and needs no extra mixing step. `DiceHash<T, Policy>` declares the member type
-`is_avalanching` exactly for the combinations of type and policy whose result is avalanching. This
-is the convention of [ankerl::unordered_dense](https://github.com/martinus/unordered_dense). A hash
-table can check it with `requires { typename Hash::is_avalanching; }`.
+with a mask, and needs no extra mixing step. A policy declares the member type `is_avalanching` if
+all its functions are avalanching, and `DiceHash<T, Policy>` then declares `is_avalanching` for every
+`T`. This is the convention of [ankerl::unordered_dense](https://github.com/martinus/unordered_dense).
+A hash table can check it with `requires { typename Hash::is_avalanching; }`.
 
-`xxh3`, `wyhash` and `rapidhash` are avalanching. `DiceHash<T>` without a policy uses `wyhash`.
-`Martinus` is not avalanching, so with it `DiceHash` declares `is_avalanching` only for
-`std::monostate`, `std::nullopt_t`, `std::nullptr_t` and the types with a true
-`dice_hash_is_avalanching`.
+`xxh3`, `wyhash` and `rapidhash` declare `is_avalanching`. `Martinus` does not. `DiceHash<T>`
+without a policy uses `wyhash`.
 
-These types are not avalanching, also with `xxh3`, `wyhash` and `rapidhash`:
-- Unordered containers (`std::unordered_map`, `std::unordered_set` and the types of
-  `is_unordered_container`). Their hash is the xor of the hashes of their elements.
-- Types with a `dice_hash_overload` without a true `dice_hash_is_avalanching` (see below), and
-  the types that contain them.
-- With `wyhash` and `rapidhash`: pairs, tuples, optionals, variants, ordered containers, and
-  vectors, arrays and spans of types that are not fundamental, if one of their parts is not
-  avalanching. The combine of these two policies keeps the avalanche of its inputs, but it does not
-  create it.
-
-#### Avalanching hashes of your own types
-`DiceHash` cannot see what the `dice_hash_overload` of a type does, so it does not declare
-`is_avalanching` for that type. If `dice_hash` returns `dice_hash_templates<Policy>::dice_hash(v)`,
-specialize `dice::hash::dice_hash_is_avalanching` and derive it from
-`dice::hash::avalanching_like` with the type of `v`:
-```c++
-struct Point;
-namespace dice::hash {
-    template <typename Policy>
-    struct dice_hash_is_avalanching<Policy, Point> : avalanching_like<std::pair<int, int>, Policy> {};
-}
-
-struct Point { int x; int y; };
-namespace dice::hash {
-    template <typename Policy>
-    struct dice_hash_overload<Policy, Point> {
-        static std::size_t dice_hash(Point const& p) noexcept {
-            return dice_hash_templates<Policy>::dice_hash(std::pair{p.x, p.y});
-        }
-    };
-}
-```
-`std::true_type` would promise the avalanche for every policy. But the result of `Point` is only
-avalanching where `DiceHash<std::pair<int, int>, Policy>` is, which is not the case for a policy of
-your own. `avalanching_like` gives the promise exactly for these policies.
-
-`DiceHash<Point>` reads `dice_hash_is_avalanching` when it is instantiated as a class, for example
-by a member of the type `std::unordered_set<Point, dice::hash::DiceHash<Point>>`. So declare the
-specialization before that point. It does not need a complete `Point`. The `dice_hash_overload`
-only has to come before the first call of `DiceHash`.
+The marker does not depend on the type. The user makes sure that the types keep the avalanche: a
+`dice_hash_overload` must give an avalanching result with an avalanching policy. An overload that
+returns `dice_hash_templates<Policy>::dice_hash(v)` does this. A policy of your own declares
+`using is_avalanching = void;` only if all its functions are avalanching. A policy that derives
+from `wyhash`, `xxh3` or `rapidhash` inherits the declaration.
 
 ### The error value
 A `std::variant` which is `valueless_by_exception` holds no alternative, so no hash can be

@@ -5,12 +5,19 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <map>
+#include <memory>
+#include <optional>
+#include <set>
 #include <span>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <type_traits>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <variant>
 #include <vector>
 
 /** Compile-time checks of the member type `is_avalanching` of `DiceHash`.
@@ -26,64 +33,57 @@ namespace dice::tests::hash::is_avalanching {
 	template<typename T, typename Policy>
 	inline constexpr bool marked = requires { typename DiceHash<T, Policy>::is_avalanching; };
 
-	/** `DiceHash<T>` without a policy declares `is_avalanching`. */
-	template<typename T>
-	inline constexpr bool marked_default = requires { typename DiceHash<T>::is_avalanching; };
+	template<typename Policy>
+	inline constexpr bool policy_marked = requires { typename Policy::is_avalanching; };
 
 	/** A type with its own `dice_hash_overload`. */
 	struct Custom {
 		int a;
 	};
 
-	/** A type whose `dice_hash_is_avalanching` is `std::true_type`. This promises the avalanche for every
-	 * policy, also for a policy of your own. The checks below test the marker, not the promise.
-	 */
-	struct CustomAvalanching {
-		int a;
+	/** A policy of your own without `is_avalanching`. */
+	struct OwnPolicy : Martinus {};
+
+	/** A policy of your own that declares `is_avalanching`. */
+	struct OwnAvalanchingPolicy : Martinus {
+		using is_avalanching = void;
 	};
 
-	/** A type whose `dice_hash_is_avalanching` is a `std::bool_constant`, true for every policy except
-	 * `Martinus`.
-	 */
-	struct CustomPerPolicy {
-		int a;
-	};
+	/** A policy of your own that derives from `wyhash` and so inherits `is_avalanching`. */
+	struct OwnWyhashPolicy : wyhash {};
 
-	/** A type whose `dice_hash_overload` hashes a `std::pair<int, int>` and whose
-	 * `dice_hash_is_avalanching` derives from `avalanching_like` of it.
-	 */
-	struct CustomLikePair {
-		int a;
-		int b;
-	};
-
-	/** A type whose `dice_hash_overload` hashes an `int` and whose `dice_hash_is_avalanching` derives
-	 * from `avalanching_like` of it.
-	 */
-	struct CustomLikeInt {
-		int a;
-	};
-
-	/** A policy of your own: the functions of `wyhash`, but no specialization of
-	 * `avalanching_functions`.
-	 */
-	struct OwnPolicy : dice::hash::Policies::wyhash {};
-
-	/** A container of the trait `is_ordered_container`. */
-	struct OrderedInts {
-		std::vector<int> values;
-		[[nodiscard]] auto begin() const noexcept { return values.begin(); }
-		[[nodiscard]] auto end() const noexcept { return values.end(); }
-		[[nodiscard]] auto size() const noexcept { return values.size(); }
-	};
-
-	/** A container of the trait `is_unordered_container`. */
-	struct UnorderedInts {
-		std::vector<int> values;
-		[[nodiscard]] auto begin() const noexcept { return values.begin(); }
-		[[nodiscard]] auto end() const noexcept { return values.end(); }
-		[[nodiscard]] auto size() const noexcept { return values.size(); }
-	};
+	/** `DiceHash<T, Policy>` is marked exactly if `Policy` declares `is_avalanching`, for each type. */
+	template<typename Policy>
+	inline constexpr bool marked_as_policy = [] {
+		constexpr bool expected = policy_marked<Policy>;
+		return marked<bool, Policy> == expected
+			   && marked<int, Policy> == expected
+			   && marked<std::uint64_t, Policy> == expected
+			   && marked<__int128, Policy> == expected
+			   && marked<double, Policy> == expected
+			   && marked<long double, Policy> == expected
+			   && marked<int *, Policy> == expected
+			   && marked<std::unique_ptr<int>, Policy> == expected
+			   && marked<std::string, Policy> == expected
+			   && marked<std::string_view, Policy> == expected
+			   && marked<std::vector<int>, Policy> == expected
+			   && marked<std::vector<double>, Policy> == expected
+			   && marked<std::array<std::string, 2>, Policy> == expected
+			   && marked<std::span<int const>, Policy> == expected
+			   && marked<std::pair<std::string, int>, Policy> == expected
+			   && marked<std::tuple<int, long, char>, Policy> == expected
+			   && marked<std::tuple<int const &>, Policy> == expected
+			   && marked<std::optional<int>, Policy> == expected
+			   && marked<std::variant<int, std::string>, Policy> == expected
+			   && marked<std::set<int>, Policy> == expected
+			   && marked<std::map<int, std::string>, Policy> == expected
+			   && marked<std::unordered_set<int>, Policy> == expected
+			   && marked<std::unordered_map<int, int>, Policy> == expected
+			   && marked<std::monostate, Policy> == expected
+			   && marked<std::nullopt_t, Policy> == expected
+			   && marked<Custom, Policy> == expected
+			   && marked<std::pair<Custom, std::unordered_set<int>>, Policy> == expected;
+	}();
 }// namespace dice::tests::hash::is_avalanching
 
 namespace dice::hash {
@@ -93,343 +93,43 @@ namespace dice::hash {
 			return dice_hash_templates<Policy>::dice_hash(c.a);
 		}
 	};
-
-	template<typename Policy>
-	struct dice_hash_is_avalanching<Policy, dice::tests::hash::is_avalanching::CustomAvalanching> : std::true_type {};
-
-	template<typename Policy>
-	struct dice_hash_overload<Policy, dice::tests::hash::is_avalanching::CustomAvalanching> {
-		static std::size_t dice_hash(dice::tests::hash::is_avalanching::CustomAvalanching const &c) noexcept {
-			return dice_hash_templates<Policy>::dice_hash(std::tuple{c.a});
-		}
-	};
-
-	template<typename Policy>
-	struct dice_hash_is_avalanching<Policy, dice::tests::hash::is_avalanching::CustomPerPolicy>
-		: std::bool_constant<!std::is_same_v<Policy, Policies::Martinus>> {};
-
-	template<typename Policy>
-	struct dice_hash_overload<Policy, dice::tests::hash::is_avalanching::CustomPerPolicy> {
-		static std::size_t dice_hash(dice::tests::hash::is_avalanching::CustomPerPolicy const &c) noexcept {
-			return dice_hash_templates<Policy>::dice_hash(c.a);
-		}
-	};
-
-	template<typename Policy>
-	struct dice_hash_is_avalanching<Policy, dice::tests::hash::is_avalanching::CustomLikePair>
-		: avalanching_like<std::pair<int, int>, Policy> {};
-
-	template<typename Policy>
-	struct dice_hash_overload<Policy, dice::tests::hash::is_avalanching::CustomLikePair> {
-		static std::size_t dice_hash(dice::tests::hash::is_avalanching::CustomLikePair const &c) noexcept {
-			return dice_hash_templates<Policy>::dice_hash(std::pair{c.a, c.b});
-		}
-	};
-
-	template<typename Policy>
-	struct dice_hash_is_avalanching<Policy, dice::tests::hash::is_avalanching::CustomLikeInt> : avalanching_like<int, Policy> {};
-
-	template<typename Policy>
-	struct dice_hash_overload<Policy, dice::tests::hash::is_avalanching::CustomLikeInt> {
-		static std::size_t dice_hash(dice::tests::hash::is_avalanching::CustomLikeInt const &c) noexcept {
-			return dice_hash_templates<Policy>::dice_hash(c.a);
-		}
-	};
-
-	template<>
-	struct is_ordered_container<dice::tests::hash::is_avalanching::OrderedInts> : std::true_type {};
-
-	template<>
-	struct is_unordered_container<dice::tests::hash::is_avalanching::UnorderedInts> : std::true_type {};
 }// namespace dice::hash
 
 namespace dice::tests::hash::is_avalanching {
-
-	TEST_CASE("The test is built in the -std mode it names", "[DiceHash][is_avalanching]") {
-#ifdef DICE_HASH_TEST_GNU_MODE
-		constexpr bool gnu_mode = true;
-#else
-		constexpr bool gnu_mode = false;
-#endif
-#ifdef __STRICT_ANSI__
-		STATIC_REQUIRE_FALSE(gnu_mode);
-#else
-		STATIC_REQUIRE(gnu_mode);
-#endif
-#ifdef __GLIBCXX__
-		// libstdc++ counts `__int128` as integral only in the GNU modes. `wyhash` hashes it by its bytes
-		// in both modes.
-		STATIC_REQUIRE(std::is_integral_v<__int128> == gnu_mode);
-#endif
+	TEST_CASE("xxh3, wyhash and rapidhash declare is_avalanching, Martinus does not", "[DiceHash][is_avalanching]") {
+		STATIC_REQUIRE(std::is_void_v<xxh3::is_avalanching>);
+		STATIC_REQUIRE(std::is_void_v<wyhash::is_avalanching>);
+		STATIC_REQUIRE(std::is_void_v<rapidhash::is_avalanching>);
+		STATIC_REQUIRE_FALSE(policy_marked<Martinus>);
 	}
 
-	TEMPLATE_TEST_CASE("is_avalanching is the same for xxh3, wyhash and rapidhash", "[DiceHash][is_avalanching]",
-					   xxh3, wyhash, rapidhash) {
-		using Policy = TestType;
-
-		SECTION("the member type is void") {
-			STATIC_REQUIRE(std::is_void_v<typename DiceHash<std::monostate, Policy>::is_avalanching>);
-		}
-
-		SECTION("types with only one value are marked") {
-			STATIC_REQUIRE(marked<std::monostate, Policy>);
-			STATIC_REQUIRE(marked<std::nullopt_t, Policy>);
-			STATIC_REQUIRE(marked<std::nullptr_t, Policy>);
-			STATIC_REQUIRE(marked<std::tuple<>, Policy>);
-		}
-
-		SECTION("unordered containers are not marked") {
-			STATIC_REQUIRE_FALSE(marked<std::unordered_set<int>, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::unordered_set<std::string>, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::unordered_map<int, int>, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::unordered_map<std::string, std::pair<int, int>>, Policy>);
-			STATIC_REQUIRE_FALSE(marked<UnorderedInts, Policy>);
-		}
-
-		SECTION("types with a dice_hash_overload without dice_hash_is_avalanching and the types that contain them are not marked") {
-			STATIC_REQUIRE_FALSE(marked<Custom, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::pair<int, Custom>, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::tuple<Custom>, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::optional<Custom>, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::variant<int, Custom>, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::vector<Custom>, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::set<Custom>, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::map<int, Custom>, Policy>);
-		}
-
-		SECTION("a type whose dice_hash_is_avalanching is std::true_type is marked") {
-			STATIC_REQUIRE(marked<CustomAvalanching, Policy>);
-			STATIC_REQUIRE(marked<CustomAvalanching const, Policy>);
-		}
-
-		SECTION("the combined types and ordered containers of a marked overload type are marked") {
-			STATIC_REQUIRE(marked<std::pair<CustomAvalanching, int>, Policy>);
-			STATIC_REQUIRE(marked<std::pair<CustomAvalanching, CustomAvalanching>, Policy>);
-			STATIC_REQUIRE(marked<std::tuple<CustomAvalanching, std::string>, Policy>);
-			STATIC_REQUIRE(marked<std::optional<CustomAvalanching>, Policy>);
-			STATIC_REQUIRE(marked<std::variant<int, CustomAvalanching>, Policy>);
-			STATIC_REQUIRE(marked<std::vector<CustomAvalanching>, Policy>);
-			STATIC_REQUIRE(marked<std::array<CustomAvalanching, 2>, Policy>);
-			STATIC_REQUIRE(marked<std::span<CustomAvalanching const>, Policy>);
-			STATIC_REQUIRE(marked<std::set<CustomAvalanching>, Policy>);
-			STATIC_REQUIRE(marked<std::map<int, CustomAvalanching>, Policy>);
-		}
-
-		SECTION("a combination of a marked overload type with an overload type without dice_hash_is_avalanching is not marked") {
-			STATIC_REQUIRE_FALSE(marked<std::pair<CustomAvalanching, Custom>, Policy>);
-		}
-
-		SECTION("an overload type with avalanching_like of a type that is marked for every policy is marked") {
-			STATIC_REQUIRE(dice::hash::avalanching_like<std::pair<int, int>, Policy>::value);
-			STATIC_REQUIRE(marked<CustomLikePair, Policy>);
-		}
-
-		SECTION("references in combined types are removed") {
-			STATIC_REQUIRE(marked<std::tuple<int const &>, Policy>);
-			STATIC_REQUIRE(marked<std::pair<std::string const &, int &>, Policy>);
-		}
-
-		SECTION("types without a hash are not marked") {
-			STATIC_REQUIRE_FALSE(marked<std::vector<bool>, Policy>);
-		}
+	TEMPLATE_TEST_CASE("DiceHash is marked exactly if the policy is", "[DiceHash][is_avalanching]",
+					   xxh3, wyhash, rapidhash, Martinus, OwnPolicy, OwnAvalanchingPolicy, OwnWyhashPolicy) {
+		STATIC_REQUIRE(marked_as_policy<TestType>);
 	}
 
-	TEMPLATE_TEST_CASE("is_avalanching with Martinus and a policy of your own", "[DiceHash][is_avalanching]", Martinus, OwnPolicy) {
-		using Policy = TestType;
-
-		SECTION("std::monostate, std::nullopt_t and std::nullptr_t are marked") {
-			STATIC_REQUIRE(marked<std::monostate, Policy>);
-			STATIC_REQUIRE(marked<std::nullopt_t, Policy>);
-			STATIC_REQUIRE(marked<std::nullptr_t, Policy>);
-		}
-
-		SECTION("a type with a true dice_hash_is_avalanching is marked") {
-			STATIC_REQUIRE(marked<CustomAvalanching, Policy>);
-			STATIC_REQUIRE(marked<CustomPerPolicy, Policy> == !std::is_same_v<Policy, Martinus>);
-		}
-
-		SECTION("the types that contain it are not marked, because the combine of the policy promises nothing") {
-			STATIC_REQUIRE_FALSE(marked<std::pair<CustomAvalanching, CustomAvalanching>, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::vector<CustomAvalanching>, Policy>);
-		}
-
-		SECTION("an overload type with avalanching_like is not marked") {
-			STATIC_REQUIRE_FALSE(marked<CustomLikePair, Policy>);
-			STATIC_REQUIRE_FALSE(marked<CustomLikeInt, Policy>);
-		}
-
-		SECTION("values, strings, ranges and combined types are not marked") {
-			STATIC_REQUIRE_FALSE(marked<int, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::uint64_t, Policy>);
-			STATIC_REQUIRE_FALSE(marked<__int128, Policy>);
-			STATIC_REQUIRE_FALSE(marked<long double, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::string, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::vector<long double>, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::pair<std::string, int>, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::set<int>, Policy>);
-		}
+	TEST_CASE("The marker of DiceHash", "[DiceHash][is_avalanching]") {
+		STATIC_REQUIRE(std::is_void_v<DiceHash<int, wyhash>::is_avalanching>);
+		STATIC_REQUIRE(marked<std::unordered_set<int>, xxh3>);
+		STATIC_REQUIRE_FALSE(marked<int, Martinus>);
+		STATIC_REQUIRE(marked<int, OwnAvalanchingPolicy>);
+		STATIC_REQUIRE_FALSE(marked<int, OwnPolicy>);
+		// `DiceHash<T>` without a policy uses `wyhash`.
+		STATIC_REQUIRE(policy_marked<DiceHash<int>>);
+		// the marker adds no member data
+		STATIC_REQUIRE(sizeof(DiceHash<int, wyhash>) == 1);
+		STATIC_REQUIRE(sizeof(DiceHash<int, Martinus>) == 1);
 	}
 
-	TEST_CASE("is_avalanching with xxh3", "[DiceHash][is_avalanching]") {
-		using Policy = xxh3;
-
-		SECTION("fundamental types and pointers are avalanching") {
-			STATIC_REQUIRE(marked<bool, Policy>);
-			STATIC_REQUIRE(marked<char, Policy>);
-			STATIC_REQUIRE(marked<char32_t, Policy>);
-			STATIC_REQUIRE(marked<std::byte, Policy>);
-			STATIC_REQUIRE(marked<std::int8_t, Policy>);
-			STATIC_REQUIRE(marked<std::uint16_t, Policy>);
-			STATIC_REQUIRE(marked<int, Policy>);
-			STATIC_REQUIRE(marked<long, Policy>);
-			STATIC_REQUIRE(marked<std::size_t, Policy>);
-			STATIC_REQUIRE(marked<std::uint64_t, Policy>);
-			STATIC_REQUIRE(marked<__int128, Policy>);
-			STATIC_REQUIRE(marked<unsigned __int128, Policy>);
-			STATIC_REQUIRE(marked<float, Policy>);
-			STATIC_REQUIRE(marked<double, Policy>);
-			STATIC_REQUIRE(marked<long double, Policy>);
-			STATIC_REQUIRE(marked<int *, Policy>);
-			STATIC_REQUIRE(marked<std::string const *, Policy>);
-			STATIC_REQUIRE(marked<std::unique_ptr<int>, Policy>);
-			STATIC_REQUIRE(marked<std::shared_ptr<int>, Policy>);
-		}
-
-		SECTION("hash_bytes is avalanching") {
-			STATIC_REQUIRE(marked<std::string, Policy>);
-			STATIC_REQUIRE(marked<std::string_view, Policy>);
-			STATIC_REQUIRE(marked<std::u16string, Policy>);
-			STATIC_REQUIRE(marked<std::vector<int>, Policy>);
-			STATIC_REQUIRE(marked<std::array<char, 4>, Policy>);
-			STATIC_REQUIRE(marked<std::span<std::uint64_t const>, Policy>);
-		}
-
-		SECTION("hash_combine and HashState are avalanching") {
-			STATIC_REQUIRE(marked<std::pair<int, int>, Policy>);
-			STATIC_REQUIRE(marked<std::pair<std::string, int>, Policy>);
-			STATIC_REQUIRE(marked<std::tuple<int, long, char>, Policy>);
-			STATIC_REQUIRE(marked<std::optional<int>, Policy>);
-			STATIC_REQUIRE(marked<std::variant<int, std::string>, Policy>);
-			STATIC_REQUIRE(marked<std::set<int>, Policy>);
-			STATIC_REQUIRE(marked<std::map<int, std::string>, Policy>);
-			STATIC_REQUIRE(marked<OrderedInts, Policy>);
-			STATIC_REQUIRE(marked<std::vector<std::string>, Policy>);
-			STATIC_REQUIRE(marked<std::array<std::string, 2>, Policy>);
-			STATIC_REQUIRE(marked<std::vector<double>, Policy>);
-			STATIC_REQUIRE(marked<std::span<float const>, Policy>);
-			STATIC_REQUIRE(marked<std::pair<std::unordered_set<int>, int>, Policy>);
-			STATIC_REQUIRE(marked<std::vector<std::unordered_set<int>>, Policy>);
-			STATIC_REQUIRE(marked<std::pair<CustomAvalanching, std::unordered_set<int>>, Policy>);
-		}
-
-		SECTION("an overload type whose dice_hash_is_avalanching is true is marked") {
-			STATIC_REQUIRE(marked<CustomPerPolicy, Policy>);
-			STATIC_REQUIRE(marked<std::pair<CustomPerPolicy, int>, Policy>);
-			STATIC_REQUIRE(marked<CustomLikeInt, Policy>);
-		}
-	}
-
-	TEMPLATE_TEST_CASE("is_avalanching with wyhash and rapidhash", "[DiceHash][is_avalanching]", wyhash, rapidhash) {
-		using Policy = TestType;
-
-		SECTION("fundamental types and pointers are avalanching") {
-			STATIC_REQUIRE(marked<bool, Policy>);
-			STATIC_REQUIRE(marked<char, Policy>);
-			STATIC_REQUIRE(marked<char32_t, Policy>);
-			STATIC_REQUIRE(marked<std::byte, Policy>);
-			STATIC_REQUIRE(marked<std::int8_t, Policy>);
-			STATIC_REQUIRE(marked<std::uint16_t, Policy>);
-			STATIC_REQUIRE(marked<int, Policy>);
-			STATIC_REQUIRE(marked<long, Policy>);
-			STATIC_REQUIRE(marked<std::size_t, Policy>);
-			STATIC_REQUIRE(marked<std::uint64_t, Policy>);
-			STATIC_REQUIRE(marked<__int128, Policy>);
-			STATIC_REQUIRE(marked<unsigned __int128, Policy>);
-			STATIC_REQUIRE(marked<float, Policy>);
-			STATIC_REQUIRE(marked<double, Policy>);
-			STATIC_REQUIRE(marked<long double, Policy>);
-			STATIC_REQUIRE(marked<int *, Policy>);
-			STATIC_REQUIRE(marked<std::string const *, Policy>);
-			STATIC_REQUIRE(marked<std::unique_ptr<int>, Policy>);
-			STATIC_REQUIRE(marked<std::shared_ptr<int>, Policy>);
-		}
-
-		SECTION("hash_bytes is avalanching") {
-			STATIC_REQUIRE(marked<std::string, Policy>);
-			STATIC_REQUIRE(marked<std::string_view, Policy>);
-			STATIC_REQUIRE(marked<std::u16string, Policy>);
-			STATIC_REQUIRE(marked<std::vector<int>, Policy>);
-			STATIC_REQUIRE(marked<std::array<char, 4>, Policy>);
-			STATIC_REQUIRE(marked<std::span<std::uint64_t const>, Policy>);
-		}
-
-		SECTION("hash_combine and HashState are avalanching if all parts are") {
-			STATIC_REQUIRE(marked<std::pair<int, int>, Policy>);
-			STATIC_REQUIRE(marked<std::pair<std::string, int>, Policy>);
-			STATIC_REQUIRE(marked<std::tuple<int, long, char>, Policy>);
-			STATIC_REQUIRE(marked<std::optional<int>, Policy>);
-			STATIC_REQUIRE(marked<std::variant<int, std::string>, Policy>);
-			STATIC_REQUIRE(marked<std::variant<std::monostate, int>, Policy>);
-			STATIC_REQUIRE(marked<std::set<int>, Policy>);
-			STATIC_REQUIRE(marked<std::map<int, std::string>, Policy>);
-			STATIC_REQUIRE(marked<OrderedInts, Policy>);
-			STATIC_REQUIRE(marked<std::vector<std::string>, Policy>);
-			STATIC_REQUIRE(marked<std::vector<int *>, Policy>);
-			STATIC_REQUIRE(marked<std::array<std::string, 2>, Policy>);
-			STATIC_REQUIRE(marked<std::pair<__int128, int>, Policy>);
-		}
-
-		SECTION("ranges of floating point values are avalanching") {
-			STATIC_REQUIRE(marked<std::vector<float>, Policy>);
-			STATIC_REQUIRE(marked<std::vector<double>, Policy>);
-			STATIC_REQUIRE(marked<std::vector<long double>, Policy>);
-			STATIC_REQUIRE(marked<std::array<double, 2>, Policy>);
-			STATIC_REQUIRE(marked<std::span<float const>, Policy>);
-		}
-
-		SECTION("hash_combine and HashState are not avalanching if a part is not") {
-			STATIC_REQUIRE_FALSE(marked<std::pair<std::unordered_set<int>, int>, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::vector<std::unordered_set<int>>, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::optional<std::unordered_set<int>>, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::set<std::unordered_set<int>>, Policy>);
-			STATIC_REQUIRE_FALSE(marked<std::pair<CustomAvalanching, std::unordered_set<int>>, Policy>);
-		}
-
-		SECTION("an overload type whose dice_hash_is_avalanching is true is marked") {
-			STATIC_REQUIRE(marked<CustomPerPolicy, Policy>);
-			STATIC_REQUIRE(marked<std::pair<CustomPerPolicy, int>, Policy>);
-			STATIC_REQUIRE(marked<CustomLikeInt, Policy>);
-		}
-	}
-
-	TEMPLATE_TEST_CASE("Integers with 128 bits are marked in every -std mode", "[DiceHash][is_avalanching]",
-					   xxh3, wyhash, rapidhash) {
-		using Policy = TestType;
-		// `wyhash` hashes integers with more than 64 bits by their bytes, also where
-		// `std::is_integral_v<__int128>` is true.
-		STATIC_REQUIRE(marked<__int128, Policy>);
-		STATIC_REQUIRE(marked<unsigned __int128, Policy>);
-		STATIC_REQUIRE(marked<std::pair<__int128, int>, Policy>);
-	}
-
-	TEST_CASE("DiceHash without a policy is marked as with wyhash", "[DiceHash][is_avalanching]") {
-		STATIC_REQUIRE(marked_default<int>);
-		STATIC_REQUIRE(marked_default<std::uint64_t>);
-		STATIC_REQUIRE(marked_default<__int128>);
-		STATIC_REQUIRE(marked_default<double>);
-		STATIC_REQUIRE(marked_default<std::string>);
-		STATIC_REQUIRE(marked_default<std::string_view>);
-		STATIC_REQUIRE(marked_default<std::vector<int>>);
-		STATIC_REQUIRE(marked_default<std::pair<int, std::string>>);
-		STATIC_REQUIRE_FALSE(marked_default<std::unordered_set<int>>);
-		STATIC_REQUIRE_FALSE(marked_default<std::pair<std::unordered_set<int>, int>>);
-		STATIC_REQUIRE_FALSE(marked_default<Custom>);
+	TEST_CASE("DiceHash keeps the combine functions of the policy", "[DiceHash][is_avalanching]") {
+		CHECK(DiceHash<int, wyhash>::hash_combine({1, 2}) == wyhash::hash_combine({1, 2}));
+		CHECK(DiceHash<int, Martinus>::hash_combine({1, 2}) == Martinus::hash_combine({1, 2}));
+		CHECK(DiceHash<int, xxh3>::hash_invertible_combine({1, 2}) == xxh3::hash_invertible_combine({1, 2}));
 	}
 }// namespace dice::tests::hash::is_avalanching
 
-// `DiceHash<Late>` and `DiceHash<LateMarked>` are instantiated as classes by the members of the holders,
-// before the `dice_hash_overload` of the type is declared. The overload only has to come before the call.
-// `dice_hash_is_avalanching` of `LateMarked` follows a forward declaration of the type.
+// `DiceHash<Late>` is instantiated as a class by the member of `LateHolder`, before the
+// `dice_hash_overload` of `Late` is declared. The overload only has to come before the call.
 namespace dice::tests::hash::is_avalanching {
 	struct Late {
 		int a;
@@ -437,23 +137,6 @@ namespace dice::tests::hash::is_avalanching {
 	};
 	struct LateHolder {
 		std::unordered_set<Late, DiceHash<Late>> set;
-	};
-
-	struct LateMarked;
-}// namespace dice::tests::hash::is_avalanching
-
-namespace dice::hash {
-	template<typename Policy>
-	struct dice_hash_is_avalanching<Policy, dice::tests::hash::is_avalanching::LateMarked> : avalanching_like<int, Policy> {};
-}// namespace dice::hash
-
-namespace dice::tests::hash::is_avalanching {
-	struct LateMarked {
-		int a;
-		bool operator==(LateMarked const &) const = default;
-	};
-	struct LateMarkedHolder {
-		std::unordered_set<LateMarked, DiceHash<LateMarked>> set;
 	};
 }// namespace dice::tests::hash::is_avalanching
 
@@ -464,30 +147,15 @@ namespace dice::hash {
 			return dice_hash_templates<Policy>::dice_hash(x.a);
 		}
 	};
-
-	template<typename Policy>
-	struct dice_hash_overload<Policy, dice::tests::hash::is_avalanching::LateMarked> {
-		static std::size_t dice_hash(dice::tests::hash::is_avalanching::LateMarked const &x) noexcept {
-			return dice_hash_templates<Policy>::dice_hash(x.a);
-		}
-	};
 }// namespace dice::hash
 
 namespace dice::tests::hash::is_avalanching {
 	TEST_CASE("The dice_hash_overload can follow the first instantiation of DiceHash as a class", "[DiceHash][is_avalanching]") {
-		STATIC_REQUIRE_FALSE(marked_default<Late>);
-		STATIC_REQUIRE(marked_default<LateMarked>);
-		STATIC_REQUIRE_FALSE(marked<LateMarked, Martinus>);
-
+		STATIC_REQUIRE(policy_marked<DiceHash<Late>>);
 		LateHolder holder;
 		holder.set.insert(Late{1});
 		holder.set.insert(Late{2});
 		CHECK(holder.set.size() == 2);
 		CHECK(DiceHash<Late>{}(Late{7}) == DiceHash<int>{}(7));
-
-		LateMarkedHolder marked_holder;
-		marked_holder.set.insert(LateMarked{1});
-		CHECK(marked_holder.set.size() == 1);
-		CHECK(DiceHash<LateMarked>{}(LateMarked{7}) == DiceHash<int>{}(7));
 	}
 }// namespace dice::tests::hash::is_avalanching
