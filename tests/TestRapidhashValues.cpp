@@ -1,9 +1,12 @@
 /** Fixed hash values of `Policies::rapidhash` and of the copy of `rapidhash.h` in `dice::hash::rapidhash`.
  * The expected values are those of the original `rapidhash.h` (tag `rapidhash_v3`) in its protected mode.
+ * It also has fixed hash values of `Policies::wyhash` in the condom 2 mode (`WYHASH_CONDOM 2`).
  * This file is built twice (see `tests/CMakeLists.txt`). `tests_rapidhash_values` defines no macro of the
- * original `rapidhash.h`. `tests_rapidhash_values_macros` defines `RAPIDHASH_FAST` and `RAPIDHASH_UNROLLED`,
- * which switch the original to its fast mode and to its unrolled loop. The copy undefines both before the text
- * of the original and restores them at its end, so both builds check the same values.
+ * original `rapidhash.h` or `wyhash.h`. `tests_rapidhash_values_macros` defines `RAPIDHASH_FAST` and
+ * `RAPIDHASH_UNROLLED`, which switch the original `rapidhash.h` to its fast mode and to its unrolled loop. It also
+ * defines `WYHASH_CONDOM` as 1, which switches the original `wyhash.h` to its condom 1 mode, and
+ * `wyhash_final_version_3`, the include guard of the original `wyhash.h`. The copies undefine these macros before
+ * the text of the original and restore them at their end, so both builds check the same values.
  * `DICE_HASH_TEST_RAPIDHASH_MACROS` is 0 in the first build and 1 in the second.
  */
 
@@ -20,11 +23,11 @@
 #include <utility>
 #include <vector>
 
-// The copies of `rapidhash.h` and `wyhash.h` undefine the macros they define at their end. The copy of `rapidhash.h`
-// restores the macros of the original `rapidhash.h` that were defined before it. So dice-hash defines no macro of the
-// original `rapidhash.h`: none of its `RAPIDHASH_` macros, and not `_likely_` or `_unlikely_`. It does not change the
-// mode of the original, and the macros of the original are not defined twice. The test case "The test is built with
-// the macros it names" checks that `RAPIDHASH_FAST` and `RAPIDHASH_UNROLLED` are still defined in the second build.
+// The copies of `rapidhash.h` and `wyhash.h` undefine the macros they define at their end and restore the macros of the
+// originals that were defined before them. So dice-hash defines no macro of the original `rapidhash.h` or `wyhash.h`:
+// none of their `RAPIDHASH_` and `WYHASH_` macros, not `wyhash_final_version_3`, and not `_likely_` or `_unlikely_`.
+// It does not change the mode of the originals. The test case "The test is built with the macros it names" checks
+// that the macros of the second build are still defined, with their values.
 #if defined(_likely_) || defined(_unlikely_)
 #error "dice-hash defines _likely_ or _unlikely_, which the original rapidhash.h defines too"
 #endif
@@ -33,6 +36,10 @@
 		|| defined(RAPIDHASH_CONSTEXPR) || defined(RAPIDHASH_LITTLE_ENDIAN) || defined(RAPIDHASH_BIG_ENDIAN)         \
 		|| (!DICE_HASH_TEST_RAPIDHASH_MACROS && (defined(RAPIDHASH_FAST) || defined(RAPIDHASH_UNROLLED)))
 #error "dice-hash defines a macro of the original rapidhash.h"
+#endif
+#if defined(WYHASH_32BIT_MUM) || defined(WYHASH_LITTLE_ENDIAN)                                                 \
+		|| (!DICE_HASH_TEST_RAPIDHASH_MACROS && (defined(WYHASH_CONDOM) || defined(wyhash_final_version_3)))
+#error "dice-hash defines a macro of the original wyhash.h"
 #endif
 
 namespace dice::tests::hash::rapidhash_values {
@@ -56,7 +63,7 @@ namespace dice::tests::hash::rapidhash_values {
 	}
 
 	TEST_CASE("The test is built with the macros it names", "[rapidhash]") {
-#if defined(RAPIDHASH_FAST) && defined(RAPIDHASH_UNROLLED)
+#if defined(RAPIDHASH_FAST) && defined(RAPIDHASH_UNROLLED) && defined(wyhash_final_version_3) && WYHASH_CONDOM == 1
 		constexpr bool macros = true;
 #else
 		constexpr bool macros = false;
@@ -153,5 +160,31 @@ namespace dice::tests::hash::rapidhash_values {
 		CHECK(rh::rapidhashMicro(buf.data(), 200) == 17709718943099738981ull);
 		CHECK(rh::rapidhashNano(buf.data(), 10) == 11064886776932023373ull);
 		CHECK(rh::rapidhashNano(buf.data(), 100) == 17908432128986484472ull);
+	}
+
+	TEST_CASE("wyhash keeps its values in the condom 2 mode", "[wyhash]") {
+		using WyPolicy = dice::hash::Policies::wyhash;
+		struct Case {
+			std::size_t len;
+			std::uint64_t hash;
+		};
+		// The lengths reach every path of `wyhash`: 0, up to 3, up to 16, up to 48 and more than 48 bytes.
+		constexpr Case cases[] = {
+				{0, 10113707786786037208ull},
+				{3, 10138066718226151019ull},
+				{8, 954891474420773423ull},
+				{16, 15180275443663933132ull},
+				{17, 14663692402014672255ull},
+				{48, 11373298503282026828ull},
+				{49, 3963704199424441687ull},
+				{100, 12878760610443598119ull},
+				{1000, 5092448396972611088ull},
+		};
+		auto const buf = make_buffer();
+		for (auto const &c : cases) {
+			CAPTURE(c.len);
+			CHECK(WyPolicy::hash_bytes(buf.data(), c.len) == c.hash);
+		}
+		CHECK(WyPolicy::hash_combine({0x0123456789abcdefull, 0xfedcba9876543210ull, 42}) == 16115629609616014822ull);
 	}
 }// namespace dice::tests::hash::rapidhash_values

@@ -131,8 +131,9 @@ if (WITH_SODIUM)
 endif ()
 
 # `TestRapidhashValues.cpp` is built once without and once with the macros `RAPIDHASH_FAST` and
-# `RAPIDHASH_UNROLLED` of the original `rapidhash.h`. The copy of dice-hash undefines both before the
-# text of the original and restores them at its end, so both builds check the same values.
+# `RAPIDHASH_UNROLLED` of the original `rapidhash.h` and `WYHASH_CONDOM=1` and `wyhash_final_version_3`
+# of the original `wyhash.h`. The copies of dice-hash undefine them before the text of the originals and
+# restore them at their end, so both builds check the same values.
 add_executable(tests_rapidhash_values TestRapidhashValues.cpp)
 target_link_libraries(tests_rapidhash_values PRIVATE
         Catch2::Catch2WithMain
@@ -149,5 +150,5 @@ target_link_libraries(tests_rapidhash_values_macros PRIVATE
         )
 set_target_properties(tests_rapidhash_values_macros PROPERTIES CXX_STANDARD 20)
 target_compile_definitions(tests_rapidhash_values_macros PRIVATE
-        DICE_HASH_TEST_RAPIDHASH_MACROS=1 RAPIDHASH_FAST RAPIDHASH_UNROLLED)
-catch_discover_tests(tests_rapidhash_values_macros TEST_SUFFIX " (RAPIDHASH_FAST and RAPIDHASH_UNROLLED)")
+        DICE_HASH_TEST_RAPIDHASH_MACROS=1 RAPIDHASH_FAST RAPIDHASH_UNROLLED WYHASH_CONDOM=1 wyhash_final_version_3)
+catch_discover_tests(tests_rapidhash_values_macros TEST_SUFFIX " (macros of rapidhash and wyhash)")
