@@ -574,7 +574,7 @@ namespace dice::hash {
 		/** Mixing of a `std::vector`, `std::array` or `std::span` that holds values of the type `T`.
 		 * `dice_hash_templates` hashes it as one block with `hash_bytes` if `hash_range_as_bytes<T>`
 		 * is true, otherwise value by value with `HashState` over the hashes of the values. Ranges of
-		 * floating point values are hashed value by value.
+		 * `long double` in x87 extended precision are hashed value by value.
 		 */
 		template<typename Policy, typename T>
 		constexpr mixing sequence_mixing() noexcept {
@@ -725,10 +725,10 @@ namespace dice::hash {
      *   views, and vectors, arrays and spans of fundamental types. Pairs, tuples, optionals,
      *   variants and the other containers only if all their parts are avalanching.
      * - `Martinus`: pairs, tuples, optionals, variants, ordered containers, and vectors, arrays and
-     *   spans of floating point types and of types that are not fundamental. `__int128`,
-     *   `unsigned __int128`, and `long double` where it is larger than `double`. Not avalanching
-     *   are the other fundamental types, pointers, smart pointers, strings, string views, and
-     *   vectors, arrays and spans of the other fundamental types.
+     *   spans of `long double` in x87 extended precision and of types that are not fundamental.
+     *   `__int128`, `unsigned __int128`, and `long double` where it is larger than `double`. Not
+     *   avalanching are the other fundamental types, pointers, smart pointers, strings, string
+     *   views, and vectors, arrays and spans of the other fundamental types.
      * - A policy of your own: no other type.
      * `DiceHash<T>` without a policy uses `wyhash`. The README explains the reasons.
      * @tparam T The type to define the hash for.

@@ -305,12 +305,19 @@ namespace dice::tests::hash::is_avalanching {
 			STATIC_REQUIRE(marked<long double, Policy> == (sizeof(long double) > sizeof(double)));
 		}
 
-		SECTION("ranges of floating point values are hashed with HashState and are avalanching") {
-			STATIC_REQUIRE(marked<std::vector<float>, Policy>);
-			STATIC_REQUIRE(marked<std::vector<double>, Policy>);
-			STATIC_REQUIRE(marked<std::vector<long double>, Policy>);
-			STATIC_REQUIRE(marked<std::array<double, 2>, Policy>);
-			STATIC_REQUIRE(marked<std::span<float const>, Policy>);
+		SECTION("ranges of float and double are hashed as bytes and are not avalanching") {
+			STATIC_REQUIRE_FALSE(marked<std::vector<float>, Policy>);
+			STATIC_REQUIRE_FALSE(marked<std::vector<double>, Policy>);
+			STATIC_REQUIRE_FALSE(marked<std::array<double, 2>, Policy>);
+			STATIC_REQUIRE_FALSE(marked<std::span<float const>, Policy>);
+		}
+
+		SECTION("ranges of long double in x87 extended precision are hashed with HashState and are avalanching") {
+			using dice::hash::internal::FloatFormat;
+			constexpr bool x87 = dice::hash::internal::float_format<long double> == FloatFormat::x87_extended;
+			STATIC_REQUIRE(marked<std::vector<long double>, Policy> == x87);
+			STATIC_REQUIRE(marked<std::array<long double, 2>, Policy> == x87);
+			STATIC_REQUIRE(marked<std::span<long double const>, Policy> == x87);
 		}
 
 		SECTION("hash_combine and HashState are avalanching") {
@@ -451,7 +458,7 @@ namespace dice::tests::hash::is_avalanching {
 			STATIC_REQUIRE(marked<std::pair<__int128, int>, Policy>);
 		}
 
-		SECTION("ranges of floating point values are hashed with HashState over avalanching parts") {
+		SECTION("ranges of floating point values are avalanching") {
 			STATIC_REQUIRE(marked<std::vector<float>, Policy>);
 			STATIC_REQUIRE(marked<std::vector<double>, Policy>);
 			STATIC_REQUIRE(marked<std::vector<long double>, Policy>);
@@ -498,10 +505,10 @@ namespace dice::tests::hash::is_avalanching {
 #if defined(DICE_HASH_TEST_GNU_MODE) && defined(__GLIBCXX__) && defined(_GLIBCXX_USE_FLOAT128)
 		// libstdc++ counts `__float128` as a floating point type in the GNU modes.
 		STATIC_REQUIRE(ranges_marked_as_hashed<__float128>);
-		STATIC_REQUIRE(marked<std::vector<__float128>, Martinus>);
+		STATIC_REQUIRE_FALSE(marked<std::vector<__float128>, Martinus>);
 #endif
-		// floating point values are hashed value by value, the other fundamental types as bytes
-		STATIC_REQUIRE(marked<std::vector<double>, Martinus>);
+		// ranges of `double` and `int` are hashed as bytes
+		STATIC_REQUIRE_FALSE(marked<std::vector<double>, Martinus>);
 		STATIC_REQUIRE_FALSE(marked<std::vector<int>, Martinus>);
 
 		// The checks above compare the marker with the trait that `dice_hash_templates` reads. The checks

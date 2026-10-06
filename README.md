@@ -151,8 +151,8 @@ On a 64-bit platform:
 |---|---|---|---|---|
 | integers up to 64 bits, `bool`, character types, `std::byte`, `float`, `double`, `long double` where it is not larger than `double`, pointers, `std::unique_ptr`, `std::shared_ptr` | no | yes | yes | yes |
 | `__int128`, `unsigned __int128`, and `long double` where it is larger than `double` | yes | yes | yes | yes |
-| strings, string views, and `std::vector`, `std::array` and `std::span` of fundamental types that are not floating point types | no | yes | yes | yes |
-| `std::vector`, `std::array` and `std::span` of floating point types | yes | yes | yes | yes |
+| strings, string views, and `std::vector`, `std::array` and `std::span` of fundamental types, except `long double` in x87 extended precision | no | yes | yes | yes |
+| `std::vector`, `std::array` and `std::span` of `long double` in x87 extended precision | yes | yes | yes | yes |
 | `std::pair`, `std::tuple`, `std::optional`, `std::variant`, ordered containers, and `std::vector`, `std::array` and `std::span` of other types | yes | yes | if all parts are | if all parts are |
 | unordered containers | no | no | no | no |
 | `std::monostate`, `std::nullopt_t`, `std::nullptr_t` | yes | yes | yes | yes |
@@ -175,16 +175,15 @@ The reasons:
   part has a `dice_hash_overload` without a true `is_avalanching`). For example
   `std::pair<std::string, int>` is avalanching, but `std::string` and `int` are not.
 - A `std::vector`, `std::array` or `std::span` of a fundamental type is hashed as one block of
-  bytes, except for the floating point types. A range of floating point values is hashed value by
-  value with `HashState`, as a range of pairs. So with `Martinus` a `std::vector<double>` is
-  avalanching and a `std::vector<int>` is not.
+  bytes, except for `long double` in x87 extended precision, which has padding. A range of these
+  values is hashed value by value with `HashState`, as a range of pairs. So on x86_64 with
+  `Martinus` a `std::vector<long double>` is avalanching, and a `std::vector<double>` and a
+  `std::vector<int>` are not.
 - `xxh3` hashes every value and every combination with XXH3.
 - `wyhash` and `rapidhash` hash every value with a function that avalanches. `wyhash` hashes
   integers up to 64 bits with `wyhash64` and `__int128` and `unsigned __int128` by their 16 bytes,
   in every `-std` mode. Their `hash_combine` and `HashState` keep the avalanche of their inputs, but
   they do not create it. So a combined type is avalanching only if all its parts are.
-- `-0.0` hashes like `+0.0` with every policy. So for the inputs `+0.0` and `-0.0` the sign bit
-  changes no output bit. These are two of all values of the type, so the type is still avalanching.
 - The hash of an unordered container is the xor of the hashes of its elements. This keeps
   relations between results: for all values `a`, `b` and `c`,
   `h({a, b}) ^ h({a, c}) == h({b, c})`. With `xxh3`, `wyhash` and `rapidhash` a single flipped
