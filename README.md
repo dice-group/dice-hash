@@ -143,11 +143,6 @@ returns `dice_hash_templates<Policy>::dice_hash(v)` does this. A policy of your 
 `using is_avalanching = void;` only if all its functions are avalanching. A policy that derives
 from `wyhash`, `xxh3` or `rapidhash` inherits the declaration.
 
-### Valueless variants
-A `std::variant` which is `valueless_by_exception` holds no alternative. It is hashed like a
-variant with the index `std::variant_npos` and the value `std::monostate`, so it gets a regular
-hash like every other value.
-
 ## Usage for general data hashing
 **The hash functions mentioned in this section are enabled/disabled using the feature flag `WITH_SODIUM=ON/OFF`.**
 **Enabling this flag (default behaviour) results in [libsodium](https://doc.libsodium.org/) being required as a dependency.**
