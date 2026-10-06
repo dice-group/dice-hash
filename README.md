@@ -137,69 +137,29 @@ If you want to use `DiceHash` in a different structure (like `std::unordered_map
 ### Avalanching hashes
 A hash is avalanching if every bit of the input changes each bit of the result with a probability
 of about one half. A hash table can then use the lowest bits of the result directly, for example
-with a mask, and needs no extra mixing step.
+with a mask, and needs no extra mixing step. `DiceHash<T, Policy>` declares the member type
+`is_avalanching` exactly for the combinations of type and policy whose result is avalanching. This
+is the convention of [ankerl::unordered_dense](https://github.com/martinus/unordered_dense). A hash
+table can check it with `requires { typename Hash::is_avalanching; }`.
 
-`DiceHash<T, Policy>` declares the member type `is_avalanching` (as `void`) exactly for the
-combinations of type and policy whose result is avalanching. This is the convention of
-[ankerl::unordered_dense](https://github.com/martinus/unordered_dense). A hash table can check it with
-`requires { typename Hash::is_avalanching; }`. `DiceHash<T>` without a policy uses `wyhash`, so it
-declares `is_avalanching` for the types of the `wyhash` column, for example integers and strings.
+`xxh3`, `wyhash` and `rapidhash` are avalanching. `DiceHash<T>` without a policy uses `wyhash`.
+`Martinus` is not avalanching for most fundamental types and for strings. The doc comment of
+`DiceHash` lists the details.
 
-On a 64-bit platform:
-
-| type | `Martinus` | `xxh3` | `wyhash` | `rapidhash` |
-|---|---|---|---|---|
-| integers up to 64 bits, `bool`, character types, `std::byte`, `float`, `double`, `long double` where it is not larger than `double`, pointers, `std::unique_ptr`, `std::shared_ptr` | no | yes | yes | yes |
-| `__int128`, `unsigned __int128`, and `long double` where it is larger than `double` | yes | yes | yes | yes |
-| strings, string views, and `std::vector`, `std::array` and `std::span` of fundamental types, except `long double` in x87 extended precision | no | yes | yes | yes |
-| `std::vector`, `std::array` and `std::span` of `long double` in x87 extended precision | yes | yes | yes | yes |
-| `std::pair`, `std::tuple`, `std::optional`, `std::variant`, ordered containers, and `std::vector`, `std::array` and `std::span` of other types | yes | yes | if all parts are | if all parts are |
-| unordered containers | no | no | no | no |
-| `std::monostate`, `std::nullopt_t`, `std::nullptr_t` | yes | yes | yes | yes |
-| types whose `dice_hash_overload` declares `is_avalanching` for the policy (see below) | yes | yes | yes | yes |
-| types with another `dice_hash_overload`, and types that contain one | no | no | no | no |
-
-Ordered containers are `std::map`, `std::set` and the types of `is_ordered_container`. Unordered
-containers are `std::unordered_map`, `std::unordered_set` and the types of `is_unordered_container`.
-A policy of your own has no avalanching results, except for the three types with only one value
-and the types whose `dice_hash_overload` declares `is_avalanching`.
-
-The reasons:
-- `Martinus` hashes integers up to 8 bytes, `bool`, `double` and pointers with a multiplication and
-  a rotation. Some input bits never change some output bits. Its byte hash is MurmurHash64A. When
-  4 to 7 bytes follow the last full block of 8 bytes, some output bits flip with a probability of
-  0.44 instead of 0.5. This affects `float` and every string whose length leaves such a rest. A
-  `long double` that is larger than `double` is hashed with MurmurHash64A over its 10 or 16 value
-  bytes, so it is avalanching. Its `hash_combine` and `HashState` mix every input hash again, so
-  pairs, tuples and the other combined types are avalanching even if their parts are not (unless a
-  part has a `dice_hash_overload` without a true `is_avalanching`). For example
-  `std::pair<std::string, int>` is avalanching, but `std::string` and `int` are not.
-- A `std::vector`, `std::array` or `std::span` of a fundamental type is hashed as one block of
-  bytes, except for `long double` in x87 extended precision, which has padding. A range of these
-  values is hashed value by value with `HashState`, as a range of pairs. So on x86_64 with
-  `Martinus` a `std::vector<long double>` is avalanching, and a `std::vector<double>` and a
-  `std::vector<int>` are not.
-- `xxh3` hashes every value and every combination with XXH3.
-- `wyhash` and `rapidhash` hash every value with a function that avalanches. `wyhash` hashes
-  integers up to 64 bits with `wyhash64` and `__int128` and `unsigned __int128` by their 16 bytes,
-  in every `-std` mode. Their `hash_combine` and `HashState` keep the avalanche of their inputs, but
-  they do not create it. So a combined type is avalanching only if all its parts are.
-- The hash of an unordered container is the xor of the hashes of its elements. This keeps
-  relations between results: for all values `a`, `b` and `c`,
-  `h({a, b}) ^ h({a, c}) == h({b, c})`. With `xxh3`, `wyhash` and `rapidhash` a single flipped
-  input bit still changes about half of the result bits, but the result is not marked for any
-  policy.
-- The types with only one value have no input bit that could fail the test.
-
-[TestDiceHashAvalanche.cpp](tests/TestDiceHashAvalanche.cpp) checks every marked combination of a
-list of types. It flips each input bit of many inputs and checks that each output bit flips with a
-probability between 0.475 and 0.525. Types with 8 bits have only 256 values, so their bound is
-wider.
+These types are not avalanching, also with `xxh3`, `wyhash` and `rapidhash`:
+- Unordered containers (`std::unordered_map`, `std::unordered_set` and the types of
+  `is_unordered_container`). Their hash is the xor of the hashes of their elements.
+- Types with a `dice_hash_overload` that does not declare `is_avalanching` (see below), and the
+  types that contain them.
+- With `wyhash` and `rapidhash`: pairs, tuples, optionals, variants, ordered containers, and
+  vectors, arrays and spans of types that are not fundamental, if one of their parts is not
+  avalanching. The combine of these two policies keeps the avalanche of its inputs, but it does not
+  create it.
 
 #### Avalanching hashes of your own types
-`DiceHash` cannot see what the `dice_hash_overload` of a type does. If its result is avalanching,
-declare the member type `is_avalanching` in the specialization. If `dice_hash` returns
-`dice_hash_templates<Policy>::dice_hash(v)`, use `dice::hash::avalanching_like` with the type of `v`:
+`DiceHash` cannot see what the `dice_hash_overload` of a type does, so it does not declare
+`is_avalanching` for that type. If `dice_hash` returns `dice_hash_templates<Policy>::dice_hash(v)`,
+declare `is_avalanching` as `dice::hash::avalanching_like` with the type of `v`:
 ```c++
 struct Point { int x; int y; };
 namespace dice::hash {
@@ -212,28 +172,9 @@ namespace dice::hash {
     };
 }
 ```
-`avalanching_like<std::pair<int, int>, Policy>` is `std::true_type` exactly for the policies for
-which `DiceHash<std::pair<int, int>, Policy>` declares `is_avalanching`. These are the four policies
-of dice-hash, but not a policy of your own. So `DiceHash<Point, Policy>` declares `is_avalanching`
-for the four policies of dice-hash. With an overload that hashes a single `int`,
-`avalanching_like<int, Policy>` would be false for `Martinus`. Pairs, tuples, optionals, variants,
-ordered containers, vectors, arrays and spans of `Point` follow the table above, with `Point` as an
-avalanching part. With a policy of your own they are not avalanching.
-
-`using is_avalanching = void;` promises the avalanche for every policy, also for every policy of
-your own. Use it only if the result does not depend on the policy in that way, for example if
-`dice_hash` applies a hash function of its own that avalanches. If `is_avalanching` names a type
-with a `value` that is false, like `std::false_type`, it makes no promise. A specialization that
-derives from a class with `is_avalanching`, for example another `dice_hash_overload`, gets the
-promise of that class. dice-hash does not check a promise.
-
-A hash table that honors `is_avalanching` uses the result of `DiceHash` without a mixing step of
-its own. So when a specialization starts to declare `is_avalanching`, such a table places the keys
-in other buckets. A table that was persisted with the old placement is not valid any more.
-
-Declare the specialization before `DiceHash<Point, Policy>`, or a `DiceHash` of a type that contains
-`Point`, is first instantiated as a class. This holds for every specialization of
-`dice_hash_overload`, with or without `is_avalanching`, as described above.
+`using is_avalanching = void;` would promise the avalanche for every policy. But the result of
+`Point` is only avalanching where `DiceHash<std::pair<int, int>, Policy>` is, which is not the
+case for a policy of your own. `avalanching_like` gives the promise exactly for these policies.
 
 ### The error value
 A `std::variant` which is `valueless_by_exception` holds no alternative, so no hash can be
