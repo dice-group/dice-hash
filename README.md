@@ -143,21 +143,10 @@ returns `dice_hash_templates<Policy>::dice_hash(v)` does this. A policy of your 
 `using is_avalanching = void;` only if all its functions are avalanching. A policy that derives
 from `wyhash`, `xxh3` or `rapidhash` inherits the declaration.
 
-### The error value
-A `std::variant` which is `valueless_by_exception` holds no alternative, so no hash can be
-calculated for it. In that case `DiceHash` returns the `ErrorValue` of the policy, which
-`is_faulty` reports:
-```c++
-using Hash = dice::hash::DiceHash<std::variant<int, std::string>>;
-Hash::is_faulty(Hash{}(your_variant));
-```
-Every other value gets a regular hash. Types which hold nothing, like `std::monostate`,
-`std::nullopt` and empty containers, are regular values and are never reported as faulty.
-
-`ErrorValue` is a sentinel, not a value outside the range of the hash functions. A regular
-value can land on it, so `is_faulty` is a strong hint and not a proof. For unordered
-containers this is easy to trigger on purpose, because their hash is the xor of the hashes of
-their elements.
+### Valueless variants
+A `std::variant` which is `valueless_by_exception` holds no alternative. It is hashed like a
+variant with the index `std::variant_npos` and the value `std::monostate`, so it gets a regular
+hash like every other value.
 
 ## Usage for general data hashing
 **The hash functions mentioned in this section are enabled/disabled using the feature flag `WITH_SODIUM=ON/OFF`.**

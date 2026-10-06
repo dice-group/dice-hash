@@ -87,8 +87,7 @@ namespace dice::hash {
 
 		/** Hashes of the types which hold no value.
 		 * A type which holds no value has nothing to hash, so it gets a fixed constant. The two
-		 * constants only have to be different from each other and from the error value of the
-		 * policy, which dice_hash_templates checks. They are the same for every policy.
+		 * constants only have to be different from each other. They are the same for every policy.
 		 */
 		inline constexpr std::size_t monostate_hash = static_cast<std::size_t>(0x734085ee0280dfa9ull);
 		inline constexpr std::size_t nullopt_hash = static_cast<std::size_t>(0x5003c53fd5e09c85ull);
@@ -99,11 +98,6 @@ namespace dice::hash {
 	 */
 	template<Policies::HashPolicy Policy>
 	class dice_hash_templates {
-		static_assert(internal::monostate_hash != Policy::ErrorValue,
-					  "the error value of the policy collides with the hash of std::monostate");
-		static_assert(internal::nullopt_hash != Policy::ErrorValue,
-					  "the error value of the policy collides with the hash of std::nullopt");
-
 	private:
 		/** Calculates the hash over an ordered container.
          * An example would be a vector, a map, an array or a list.
@@ -337,15 +331,19 @@ namespace dice::hash {
 		/** Implementation for variant.
          * Hashes the index of the active alternative together with its value.
          * The index is part of the hash, so two alternatives with equal content
-         * still get different hashes.
+         * still get different hashes. A variant that is `valueless_by_exception` holds no
+         * alternative. Its index is `std::variant_npos`, and it is hashed with `std::monostate` as
+         * its value.
          * @tparam VariantArgs Types of the possible values.
          * @param var The variant itself.
-         * @return Hash value, the error value of the policy if the variant is valueless_by_exception.
+         * @return Hash value.
          */
 		template<typename... VariantArgs>
 		static std::size_t dice_hash(std::variant<VariantArgs...> const &var) noexcept {
 			if (var.valueless_by_exception()) {
-				return Policy::ErrorValue;
+				static constexpr std::size_t index = std::variant_npos;
+				static constexpr std::monostate empty{};
+				return dice_hash(std::tie(index, empty));
 			}
 			std::size_t const index = var.index();
 			return std::visit([&index](auto const &arg) { return dice_hash(std::tie(index, arg)); }, var);
@@ -425,15 +423,6 @@ namespace dice::hash {
          */
         std::size_t operator()(T const &t) const noexcept {
 			return dice_hash_templates<Policy>::dice_hash(t);
-		}
-
-		/** Function to check if a hash is equal to an error value.
-		 * Simple wrapper for equality checking of the Policy error value.
-		 * @param to_check The hash value to check.
-		 * @return True if value is an error value, false otherwise.
-		 */
-		[[nodiscard]] static constexpr bool is_faulty(std::size_t to_check) noexcept {
-			return to_check == Policy::ErrorValue;
 		}
 	};
 

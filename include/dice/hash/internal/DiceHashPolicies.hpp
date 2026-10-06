@@ -16,13 +16,10 @@
 
 namespace dice::hash::Policies {
     /** Requirements for a hash policy.
-     * ErrorValue signals that a hash could not be calculated. It must differ from the value the
-     * policy returns for combining nothing, otherwise an empty container looks like an error.
      */
     template<typename T>
     concept HashPolicy =
-    std::is_convertible_v<decltype(T::ErrorValue), std::size_t>
-    &&std::is_nothrow_invocable_r_v<std::size_t, decltype(T::template hash_fundamental<int>), int>
+    std::is_nothrow_invocable_r_v<std::size_t, decltype(T::template hash_fundamental<int>), int>
     &&std::is_nothrow_invocable_r_v<std::size_t, decltype(T::template hash_fundamental<long>), long>
     &&std::is_nothrow_invocable_r_v<std::size_t, decltype(T::template hash_fundamental<std::size_t>), std::size_t>
     &&std::is_nothrow_invocable_r_v<std::size_t, decltype(T::hash_bytes), void const *, std::size_t>
@@ -45,7 +42,6 @@ namespace dice::hash::Policies {
 				dice::hash::wyhash::_wyp[2],
 				dice::hash::wyhash::_wyp[3]
 		};
-		inline static constexpr std::size_t ErrorValue = ~static_cast<std::size_t>(kSeed);
 
 		/** Integers of up to 64 bits are hashed with `wyhash64`. All other types are hashed by
 		 * their bytes, also `__int128` and `unsigned __int128`, so that `wyhash64` does not truncate
@@ -103,7 +99,6 @@ namespace dice::hash::Policies {
 
 		inline static constexpr std::size_t size_t_bits = 8 * sizeof(std::size_t);
 		inline static constexpr std::size_t seed = std::size_t(0xA24BAED4963EE407UL);
-		inline static constexpr std::size_t ErrorValue = ~seed;
 
 		template<typename T>
 		static std::size_t hash_fundamental(T x) noexcept {
@@ -146,7 +141,6 @@ namespace dice::hash::Policies {
 	 * input bits never change some output bits.
 	 */
 	struct Martinus {
-		static constexpr std::size_t ErrorValue = ~dice::hash::martinus::seed;
 		template<typename T>
 		static std::size_t hash_fundamental(T x) noexcept {
 			static_assert(!std::is_same_v<std::remove_cv_t<T>, long double>, "long double is not supported, it can have padding bytes");
@@ -205,7 +199,6 @@ namespace dice::hash::Policies {
 		// the value rapidhash used as its default seed up to version 1.0, where it was the
 		// macro RAPID_SEED. Version 3.0 no longer defines it.
 		inline static constexpr uint64_t kSeed = 0xbdd89aa982704029ull;
-		inline static constexpr std::size_t ErrorValue = ~static_cast<std::size_t>(kSeed);
 
 		template<typename T>
 		static std::size_t hash_fundamental(T x) noexcept {

@@ -349,42 +349,23 @@ namespace dice::tests::hash {
 			REQUIRE(getHash<CurrentPolicy>(first) != getHash<CurrentPolicy>(second));
 		}
 
-        SECTION("is_faulty returns true if ErrorValue is tested") {
-			REQUIRE(dice::hash::DiceHash<int, CurrentPolicy>::is_faulty(CurrentPolicy::ErrorValue));
-		}
-
-        SECTION("is_faulty returns false if value tested isn't ErrorValue") {
-            REQUIRE(dice::hash::DiceHash<int, CurrentPolicy>::is_faulty(CurrentPolicy::ErrorValue+1) == false);
-        }
-
-		SECTION("Variant monostate is not an error") {
-			std::variant<std::monostate, int, char> test;
-			auto hashed = getHash<CurrentPolicy>(test);
-            REQUIRE_FALSE(dice::hash::DiceHash<decltype(test), CurrentPolicy>::is_faulty(hashed));
-		}
-
-		SECTION("Values which hold nothing are not errors") {
-			REQUIRE_FALSE(dice::hash::DiceHash<std::monostate, CurrentPolicy>::is_faulty(getHash<CurrentPolicy>(std::monostate{})));
-			REQUIRE_FALSE(dice::hash::DiceHash<std::nullopt_t, CurrentPolicy>::is_faulty(getHash<CurrentPolicy>(std::nullopt)));
-			REQUIRE_FALSE(dice::hash::DiceHash<std::optional<int>, CurrentPolicy>::is_faulty(getHash<CurrentPolicy>(std::optional<int>{})));
-		}
-
-		SECTION("Empty containers are not errors") {
-			REQUIRE_FALSE(dice::hash::DiceHash<std::tuple<>, CurrentPolicy>::is_faulty(getHash<CurrentPolicy>(std::tuple<>{})));
-			REQUIRE_FALSE(dice::hash::DiceHash<std::string, CurrentPolicy>::is_faulty(getHash<CurrentPolicy>(std::string{})));
-			REQUIRE_FALSE(dice::hash::DiceHash<std::vector<int>, CurrentPolicy>::is_faulty(getHash<CurrentPolicy>(std::vector<int>{})));
-			REQUIRE_FALSE(dice::hash::DiceHash<std::set<int>, CurrentPolicy>::is_faulty(getHash<CurrentPolicy>(std::set<int>{})));
-			REQUIRE_FALSE(dice::hash::DiceHash<std::map<int, int>, CurrentPolicy>::is_faulty(getHash<CurrentPolicy>(std::map<int, int>{})));
-		}
-
-		SECTION("Hash of ill-formed variant is the error value") {
+		SECTION("A valueless variant is hashed like the index std::variant_npos with std::monostate") {
 			std::variant<int, ValuelessByException> test;
 			try {
 				test = ValuelessByException();
 			} catch (std::domain_error const &) {}
-			// now test is valueless_by_exception
-            auto hashed = getHash<CurrentPolicy>(test);
-            REQUIRE(dice::hash::DiceHash<decltype(test), CurrentPolicy>::is_faulty(hashed));
+			REQUIRE(test.valueless_by_exception());
+			std::size_t const hashed = getHash<CurrentPolicy>(test);
+			REQUIRE(hashed == getHash<CurrentPolicy>(std::tuple<std::size_t, std::monostate>{std::variant_npos, std::monostate{}}));
+			REQUIRE(hashed != getHash<CurrentPolicy>(std::variant<int, ValuelessByException>{0}));
+			REQUIRE(hashed != getHash<CurrentPolicy>(std::monostate{}));
+
+			std::variant<std::string, ValuelessByException> other{"a"};
+			try {
+				other = ValuelessByException();
+			} catch (std::domain_error const &) {}
+			REQUIRE(other.valueless_by_exception());
+			REQUIRE(getHash<CurrentPolicy>(other) == hashed);
 		}
 
 		SECTION("user-defined types can be used in collections") {
