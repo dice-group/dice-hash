@@ -80,9 +80,8 @@ namespace dice::hash {
 		inline constexpr bool is_fundamental = std::is_fundamental_v<T> || std::is_same_v<std::remove_cv_t<T>, std::byte> || is_int128<T>;
 
 		/** Types whose `std::array`, `std::vector` and `std::span` are hashed as one block of bytes.
-		 * These are the fundamental types, except `long double` in two formats (see `FloatingPoint.hpp`):
-		 * in x87 extended precision it has padding, and in the double-double format the low part of a
-		 * value can be `+0.0` or `-0.0`. Ranges of these are hashed value by value.
+		 * These are the fundamental types, except `long double` in x87 extended precision (see
+		 * `FloatingPoint.hpp`), which has padding. Its ranges are hashed value by value.
 		 * @tparam T The type to check.
 		 */
 		template<typename T>

@@ -514,13 +514,12 @@ namespace dice::tests::hash {
 		STATIC_REQUIRE(float_format_of(2, 64, 16384, 12, true) == FloatFormat::x87_extended);
 		// m68k extended precision: the limits of x87, but big endian with padding in the middle
 		STATIC_REQUIRE(float_format_of(2, 64, 16384, 12, false) == FloatFormat::all_bytes);
-		// double-double: long double on PowerPC
-		STATIC_REQUIRE(float_format_of(2, 106, 1024, 16, true) == FloatFormat::double_double);
-		STATIC_REQUIRE(float_format_of(2, 106, 1024, 16, false) == FloatFormat::double_double);
+		// double-double: long double on PowerPC, two `double`s in all 16 bytes
+		STATIC_REQUIRE(float_format_of(2, 106, 1024, 16, true) == FloatFormat::all_bytes);
+		STATIC_REQUIRE(float_format_of(2, 106, 1024, 16, false) == FloatFormat::all_bytes);
 
 		STATIC_REQUIRE(float_value_size_of(FloatFormat::x87_extended, 16) == 10);
 		STATIC_REQUIRE(float_value_size_of(FloatFormat::x87_extended, 12) == 10);
-		STATIC_REQUIRE(float_value_size_of(FloatFormat::double_double, 16) == 16);
 		STATIC_REQUIRE(float_value_size_of(FloatFormat::all_bytes, 16) == 16);
 		STATIC_REQUIRE(float_value_size_of(FloatFormat::all_bytes, 8) == 8);
 
@@ -529,33 +528,9 @@ namespace dice::tests::hash {
 #if defined(__LDBL_MANT_DIG__) && defined(__LDBL_MAX_EXP__)
 		// the macros of gcc and clang name the format of `long double` independent of `std::numeric_limits`
 		constexpr FloatFormat expected = __LDBL_MANT_DIG__ == 64 && __LDBL_MAX_EXP__ == 16384 ? FloatFormat::x87_extended
-										 : __LDBL_MANT_DIG__ == 106							  ? FloatFormat::double_double
 																							  : FloatFormat::all_bytes;
 		STATIC_REQUIRE(float_format<long double> == expected);
 #endif
-	}
-
-	TEST_CASE("The low part of a double-double value is +0.0 in canonical form", "[DiceHash]") {
-		using dice::hash::internal::canonical_float_bytes;
-		using dice::hash::internal::FloatFormat;
-		using Bytes = std::array<unsigned char, 16>;
-
-		// -1.0 as (-1.0, -0.0), the result of negating 1.0, and as (-1.0, +0.0)
-		constexpr Bytes le_negated{0, 0, 0, 0, 0, 0, 0xf0, 0xbf, 0, 0, 0, 0, 0, 0, 0, 0x80};
-		constexpr Bytes le_converted{0, 0, 0, 0, 0, 0, 0xf0, 0xbf, 0, 0, 0, 0, 0, 0, 0, 0};
-		STATIC_REQUIRE(canonical_float_bytes<FloatFormat::double_double>(le_negated, true) == le_converted);
-		STATIC_REQUIRE(canonical_float_bytes<FloatFormat::double_double>(le_converted, true) == le_converted);
-
-		constexpr Bytes be_negated{0xbf, 0xf0, 0, 0, 0, 0, 0, 0, 0x80, 0, 0, 0, 0, 0, 0, 0};
-		constexpr Bytes be_converted{0xbf, 0xf0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-		STATIC_REQUIRE(canonical_float_bytes<FloatFormat::double_double>(be_negated, false) == be_converted);
-		STATIC_REQUIRE(canonical_float_bytes<FloatFormat::double_double>(be_converted, false) == be_converted);
-
-		// a nonzero low part does not change: 1.0 + 2^-60, and its negation
-		constexpr Bytes le_low{0, 0, 0, 0, 0, 0, 0xf0, 0x3f, 0, 0, 0, 0, 0, 0, 0x30, 0x3c};
-		constexpr Bytes le_negative_low{0, 0, 0, 0, 0, 0, 0xf0, 0xbf, 0, 0, 0, 0, 0, 0, 0x30, 0xbc};
-		STATIC_REQUIRE(canonical_float_bytes<FloatFormat::double_double>(le_low, true) == le_low);
-		STATIC_REQUIRE(canonical_float_bytes<FloatFormat::double_double>(le_negative_low, true) == le_negative_low);
 	}
 
 	TEMPLATE_TEST_CASE("Floating point values hash their value bytes", "[DiceHash]", AllPoliciesToTestForDiceHash) {
