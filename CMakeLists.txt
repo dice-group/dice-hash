@@ -5,7 +5,7 @@ project(
         VERSION 0.5.2
         DESCRIPTION "dice-hash provides a framework to generate stable hashes. It provides state-of-the-art hash functions, supports STL containers out of the box and helps you to defines stable hashes for your own structs and classes."
         HOMEPAGE_URL "https://dice-group.github.io/dice-hash/")
-set(POBR_VERSION 2)  # Persisted Object Binary Representation Version
+set(POBR_VERSION 3)  # Persisted Object Binary Representation Version
 
 include(cmake/boilerplate_init.cmake)
 boilerplate_init()
