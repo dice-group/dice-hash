@@ -30,13 +30,15 @@ namespace dice::tests::hash::avalanche {
 }// namespace dice::tests::hash::avalanche
 
 namespace dice::hash {
-	/** The result is the hash of a `std::uint64_t`. So the overload declares `is_avalanching` as
+	/** The result is the hash of a `std::uint64_t`. So `dice_hash_is_avalanching` derives from
 	 * `avalanching_like<std::uint64_t, Policy>`, which is true exactly for the policies that mark
 	 * `DiceHash<std::uint64_t, Policy>`.
 	 */
 	template<typename Policy>
+	struct dice_hash_is_avalanching<Policy, dice::tests::hash::avalanche::Id> : avalanching_like<std::uint64_t, Policy> {};
+
+	template<typename Policy>
 	struct dice_hash_overload<Policy, dice::tests::hash::avalanche::Id> {
-		using is_avalanching = avalanching_like<std::uint64_t, Policy>;
 		static std::size_t dice_hash(dice::tests::hash::avalanche::Id const &id) noexcept {
 			return dice_hash_templates<Policy>::dice_hash(id.value);
 		}

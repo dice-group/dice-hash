@@ -103,14 +103,6 @@ namespace dice::hash {
 }
 ```
 [Here](examples/customType.cpp) is an compilable example. 
-Declare the specialization before `DiceHash<YourType>`, or a `DiceHash` of a type that contains
-`YourType`, is first instantiated as a class. For example, a member of the type
-`std::unordered_set<YourType, dice::hash::DiceHash<YourType>>` instantiates it. `DiceHash` reads the
-member type `is_avalanching` of the specialization (see
-[Avalanching hashes of your own types](#avalanching-hashes-of-your-own-types)), so a specialization
-that comes later is ill-formed: gcc reports a partial specialization after instantiation, and clang
-uses the primary template, so the call of `DiceHash<YourType>` does not compile.
-
 If you want to combine the hash of two or more objects you can use the
 `hash_combine` or `hash_invertible_combine` function.
 These are part of the Policy, however they can be called via the DiceHash object.
@@ -149,8 +141,8 @@ table can check it with `requires { typename Hash::is_avalanching; }`.
 These types are not avalanching, also with `xxh3`, `wyhash` and `rapidhash`:
 - Unordered containers (`std::unordered_map`, `std::unordered_set` and the types of
   `is_unordered_container`). Their hash is the xor of the hashes of their elements.
-- Types with a `dice_hash_overload` that does not declare `is_avalanching` (see below), and the
-  types that contain them.
+- Types with a `dice_hash_overload` without a true `dice_hash_is_avalanching` (see below), and
+  the types that contain them.
 - With `wyhash` and `rapidhash`: pairs, tuples, optionals, variants, ordered containers, and
   vectors, arrays and spans of types that are not fundamental, if one of their parts is not
   avalanching. The combine of these two policies keeps the avalanche of its inputs, but it does not
@@ -159,22 +151,33 @@ These types are not avalanching, also with `xxh3`, `wyhash` and `rapidhash`:
 #### Avalanching hashes of your own types
 `DiceHash` cannot see what the `dice_hash_overload` of a type does, so it does not declare
 `is_avalanching` for that type. If `dice_hash` returns `dice_hash_templates<Policy>::dice_hash(v)`,
-declare `is_avalanching` as `dice::hash::avalanching_like` with the type of `v`:
+specialize `dice::hash::dice_hash_is_avalanching` and derive it from
+`dice::hash::avalanching_like` with the type of `v`:
 ```c++
+struct Point;
+namespace dice::hash {
+    template <typename Policy>
+    struct dice_hash_is_avalanching<Policy, Point> : avalanching_like<std::pair<int, int>, Policy> {};
+}
+
 struct Point { int x; int y; };
 namespace dice::hash {
     template <typename Policy>
     struct dice_hash_overload<Policy, Point> {
-        using is_avalanching = avalanching_like<std::pair<int, int>, Policy>;
         static std::size_t dice_hash(Point const& p) noexcept {
             return dice_hash_templates<Policy>::dice_hash(std::pair{p.x, p.y});
         }
     };
 }
 ```
-`using is_avalanching = void;` would promise the avalanche for every policy. But the result of
-`Point` is only avalanching where `DiceHash<std::pair<int, int>, Policy>` is, which is not the
-case for a policy of your own. `avalanching_like` gives the promise exactly for these policies.
+`std::true_type` would promise the avalanche for every policy. But the result of `Point` is only
+avalanching where `DiceHash<std::pair<int, int>, Policy>` is, which is not the case for a policy of
+your own. `avalanching_like` gives the promise exactly for these policies.
+
+`DiceHash<Point>` reads `dice_hash_is_avalanching` when it is instantiated as a class, for example
+by a member of the type `std::unordered_set<Point, dice::hash::DiceHash<Point>>`. So declare the
+specialization before that point. It does not need a complete `Point`. The `dice_hash_overload`
+only has to come before the first call of `DiceHash`.
 
 ### The error value
 A `std::variant` which is `valueless_by_exception` holds no alternative, so no hash can be

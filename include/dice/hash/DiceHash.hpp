@@ -38,19 +38,8 @@ namespace dice::hash {
 
 	/** Helper struct for defining the hash for custom structs.
 	 * Because of partial specialization problems with functions, this struct must be specialized to define the hash for a custom type.
-	 *
-	 * Every specialization must be declared before `DiceHash<T, Policy>`, or a `DiceHash` of a type that contains
-	 * `T`, is first instantiated as a class, also a specialization without `is_avalanching`. The class reads the
-	 * member type `is_avalanching` of the specialization.
-	 *
-	 * A specialization can declare the member type `is_avalanching`. It promises that the result of its `dice_hash`
-	 * is avalanching with `Policy`, and `DiceHash<T, Policy>` then declares `is_avalanching` too. dice-hash does not
-	 * check the promise. A member type with a `value` that is false, like `std::false_type`, makes no promise.
-	 * `using is_avalanching = avalanching_like<U, Policy>;` promises it exactly for the policies for which
-	 * `DiceHash<U, Policy>` declares `is_avalanching`. Use it if `dice_hash` returns
-	 * `dice_hash_templates<Policy>::dice_hash(u)` for a `u` of the type `U`. `using is_avalanching = void;`
-	 * promises it for every policy, also for a policy of your own. A specialization that derives from a class with
-	 * `is_avalanching`, for example another `dice_hash_overload`, gets the promise of that class.
+	 * A specialization must be declared before the first call of `DiceHash` for `T`. To mark its result as avalanching,
+	 * specialize `dice_hash_is_avalanching`.
 	 * @tparam Policy The policy to use.
 	 * @tparam T The custom type.
 	 */
@@ -76,6 +65,25 @@ namespace dice::hash {
 			return 0;
 		}
 	};
+
+	/** Promise that the `dice_hash_overload` of `T` gives an avalanching result with `Policy`.
+	 * If `value` is true, `DiceHash<T, Policy>` declares the member type `is_avalanching`. The primary template is
+	 * `std::false_type`, so a type with a `dice_hash_overload` is not marked. dice-hash does not check the promise.
+	 *
+	 * If `dice_hash` returns `dice_hash_templates<Policy>::dice_hash(u)` for a `u` of the type `U`, derive the
+	 * specialization from `avalanching_like<U, Policy>`. Then the promise holds exactly for the policies for which
+	 * `DiceHash<U, Policy>` declares `is_avalanching`. Derive it from `std::true_type` only if the result is
+	 * avalanching for every policy, also for a policy of your own.
+	 *
+	 * `DiceHash<T, Policy>`, and a `DiceHash` of a type that contains `T`, reads this trait when it is instantiated as
+	 * a class. So declare the specialization before that point. It does not need a complete `T`, so it can follow a
+	 * forward declaration of `T`. This trait is separate from `dice_hash_overload`, so that `DiceHash` does not
+	 * instantiate `dice_hash_overload` before it is called.
+	 * @tparam Policy The policy.
+	 * @tparam T The custom type.
+	 */
+	template<Policies::HashPolicy Policy, typename T>
+	struct dice_hash_is_avalanching : std::false_type {};
 
 	/** Type traits and constants used by dice_hash_templates.
 	 * The traits sit outside of the class because gcc 15 crashes with an internal compiler
@@ -406,7 +414,7 @@ namespace dice::hash {
 		 * when all input hashes are avalanching.
 		 * A policy without a specialization promises nothing, so `DiceHash` never declares
 		 * `is_avalanching` for it, except for `std::monostate`, `std::nullopt_t`, `std::nullptr_t`
-		 * and the types whose `dice_hash_overload` declares `is_avalanching`.
+		 * and the types with a true `dice_hash_is_avalanching`.
 		 * @tparam Policy The policy.
 		 */
 		template<typename Policy>
@@ -497,16 +505,16 @@ namespace dice::hash {
 		/** How well `dice_hash_templates<Policy>::dice_hash` mixes the result for a type.
 		 */
 		enum class mixing {
-			/** Nothing is known. Types with a `dice_hash_overload` that does not declare a true
-			 * `is_avalanching`, and results of a combine that does not avalanche over parts that do
+			/** Nothing is known. Types with a `dice_hash_overload` without a true
+			 * `dice_hash_is_avalanching`, and results of a combine that does not avalanche over parts that do
 			 * not avalanche.
 			 */
 			unknown,
 			/** A path of `dice_hash_templates` whose result does not avalanche. */
 			plain,
 			/** Every input bit changes each bit of the result with a probability of about one half.
-			 * Types with only one value are avalanching, because they have no input bit. Types whose
-			 * `dice_hash_overload` declares `is_avalanching` are avalanching by the promise of the user.
+			 * Types with only one value are avalanching, because they have no input bit. Types with a
+			 * true `dice_hash_is_avalanching` are avalanching by the promise of the user.
 			 */
 			avalanching
 		};
@@ -554,21 +562,12 @@ namespace dice::hash {
 		}
 
 		/** Mixing of a type that `dice_hash_templates` hashes with `dice_hash_overload<Policy, T>`.
-		 * The result is avalanching if the overload declares the member type `is_avalanching`,
-		 * except if that type has a `value` that is false.
+		 * The result is avalanching if `dice_hash_is_avalanching<Policy, T>` is true. This does not
+		 * instantiate `dice_hash_overload<Policy, T>`.
 		 */
 		template<typename Policy, typename T>
 		constexpr mixing overload_mixing() noexcept {
-			if constexpr (requires { typename dice_hash_overload<Policy, T>::is_avalanching; }) {
-				using promise = typename dice_hash_overload<Policy, T>::is_avalanching;
-				if constexpr (requires { promise::value; }) {
-					return static_cast<bool>(promise::value) ? mixing::avalanching : mixing::unknown;
-				} else {
-					return mixing::avalanching;
-				}
-			} else {
-				return mixing::unknown;
-			}
+			return dice_hash_is_avalanching<Policy, T>::value ? mixing::avalanching : mixing::unknown;
 		}
 
 		/** Mixing of a `std::vector`, `std::array` or `std::span` that holds values of the type `T`.
@@ -696,9 +695,10 @@ namespace dice::hash {
 	}// namespace internal
 
 	/** `std::true_type` if `DiceHash<T, Policy>` declares `is_avalanching`, otherwise `std::false_type`.
-	 * A `dice_hash_overload<Policy, X>` whose `dice_hash` returns `dice_hash_templates<Policy>::dice_hash(t)`
-	 * for a `t` of the type `T` can declare `using is_avalanching = avalanching_like<T, Policy>;`. `T` is
-	 * the type that the overload hashes, not `X` or a type that contains `X`.
+	 * If the `dice_hash_overload<Policy, X>` of a type `X` returns `dice_hash_templates<Policy>::dice_hash(t)`
+	 * for a `t` of the type `T`, `dice_hash_is_avalanching<Policy, X>` can derive from
+	 * `avalanching_like<T, Policy>`. `T` is the type that the overload hashes, not `X` or a type that
+	 * contains `X`.
 	 * @tparam T The type that the overload passes to `dice_hash_templates<Policy>::dice_hash`.
 	 * @tparam Policy The policy.
 	 */
@@ -713,13 +713,12 @@ namespace dice::hash {
      * about one half. A hash table can then use the lowest bits of the result directly, for example
      * with a mask. This is the convention of ankerl::unordered_dense. On a 64-bit platform:
      * - Never avalanching: unordered containers, because their hash is the xor of the hashes of
-     *   their elements. Types with a `dice_hash_overload` that does not declare a true
-     *   `is_avalanching`, and every type that contains one.
+     *   their elements. Types with a `dice_hash_overload` without a true
+     *   `dice_hash_is_avalanching`, and every type that contains one.
      * - Always avalanching: `std::monostate`, `std::nullopt_t` and `std::nullptr_t`, because they
      *   have only one value.
-     * - Avalanching by the promise of the user: types whose `dice_hash_overload` declares
-     *   `is_avalanching` for the policy (see `dice_hash_overload`). The types that contain them
-     *   follow the rules below.
+     * - Avalanching by the promise of the user: types with a true `dice_hash_is_avalanching` for
+     *   the policy. The types that contain them follow the rules below.
      * - `xxh3`: every other type.
      * - `wyhash` and `rapidhash`: fundamental types, pointers, smart pointers, strings, string
      *   views, and vectors, arrays and spans of fundamental types. Pairs, tuples, optionals,

@@ -9,6 +9,7 @@
 #include <string>
 #include <tuple>
 #include <type_traits>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -44,30 +45,30 @@ namespace dice::tests::hash::is_avalanching {
 		int a;
 	};
 
-	/** A type whose `dice_hash_overload` declares `is_avalanching` as `void`. This promises it for every
+	/** A type whose `dice_hash_is_avalanching` is `std::true_type`. This promises the avalanche for every
 	 * policy, also for a policy of your own. The checks below test the marker, not the promise.
 	 */
 	struct CustomAvalanching {
 		int a;
 	};
 
-	/** A type whose `dice_hash_overload` declares `is_avalanching` as `std::bool_constant`, true for
-	 * every policy except `Martinus`.
+	/** A type whose `dice_hash_is_avalanching` is a `std::bool_constant`, true for every policy except
+	 * `Martinus`.
 	 */
 	struct CustomPerPolicy {
 		int a;
 	};
 
-	/** A type whose `dice_hash_overload` hashes a `std::pair<int, int>` and declares `is_avalanching` as
-	 * `avalanching_like` of it.
+	/** A type whose `dice_hash_overload` hashes a `std::pair<int, int>` and whose
+	 * `dice_hash_is_avalanching` derives from `avalanching_like` of it.
 	 */
 	struct CustomLikePair {
 		int a;
 		int b;
 	};
 
-	/** A type whose `dice_hash_overload` hashes an `int` and declares `is_avalanching` as
-	 * `avalanching_like` of it.
+	/** A type whose `dice_hash_overload` hashes an `int` and whose `dice_hash_is_avalanching` derives
+	 * from `avalanching_like` of it.
 	 */
 	struct CustomLikeInt {
 		int a;
@@ -104,32 +105,42 @@ namespace dice::hash {
 	};
 
 	template<typename Policy>
+	struct dice_hash_is_avalanching<Policy, dice::tests::hash::is_avalanching::CustomAvalanching> : std::true_type {};
+
+	template<typename Policy>
 	struct dice_hash_overload<Policy, dice::tests::hash::is_avalanching::CustomAvalanching> {
-		using is_avalanching = void;
 		static std::size_t dice_hash(dice::tests::hash::is_avalanching::CustomAvalanching const &c) noexcept {
 			return dice_hash_templates<Policy>::dice_hash(std::tuple{c.a});
 		}
 	};
 
 	template<typename Policy>
+	struct dice_hash_is_avalanching<Policy, dice::tests::hash::is_avalanching::CustomPerPolicy>
+		: std::bool_constant<!std::is_same_v<Policy, Policies::Martinus>> {};
+
+	template<typename Policy>
 	struct dice_hash_overload<Policy, dice::tests::hash::is_avalanching::CustomPerPolicy> {
-		using is_avalanching = std::bool_constant<!std::is_same_v<Policy, Policies::Martinus>>;
 		static std::size_t dice_hash(dice::tests::hash::is_avalanching::CustomPerPolicy const &c) noexcept {
 			return dice_hash_templates<Policy>::dice_hash(c.a);
 		}
 	};
 
 	template<typename Policy>
+	struct dice_hash_is_avalanching<Policy, dice::tests::hash::is_avalanching::CustomLikePair>
+		: avalanching_like<std::pair<int, int>, Policy> {};
+
+	template<typename Policy>
 	struct dice_hash_overload<Policy, dice::tests::hash::is_avalanching::CustomLikePair> {
-		using is_avalanching = avalanching_like<std::pair<int, int>, Policy>;
 		static std::size_t dice_hash(dice::tests::hash::is_avalanching::CustomLikePair const &c) noexcept {
 			return dice_hash_templates<Policy>::dice_hash(std::pair{c.a, c.b});
 		}
 	};
 
 	template<typename Policy>
+	struct dice_hash_is_avalanching<Policy, dice::tests::hash::is_avalanching::CustomLikeInt> : avalanching_like<int, Policy> {};
+
+	template<typename Policy>
 	struct dice_hash_overload<Policy, dice::tests::hash::is_avalanching::CustomLikeInt> {
-		using is_avalanching = avalanching_like<int, Policy>;
 		static std::size_t dice_hash(dice::tests::hash::is_avalanching::CustomLikeInt const &c) noexcept {
 			return dice_hash_templates<Policy>::dice_hash(c.a);
 		}
@@ -185,7 +196,7 @@ namespace dice::tests::hash::is_avalanching {
 			STATIC_REQUIRE_FALSE(marked<UnorderedInts, Policy>);
 		}
 
-		SECTION("types with a dice_hash_overload without is_avalanching and the types that contain them are not marked") {
+		SECTION("types with a dice_hash_overload without dice_hash_is_avalanching and the types that contain them are not marked") {
 			STATIC_REQUIRE_FALSE(marked<Custom, Policy>);
 			STATIC_REQUIRE_FALSE(marked<std::pair<int, Custom>, Policy>);
 			STATIC_REQUIRE_FALSE(marked<std::tuple<Custom>, Policy>);
@@ -196,7 +207,7 @@ namespace dice::tests::hash::is_avalanching {
 			STATIC_REQUIRE_FALSE(marked<std::map<int, Custom>, Policy>);
 		}
 
-		SECTION("a type whose dice_hash_overload declares is_avalanching as void is marked") {
+		SECTION("a type whose dice_hash_is_avalanching is std::true_type is marked") {
 			STATIC_REQUIRE(marked<CustomAvalanching, Policy>);
 			STATIC_REQUIRE(marked<CustomAvalanching const, Policy>);
 		}
@@ -214,7 +225,7 @@ namespace dice::tests::hash::is_avalanching {
 			STATIC_REQUIRE(marked<std::map<int, CustomAvalanching>, Policy>);
 		}
 
-		SECTION("a combination of a marked overload type with an overload type without is_avalanching is not marked") {
+		SECTION("a combination of a marked overload type with an overload type without dice_hash_is_avalanching is not marked") {
 			STATIC_REQUIRE_FALSE(marked<std::pair<CustomAvalanching, Custom>, Policy>);
 		}
 
@@ -242,7 +253,7 @@ namespace dice::tests::hash::is_avalanching {
 			STATIC_REQUIRE(marked<std::nullptr_t, Policy>);
 		}
 
-		SECTION("a type whose dice_hash_overload declares is_avalanching is marked") {
+		SECTION("a type with a true dice_hash_is_avalanching is marked") {
 			STATIC_REQUIRE(marked<CustomAvalanching, Policy>);
 			STATIC_REQUIRE(marked<CustomPerPolicy, Policy>);
 		}
@@ -342,7 +353,7 @@ namespace dice::tests::hash::is_avalanching {
 			STATIC_REQUIRE(marked<std::pair<CustomAvalanching, std::unordered_set<int>>, Policy>);
 		}
 
-		SECTION("an overload type whose is_avalanching has a false value is not marked") {
+		SECTION("an overload type whose dice_hash_is_avalanching is false is not marked") {
 			STATIC_REQUIRE_FALSE(marked<CustomPerPolicy, Policy>);
 			STATIC_REQUIRE_FALSE(marked<std::pair<CustomPerPolicy, int>, Policy>);
 			STATIC_REQUIRE_FALSE(marked<CustomLikeInt, Policy>);
@@ -401,7 +412,7 @@ namespace dice::tests::hash::is_avalanching {
 			STATIC_REQUIRE(marked<std::pair<CustomAvalanching, std::unordered_set<int>>, Policy>);
 		}
 
-		SECTION("an overload type whose is_avalanching has a true value is marked") {
+		SECTION("an overload type whose dice_hash_is_avalanching is true is marked") {
 			STATIC_REQUIRE(marked<CustomPerPolicy, Policy>);
 			STATIC_REQUIRE(marked<std::pair<CustomPerPolicy, int>, Policy>);
 			STATIC_REQUIRE(marked<CustomLikeInt, Policy>);
@@ -474,7 +485,7 @@ namespace dice::tests::hash::is_avalanching {
 			STATIC_REQUIRE_FALSE(marked<std::pair<CustomAvalanching, std::unordered_set<int>>, Policy>);
 		}
 
-		SECTION("an overload type whose is_avalanching has a true value is marked") {
+		SECTION("an overload type whose dice_hash_is_avalanching is true is marked") {
 			STATIC_REQUIRE(marked<CustomPerPolicy, Policy>);
 			STATIC_REQUIRE(marked<std::pair<CustomPerPolicy, int>, Policy>);
 			STATIC_REQUIRE(marked<CustomLikeInt, Policy>);
@@ -560,5 +571,70 @@ namespace dice::tests::hash::is_avalanching {
 		STATIC_REQUIRE_FALSE(marked_default<std::unordered_set<int>>);
 		STATIC_REQUIRE_FALSE(marked_default<std::pair<std::unordered_set<int>, int>>);
 		STATIC_REQUIRE_FALSE(marked_default<Custom>);
+	}
+}// namespace dice::tests::hash::is_avalanching
+
+// `DiceHash<Late>` and `DiceHash<LateMarked>` are instantiated as classes by the members of the holders,
+// before the `dice_hash_overload` of the type is declared. The overload only has to come before the call.
+// `dice_hash_is_avalanching` of `LateMarked` follows a forward declaration of the type.
+namespace dice::tests::hash::is_avalanching {
+	struct Late {
+		int a;
+		bool operator==(Late const &) const = default;
+	};
+	struct LateHolder {
+		std::unordered_set<Late, DiceHash<Late>> set;
+	};
+
+	struct LateMarked;
+}// namespace dice::tests::hash::is_avalanching
+
+namespace dice::hash {
+	template<typename Policy>
+	struct dice_hash_is_avalanching<Policy, dice::tests::hash::is_avalanching::LateMarked> : avalanching_like<int, Policy> {};
+}// namespace dice::hash
+
+namespace dice::tests::hash::is_avalanching {
+	struct LateMarked {
+		int a;
+		bool operator==(LateMarked const &) const = default;
+	};
+	struct LateMarkedHolder {
+		std::unordered_set<LateMarked, DiceHash<LateMarked>> set;
+	};
+}// namespace dice::tests::hash::is_avalanching
+
+namespace dice::hash {
+	template<typename Policy>
+	struct dice_hash_overload<Policy, dice::tests::hash::is_avalanching::Late> {
+		static std::size_t dice_hash(dice::tests::hash::is_avalanching::Late const &x) noexcept {
+			return dice_hash_templates<Policy>::dice_hash(x.a);
+		}
+	};
+
+	template<typename Policy>
+	struct dice_hash_overload<Policy, dice::tests::hash::is_avalanching::LateMarked> {
+		static std::size_t dice_hash(dice::tests::hash::is_avalanching::LateMarked const &x) noexcept {
+			return dice_hash_templates<Policy>::dice_hash(x.a);
+		}
+	};
+}// namespace dice::hash
+
+namespace dice::tests::hash::is_avalanching {
+	TEST_CASE("The dice_hash_overload can follow the first instantiation of DiceHash as a class", "[DiceHash][is_avalanching]") {
+		STATIC_REQUIRE_FALSE(marked_default<Late>);
+		STATIC_REQUIRE(marked_default<LateMarked>);
+		STATIC_REQUIRE_FALSE(marked<LateMarked, Martinus>);
+
+		LateHolder holder;
+		holder.set.insert(Late{1});
+		holder.set.insert(Late{2});
+		CHECK(holder.set.size() == 2);
+		CHECK(DiceHash<Late>{}(Late{7}) == DiceHash<int>{}(7));
+
+		LateMarkedHolder marked_holder;
+		marked_holder.set.insert(LateMarked{1});
+		CHECK(marked_holder.set.size() == 1);
+		CHECK(DiceHash<LateMarked>{}(LateMarked{7}) == DiceHash<int>{}(7));
 	}
 }// namespace dice::tests::hash::is_avalanching
