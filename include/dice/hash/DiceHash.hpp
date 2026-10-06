@@ -380,11 +380,12 @@ namespace dice::hash {
 		/** Base of `DiceHash`. It holds the policy as a protected base, so that `DiceHash` can use its
 		 * functions, and declares `is_avalanching` publicly if the policy declares it.
 		 */
-		template<typename Policy, bool = requires { typename Policy::is_avalanching; }>
+		template<typename Policy>
 		struct policy_base : protected Policy {};
 
 		template<typename Policy>
-		struct policy_base<Policy, true> : protected Policy {
+			requires requires { typename Policy::is_avalanching; }
+		struct policy_base<Policy> : protected Policy {
 			using typename Policy::is_avalanching;
 		};
 	}// namespace internal
