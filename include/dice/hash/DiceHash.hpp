@@ -80,22 +80,15 @@ namespace dice::hash {
 		inline constexpr bool is_fundamental = std::is_fundamental_v<T> || std::is_same_v<std::remove_cv_t<T>, std::byte> || is_int128<T>;
 
 		/** Types whose `std::array`, `std::vector` and `std::span` are hashed as one block of bytes.
-		 * These are the fundamental types, except `long double` in two formats (see `FloatingPoint.hpp`):
-		 * in x87 extended precision it has padding, and in the double-double format the low part of a
-		 * value can be `+0.0` or `-0.0`. Ranges of these are hashed value by value.
-		 * A single floating point value hashes `-0.0` like `+0.0`. A range of `float`, `double` or
-		 * `long double` that is hashed as one block of bytes keeps the sign of zero, so in it `-0.0`
-		 * and `+0.0` give different hashes.
+		 * These are the fundamental types except the floating point types. A range of floating point
+		 * values is hashed value by value, and each value is hashed like a single value. Equal
+		 * floating point values can have different bytes: `-0.0` and `+0.0`, and `long double` in two
+		 * formats (see `FloatingPoint.hpp`). A single value hashes them the same, one block of bytes
+		 * does not.
 		 * @tparam T The type to check.
 		 */
 		template<typename T>
-		inline constexpr bool hash_range_as_bytes = [] {
-			if constexpr (std::is_floating_point_v<T>) {
-				return float_format<std::remove_cv_t<T>> == FloatFormat::all_bytes;
-			} else {
-				return is_fundamental<T>;
-			}
-		}();
+		inline constexpr bool hash_range_as_bytes = is_fundamental<T> && !std::is_floating_point_v<T>;
 
 		/** Hashes of the types which hold no value.
 		 * A type which holds no value has nothing to hash, so it gets a fixed constant. The two
