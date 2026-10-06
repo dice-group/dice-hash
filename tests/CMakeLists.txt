@@ -131,8 +131,8 @@ if (WITH_SODIUM)
 endif ()
 
 # `TestRapidhashValues.cpp` is built once without and once with the macros `RAPIDHASH_FAST` and
-# `RAPIDHASH_UNROLLED` of the original `rapidhash.h`. The copy of dice-hash reads neither, so both
-# builds check the same values.
+# `RAPIDHASH_UNROLLED` of the original `rapidhash.h`. The copy of dice-hash undefines both before the
+# text of the original and restores them at its end, so both builds check the same values.
 add_executable(tests_rapidhash_values TestRapidhashValues.cpp)
 target_link_libraries(tests_rapidhash_values PRIVATE
         Catch2::Catch2WithMain

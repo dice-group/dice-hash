@@ -171,7 +171,7 @@ namespace dice::hash::Policies {
 
 	/** Hashes with rapidhash in its protected mode. dice-hash has its own copy of `rapidhash.h` in
 	 * the namespace `dice::hash::rapidhash` (`internal/rapidhash/rapidhash.h`), with the protected
-	 * mode fixed in the code. No macro changes it, and the original `rapidhash.h` does not either.
+	 * mode fixed. No macro changes it, and the original `rapidhash.h` does not either.
 	 * `hash_fundamental` and `hash_bytes` use `rapidhash_withSeed`. `hash_combine` and `HashState`
 	 * mix each input hash into the state with `rapid_mix`. In the protected mode `rapid_mix(a, b)`
 	 * is `a ^ b ^ lo ^ hi`, where `lo` and `hi` are the halves of the 128-bit product of `a` and

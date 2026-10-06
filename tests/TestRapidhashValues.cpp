@@ -2,8 +2,9 @@
  * The expected values are those of the original `rapidhash.h` (tag `rapidhash_v3`) in its protected mode.
  * This file is built twice (see `tests/CMakeLists.txt`). `tests_rapidhash_values` defines no macro of the
  * original `rapidhash.h`. `tests_rapidhash_values_macros` defines `RAPIDHASH_FAST` and `RAPIDHASH_UNROLLED`,
- * which switch the original to its fast mode and to its unrolled loop. The copy reads neither, so both
- * builds check the same values. `DICE_HASH_TEST_RAPIDHASH_MACROS` is 0 in the first build and 1 in the second.
+ * which switch the original to its fast mode and to its unrolled loop. The copy undefines both before the text
+ * of the original and restores them at its end, so both builds check the same values.
+ * `DICE_HASH_TEST_RAPIDHASH_MACROS` is 0 in the first build and 1 in the second.
  */
 
 #include <catch2/catch_all.hpp>
@@ -19,29 +20,19 @@
 #include <utility>
 #include <vector>
 
-// The copy of `rapidhash.h` undefines its own macros at its end.
-#if defined(DICE_HASH_RAPIDHASH_ALWAYS_INLINE) || defined(DICE_HASH_RAPIDHASH_INLINE) || defined(DICE_HASH_RAPIDHASH_INLINE_CONSTEXPR) \
-		|| defined(DICE_HASH_RAPIDHASH_LIKELY) || defined(DICE_HASH_RAPIDHASH_LITTLE_ENDIAN) || defined(DICE_HASH_RAPIDHASH_BIG_ENDIAN)
-#error "the copy of rapidhash.h leaves one of its macros defined"
-#endif
-
-// The copy of `wyhash.h` undefines its own macros `DICE_HASH_WYHASH_LIKELY` and `DICE_HASH_WYHASH_UNLIKELY` at its end.
-#if defined(DICE_HASH_WYHASH_LIKELY) || defined(DICE_HASH_WYHASH_UNLIKELY)
-#error "the copy of wyhash.h leaves one of its macros defined"
-#endif
-
-// dice-hash defines no macro of the original `rapidhash.h`: none of its `RAPIDHASH_` macros, and not `_likely_` or
-// `_unlikely_`. So it does not change the mode of the original, and the macros of the original are not defined twice.
+// The copies of `rapidhash.h` and `wyhash.h` undefine the macros they define at their end. The copy of `rapidhash.h`
+// restores the macros of the original `rapidhash.h` that were defined before it. So dice-hash defines no macro of the
+// original `rapidhash.h`: none of its `RAPIDHASH_` macros, and not `_likely_` or `_unlikely_`. It does not change the
+// mode of the original, and the macros of the original are not defined twice. The test case "The test is built with
+// the macros it names" checks that `RAPIDHASH_FAST` and `RAPIDHASH_UNROLLED` are still defined in the second build.
 #if defined(_likely_) || defined(_unlikely_)
 #error "dice-hash defines _likely_ or _unlikely_, which the original rapidhash.h defines too"
 #endif
-#if !DICE_HASH_TEST_RAPIDHASH_MACROS
-#if defined(RAPIDHASH_PROTECTED) || defined(RAPIDHASH_FAST) || defined(RAPIDHASH_COMPACT) || defined(RAPIDHASH_UNROLLED) \
-		|| defined(RAPIDHASH_ALWAYS_INLINE) || defined(RAPIDHASH_INLINE) || defined(RAPIDHASH_INLINE_CONSTEXPR)          \
-		|| defined(RAPIDHASH_NOEXCEPT) || defined(RAPIDHASH_CONSTEXPR) || defined(RAPIDHASH_LITTLE_ENDIAN)               \
-		|| defined(RAPIDHASH_BIG_ENDIAN)
+#if defined(RAPIDHASH_PROTECTED) || defined(RAPIDHASH_COMPACT) || defined(RAPIDHASH_ALWAYS_INLINE)                    \
+		|| defined(RAPIDHASH_INLINE) || defined(RAPIDHASH_INLINE_CONSTEXPR) || defined(RAPIDHASH_NOEXCEPT)           \
+		|| defined(RAPIDHASH_CONSTEXPR) || defined(RAPIDHASH_LITTLE_ENDIAN) || defined(RAPIDHASH_BIG_ENDIAN)         \
+		|| (!DICE_HASH_TEST_RAPIDHASH_MACROS && (defined(RAPIDHASH_FAST) || defined(RAPIDHASH_UNROLLED)))
 #error "dice-hash defines a macro of the original rapidhash.h"
-#endif
 #endif
 
 namespace dice::tests::hash::rapidhash_values {
