@@ -1,6 +1,7 @@
 #ifndef DICE_HASH_DICEHASHPOLICIES_HPP
 #define DICE_HASH_DICEHASHPOLICIES_HPP
 
+#include <dice/hash/internal/rapidhash/rapidhash.h>
 #include <dice/hash/internal/robinhood/martinus_robinhood_hash.hpp>
 #include <dice/hash/internal/wyhash/wyhash.h>
 // exposes the definition of XXH3_state_t, so the streaming state can be held by
@@ -9,7 +10,6 @@
 #define XXH_STATIC_LINKING_ONLY
 #endif
 #include <xxhash.h>
-#include <rapidhash.h>
 
 #include <bit>
 #include <type_traits>
@@ -169,6 +169,16 @@ namespace dice::hash::Policies {
 		};
 	};
 
+	/** Hashes with rapidhash in its protected mode. dice-hash has its own copy of `rapidhash.h` in
+	 * the namespace `dice::hash::rapidhash` (`internal/rapidhash/rapidhash.h`), with the protected
+	 * mode fixed. No macro changes it, and the original `rapidhash.h` does not either.
+	 * `hash_fundamental` and `hash_bytes` use `rapidhash_withSeed`. `hash_combine` and `HashState`
+	 * mix each input hash into the state with `rapid_mix`. In the protected mode `rapid_mix(a, b)`
+	 * is `a ^ b ^ lo ^ hi`, where `lo` and `hi` are the halves of the 128-bit product of `a` and
+	 * `b`. So an input hash of 0 keeps the state, and a state of 0 keeps the input hash.
+	 * The product of `a` and 1 is `a`, so `rapid_mix(a, 1)` and `rapid_mix(1, a)` are 1 for every
+	 * `a`. An input hash of 1 sets the state to 1, and the state stays 1 for all later input hashes.
+	 */
 	struct rapidhash {
 		// the value rapidhash used as its default seed up to version 1.0, where it was the
 		// macro RAPID_SEED. Version 3.0 no longer defines it.
@@ -177,17 +187,17 @@ namespace dice::hash::Policies {
 
 		template<typename T>
 		static std::size_t hash_fundamental(T x) noexcept {
-			return static_cast<std::size_t>(rapidhash_withSeed(&x, sizeof(T), kSeed));
+			return static_cast<std::size_t>(dice::hash::rapidhash::rapidhash_withSeed(&x, sizeof(T), kSeed));
 		}
 
 		static std::size_t hash_bytes(void const *ptr, std::size_t len) noexcept {
-			return static_cast<std::size_t>(rapidhash_withSeed(ptr, len, kSeed));
+			return static_cast<std::size_t>(dice::hash::rapidhash::rapidhash_withSeed(ptr, len, kSeed));
 		}
 
 		static std::size_t hash_combine(std::initializer_list<size_t> hashes) noexcept {
 			uint64_t state = kSeed;
 			for (auto hash : hashes) {
-				state = rapid_mix(state, hash);
+				state = dice::hash::rapidhash::rapid_mix(state, hash);
 			}
 			return static_cast<std::size_t>(state);
 		}
@@ -206,7 +216,7 @@ namespace dice::hash::Policies {
 		public:
 			explicit HashState(std::size_t) noexcept {}
 			void add (std::size_t hash) noexcept {
-				state = rapid_mix(state, static_cast<uint64_t>(hash));
+				state = dice::hash::rapidhash::rapid_mix(state, static_cast<uint64_t>(hash));
 			}
 			[[nodiscard]] std::size_t digest() noexcept {
 				return static_cast<std::size_t>(state);

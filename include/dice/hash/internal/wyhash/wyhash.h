@@ -10,6 +10,24 @@
    uint64_t hash=wyhash(s.c_str(), s.size(), 0, _wyp);
 */
 
+/*
+ *  dice-hash saves the macros of `wyhash.h` with `#pragma push_macro` and undefines them here. At the end of this
+ *  file, it undefines them again and restores them with `#pragma pop_macro`. So no macro that a user sets changes
+ *  this copy (`WYHASH_CONDOM` is always 2), and this copy does not change the macros of the user.
+ */
+#pragma push_macro("wyhash_final_version_3")
+#pragma push_macro("WYHASH_CONDOM")
+#pragma push_macro("WYHASH_32BIT_MUM")
+#pragma push_macro("WYHASH_LITTLE_ENDIAN")
+#pragma push_macro("_likely_")
+#pragma push_macro("_unlikely_")
+#undef wyhash_final_version_3
+#undef WYHASH_CONDOM
+#undef WYHASH_32BIT_MUM
+#undef WYHASH_LITTLE_ENDIAN
+#undef _likely_
+#undef _unlikely_
+
 #ifndef wyhash_final_version_3
 #define wyhash_final_version_3
 
@@ -34,7 +52,7 @@
 #pragma intrinsic(_umul128)
 #endif
 
-//likely and unlikely macros
+//likely and unlikely macros, undefined at the end of this header
 #if defined(__GNUC__) || defined(__INTEL_COMPILER) || defined(__clang__)
 #define _likely_(x) __builtin_expect(x, 1)
 #define _unlikely_(x) __builtin_expect(x, 0)
@@ -273,6 +291,20 @@ namespace dice::hash::wyhash {
 
 #endif
 }
+
+#undef wyhash_final_version_3
+#undef WYHASH_CONDOM
+#undef WYHASH_32BIT_MUM
+#undef WYHASH_LITTLE_ENDIAN
+#undef _likely_
+#undef _unlikely_
+#pragma pop_macro("wyhash_final_version_3")
+#pragma pop_macro("WYHASH_CONDOM")
+#pragma pop_macro("WYHASH_32BIT_MUM")
+#pragma pop_macro("WYHASH_LITTLE_ENDIAN")
+#pragma pop_macro("_likely_")
+#pragma pop_macro("_unlikely_")
+
 /* The Unlicense
 This is free and unencumbered software released into the public domain.
 

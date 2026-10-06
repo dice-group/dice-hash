@@ -80,7 +80,7 @@ class DiceHashConan(ConanFile):
     def package(self):
         self._configure_cmake().install()
 
-        # blake3 and rapidhash are pulled in via FetchContent and install their licenses
+        # blake3 (pulled in via FetchContent) and the vendored headers install their licenses
         # to share/licenses, so rescue those before share is removed below
         copy(self, pattern="*", src=os.path.join(self.package_folder, "share", "licenses"),
              dst=os.path.join(self.package_folder, "licenses"), keep_path=False)
