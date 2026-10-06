@@ -86,6 +86,17 @@ namespace dice::tests::hash {
 		(void) hasher;
 	}
 
+	TEST_CASE("The default policy is wyhash", "[DiceHash]") {
+		STATIC_REQUIRE(std::is_same_v<dice::hash::DiceHash<int>, dice::hash::DiceHash<int, dice::hash::Policies::wyhash>>);
+	}
+
+	TEST_CASE("Each alias names its policy", "[DiceHash]") {
+		STATIC_REQUIRE(std::is_same_v<dice::hash::DiceHashMartinus<int>, dice::hash::DiceHash<int, dice::hash::Policies::Martinus>>);
+		STATIC_REQUIRE(std::is_same_v<dice::hash::DiceHashxxh3<int>, dice::hash::DiceHash<int, dice::hash::Policies::xxh3>>);
+		STATIC_REQUIRE(std::is_same_v<dice::hash::DiceHashwyhash<int>, dice::hash::DiceHash<int, dice::hash::Policies::wyhash>>);
+		STATIC_REQUIRE(std::is_same_v<dice::hash::DiceHashrapidhash<int>, dice::hash::DiceHash<int, dice::hash::Policies::rapidhash>>);
+	}
+
 	TEMPLATE_TEST_CASE("DiceHash works with different Policies", "[DiceHash]", AllPoliciesToTestForDiceHash) {
 		using CurrentPolicy = TestType;
 		/*
@@ -389,13 +400,13 @@ namespace dice::tests::hash {
 			std::size_t b = 4;
 			std::size_t c = 7;
 			std::size_t d = 42;
-			dice::hash::DiceHash<CurrentPolicy>::hash_invertible_combine({a, b, c, d});
+			dice::hash::DiceHash<std::size_t, CurrentPolicy>::hash_invertible_combine({a, b, c, d});
 		}
 
 		SECTION("dice_hash_invertible_combine is self inverse") {
 			std::size_t a = 3;
 			std::size_t b = 4;
-			REQUIRE(a == dice::hash::DiceHash<CurrentPolicy>::hash_invertible_combine({a, b, a, a, b}));
+			REQUIRE(a == dice::hash::DiceHash<std::size_t, CurrentPolicy>::hash_invertible_combine({a, b, a, a, b}));
 		}
 
 		SECTION("dice_hash_combine can be called with any number of size_t") {
@@ -403,7 +414,7 @@ namespace dice::tests::hash {
 			std::size_t b = 4;
 			std::size_t c = 7;
 			std::size_t d = 42;
-			dice::hash::DiceHash<CurrentPolicy>::hash_combine({a, b, c, d});
+			dice::hash::DiceHash<std::size_t, CurrentPolicy>::hash_combine({a, b, c, d});
 		}
 
 		SECTION("A part that hashes to 0 does not set the hash of a pair or tuple to 0") {
