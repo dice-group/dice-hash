@@ -121,10 +121,17 @@ namespace dice::tests::hash::is_avalanching {
 		STATIC_REQUIRE(sizeof(DiceHash<int, Martinus>) == 1);
 	}
 
+	/** The inputs are hashes, as `DiceHash` passes them to the combine functions. */
 	TEST_CASE("DiceHash keeps the combine functions of the policy", "[DiceHash][is_avalanching]") {
-		CHECK(DiceHash<int, wyhash>::hash_combine({2, 3}) == wyhash::hash_combine({2, 3}));
-		CHECK(DiceHash<int, Martinus>::hash_combine({2, 3}) == Martinus::hash_combine({2, 3}));
-		CHECK(DiceHash<int, xxh3>::hash_invertible_combine({2, 3}) == xxh3::hash_invertible_combine({2, 3}));
+		std::size_t const wy_a = wyhash::hash_fundamental(2);
+		std::size_t const wy_b = wyhash::hash_fundamental(3);
+		CHECK(DiceHash<int, wyhash>::hash_combine({wy_a, wy_b}) == wyhash::hash_combine({wy_a, wy_b}));
+		std::size_t const martinus_a = Martinus::hash_fundamental(2);
+		std::size_t const martinus_b = Martinus::hash_fundamental(3);
+		CHECK(DiceHash<int, Martinus>::hash_combine({martinus_a, martinus_b}) == Martinus::hash_combine({martinus_a, martinus_b}));
+		std::size_t const xxh3_a = xxh3::hash_fundamental(2);
+		std::size_t const xxh3_b = xxh3::hash_fundamental(3);
+		CHECK(DiceHash<int, xxh3>::hash_invertible_combine({xxh3_a, xxh3_b}) == xxh3::hash_invertible_combine({xxh3_a, xxh3_b}));
 	}
 }// namespace dice::tests::hash::is_avalanching
 
