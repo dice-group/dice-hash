@@ -5,10 +5,10 @@ dice-hash provides a framework to generate stable hashes. It provides state-of-t
 **🔋 batteries included:** dice-hash defines _policies_ to support different hash algorithms. It comes with predefined policies for four state-of-the-art hash functions:
 - [XXH3](https://github.com/Cyan4973/xxHash)
 - [rapidhash](https://github.com/Nicoshev/rapidhash), in its protected mode
-- [wyhash](https://github.com/wangyi-fudan/wyhash)
+- [wyhash](https://github.com/wangyi-fudan/wyhash), in its condom 2 mode (`WYHASH_CONDOM 2`)
 - "martinus", the internal hash function from [robin-hood-hashing](https://github.com/martinus/robin-hood-hashing)
 
-dice-hash has its own copy of `rapidhash.h` (tag `rapidhash_v3`) in the namespace `dice::hash::rapidhash`, with the protected mode fixed. No macro changes it, also not `RAPIDHASH_PROTECTED` or `RAPIDHASH_FAST`. A program can include the original `rapidhash.h` in any translation unit and in either mode. The names differ, so the hash values of dice-hash stay the same, and the original `rapidhash.h` keeps the mode that the program chose. dice-hash defines no macro of the original `rapidhash.h`. The copy of `wyhash.h` in dice-hash defines `_likely_` and `_unlikely_` and undefines them at its end. The original `rapidhash.h` defines them too, with different spacing. So with GCC, a translation unit that includes the original `rapidhash.h` before dice-hash gets a warning that the two macros are redefined, and after dice-hash they are not defined. With `using namespace dice::hash;`, the name `rapidhash` means both the function of the original and the namespace of dice-hash, so call the original as `::rapidhash(...)`. dice-hash does not provide the original `rapidhash.h`: a program that uses it gets it from rapidhash.
+dice-hash has its own copies of `wyhash.h` and `rapidhash.h`. They are in their own namespaces, and their macros are pushed and popped. So their configuration does not leak into other copies of these headers that a program uses.
 
 These three, additional, general purpose hash functions are also (optionally) provided
 - [Blake2b](https://www.blake2.net)
